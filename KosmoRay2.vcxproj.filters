@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="DX12Lib">
+      <UniqueIdentifier>{4cf826d2-fe7a-4457-9ab7-0a1daa073c40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{1e06c0df-f4b8-4d1b-8bf3-d142bca7b1b1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="App2\shaders\PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="App2\shaders\VertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DX12Lib\HighResolutionClock.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Lib\Window.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Lib\Application.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Lib\CommandQueue.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Lib\DX12LibPCH.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12Lib\Game.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="App2\main.cpp" />
+    <ClCompile Include="App2\App2.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DX12Lib\HighResolutionClock.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\KeyCodes.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\resource.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\Window.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\Application.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\CommandQueue.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\d3dx12.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\DX12LibPCH.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\Events.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\Game.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\Helpers.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="App2\App2.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="DX12Lib\CMakeLists.txt">
+      <Filter>DX12Lib</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DX12Lib\DX12Lib.rc">
+      <Filter>DX12Lib</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
