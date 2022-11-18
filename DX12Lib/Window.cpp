@@ -271,7 +271,7 @@ void Window::OnResize(ResizeEventArgs& e)
     }
 }
 
-Microsoft::WRL::ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
+ComPtr<IDXGISwapChain4> Window::CreateSwapChain()
 {
     Application& app = Application::Get();
 
@@ -345,7 +345,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const
         m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const
+ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const
 {
     return m_d3d12BackBuffers[m_CurrentBackBufferIndex];
 }

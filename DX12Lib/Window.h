@@ -9,6 +9,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_5.h>
+using namespace Microsoft::WRL;
 
 #include "DX12Lib/Events.h"
 #include "DX12Lib/HighResolutionClock.h"
@@ -83,7 +84,7 @@ public:
     /**
      * Get the back buffer resource for the current back buffer.
      */
-    Microsoft::WRL::ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
+    ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
 
 
 protected:
@@ -125,7 +126,7 @@ protected:
     virtual void OnResize(ResizeEventArgs& e);
 
     // Create the swapchian.
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> CreateSwapChain();
+    ComPtr<IDXGISwapChain4> CreateSwapChain();
 
     // Update the render target views for the swapchain back buffers.
     void UpdateRenderTargetViews();
@@ -150,9 +151,9 @@ private:
 
     std::weak_ptr<Game> m_pGame;
 
-    Microsoft::WRL::ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
-    Microsoft::WRL::ComPtr<ID3D12Resource> m_d3d12BackBuffers[BufferCount];
+    ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
+    ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
+    ComPtr<ID3D12Resource> m_d3d12BackBuffers[BufferCount];
 
     UINT m_RTVDescriptorSize;
     UINT m_CurrentBackBufferIndex;

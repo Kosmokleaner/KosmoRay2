@@ -3661,7 +3661,7 @@ inline bool operator==( const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC &a, const D3D
 #include <vector>
 #ifndef D3DX12_USE_ATL
 #include <wrl/client.h>
-#define D3DX12_COM_PTR Microsoft::WRL::ComPtr
+#define D3DX12_COM_PTR ComPtr
 #define D3DX12_COM_PTR_GET(x) x.Get()
 #define D3DX12_COM_PTR_ADDRESSOF(x) x.GetAddressOf()
 #else

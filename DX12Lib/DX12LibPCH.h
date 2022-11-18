@@ -20,7 +20,7 @@
 #undef CreateWindow
 #endif
 
-// Windows Runtime Library. Needed for Microsoft::WRL::ComPtr<> template class.
+// Windows Runtime Library. Needed for ComPtr<> template class.
 #include <wrl.h>
 using namespace Microsoft::WRL;
 

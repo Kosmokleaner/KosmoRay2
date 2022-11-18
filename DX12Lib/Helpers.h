@@ -35,13 +35,18 @@
 
 // From DXSampleHelper.h 
 // Source: https://github.com/Microsoft/DirectX-Graphics-Samples
-inline void ThrowIfFailed(HRESULT hr)
+// @param msg e.g. "one line\n"
+inline void ThrowIfFailed(HRESULT hr, const wchar_t* msg = 0)
 {
     if (FAILED(hr))
     {
+        if(msg)
+            OutputDebugString(msg);
         throw std::exception();
     }
 }
+
+#define SizeOfInUint32(obj) ((sizeof(obj) - 1) / sizeof(UINT32) + 1)
 
 #define STR1(x) #x
 #define STR(x) STR1(x)

@@ -336,8 +336,8 @@ void App2::OnUpdate(UpdateEventArgs& e)
 }
 
 // Transition a resource
-void App2::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-    Microsoft::WRL::ComPtr<ID3D12Resource> resource,
+void App2::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> commandList,
+    ComPtr<ID3D12Resource> resource,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -348,13 +348,13 @@ void App2::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>
 }
 
 // Clear a render target.
-void App2::ClearRTV(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+void App2::ClearRTV(ComPtr<ID3D12GraphicsCommandList2> commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor)
 {
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 }
 
-void App2::ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+void App2::ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
 {
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
