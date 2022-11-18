@@ -5,12 +5,12 @@
 
 #include <DirectXMath.h>
 
-class App2 : public Game
+class App3 : public Game
 {
 public:
     using super = Game;
 
-    App2(const std::wstring& name, int width, int height, bool vSync = false);
+    App3(const std::wstring& name, int width, int height, bool vSync = false);
     /**
      *  Load content required for the demo.
      */

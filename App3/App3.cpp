@@ -58,7 +58,7 @@ static WORD g_Indicies[36] =
     4, 0, 3, 4, 3, 7
 };
 
-App2::App2(const std::wstring& name, int width, int height, bool vSync)
+App3::App3(const std::wstring& name, int width, int height, bool vSync)
     : super(name, width, height, vSync)
     , m_ScissorRect(CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX))
     , m_Viewport(CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)))
@@ -67,7 +67,7 @@ App2::App2(const std::wstring& name, int width, int height, bool vSync)
 {
 }
 
-void App2::UpdateBufferResource(
+void App3::UpdateBufferResource(
     ComPtr<ID3D12GraphicsCommandList2> commandList,
     ID3D12Resource** pDestinationResource,
     ID3D12Resource** pIntermediateResource,
@@ -116,7 +116,7 @@ void App2::UpdateBufferResource(
 }
 
 
-bool App2::LoadContent()
+bool App3::LoadContent()
 {
     auto device = Application::Get().GetDevice();
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
@@ -236,7 +236,7 @@ bool App2::LoadContent()
     return true;
 }
 
-void App2::ResizeDepthBuffer(int width, int height)
+void App3::ResizeDepthBuffer(int width, int height)
 {
     if (m_ContentLoaded)
     {
@@ -279,7 +279,7 @@ void App2::ResizeDepthBuffer(int width, int height)
     }
 }
 
-void App2::OnResize(ResizeEventArgs& e)
+void App3::OnResize(ResizeEventArgs& e)
 {
     if (e.Width != GetClientWidth() || e.Height != GetClientHeight())
     {
@@ -292,12 +292,12 @@ void App2::OnResize(ResizeEventArgs& e)
     }
 }
 
-void App2::UnloadContent()
+void App3::UnloadContent()
 {
     m_ContentLoaded = false;
 }
 
-void App2::OnUpdate(UpdateEventArgs& e)
+void App3::OnUpdate(UpdateEventArgs& e)
 {
     static uint64_t frameCount = 0;
     static double totalTime = 0.0;
@@ -336,7 +336,7 @@ void App2::OnUpdate(UpdateEventArgs& e)
 }
 
 // Transition a resource
-void App2::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+void App3::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
     Microsoft::WRL::ComPtr<ID3D12Resource> resource,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
@@ -348,19 +348,19 @@ void App2::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2>
 }
 
 // Clear a render target.
-void App2::ClearRTV(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+void App3::ClearRTV(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor)
 {
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 }
 
-void App2::ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+void App3::ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
 {
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
-void App2::OnRender(RenderEventArgs& e)
+void App3::OnRender(RenderEventArgs& e)
 {
     super::OnRender(e);
 
@@ -415,7 +415,7 @@ void App2::OnRender(RenderEventArgs& e)
     }
 }
 
-void App2::OnKeyPressed(KeyEventArgs& e)
+void App3::OnKeyPressed(KeyEventArgs& e)
 {
     super::OnKeyPressed(e);
 
@@ -437,7 +437,7 @@ void App2::OnKeyPressed(KeyEventArgs& e)
     }
 }
 
-void App2::OnMouseWheel(MouseWheelEventArgs& e)
+void App3::OnMouseWheel(MouseWheelEventArgs& e)
 {
     m_FoV -= e.WheelDelta;
     m_FoV = clamp(m_FoV, 12.0f, 90.0f);

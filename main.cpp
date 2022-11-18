@@ -3,8 +3,8 @@
 #include <Shlwapi.h>
 
 #include "DX12Lib/Application.h"
-#include "App2.h"
-#include "App3.h"
+#include "App2/App2.h"
+#include "App3/App3.h"
 
 #include <dxgidebug.h>
 
