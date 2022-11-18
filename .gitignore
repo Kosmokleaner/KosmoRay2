@@ -8,5 +8,6 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 /build_vs2017
+x64/*
 .vs/
 *.aps

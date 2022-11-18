@@ -1,4 +1,0 @@
-from LearningDirectX12
-
-https://github.com/jpvanoosten/LearningDirectX12
-MIT License https://github.com/jpvanoosten/LearningDirectX12/blob/v0.0.2/LICENSE

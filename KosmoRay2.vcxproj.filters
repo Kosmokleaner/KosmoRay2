@@ -37,6 +37,7 @@
     </ClCompile>
     <ClCompile Include="App2\main.cpp" />
     <ClCompile Include="App2\App2.cpp" />
+    <ClCompile Include="App3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -73,11 +74,13 @@
       <Filter>DX12Lib</Filter>
     </ClInclude>
     <ClInclude Include="App2\App2.h" />
+    <ClInclude Include="App3.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">
       <Filter>DX12Lib</Filter>
     </Text>
+    <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DX12Lib\DX12Lib.rc">

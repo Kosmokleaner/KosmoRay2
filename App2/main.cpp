@@ -37,7 +37,7 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 
     Application::Create(hInstance);
     {
-        std::shared_ptr<Tutorial2> demo = std::make_shared<Tutorial2>(L"KosmoRay2 DX12", 1280, 720);
+        std::shared_ptr<App2> demo = std::make_shared<App2>(L"KosmoRay2 DX12", 1280, 720);
         retCode = Application::Get().Run(demo);
     }
     Application::Destroy();

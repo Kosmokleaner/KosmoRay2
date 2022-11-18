@@ -35,6 +35,7 @@
   <ItemGroup>
     <ClCompile Include="App2\App2.cpp" />
     <ClCompile Include="App2\main.cpp" />
+    <ClCompile Include="App3.cpp" />
     <ClCompile Include="DX12Lib\Application.cpp" />
     <ClCompile Include="DX12Lib\CommandQueue.cpp" />
     <ClCompile Include="DX12Lib\DX12LibPCH.cpp" />
@@ -44,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App2\App2.h" />
+    <ClInclude Include="App3.h" />
     <ClInclude Include="DX12Lib\Application.h" />
     <ClInclude Include="DX12Lib\CommandQueue.h" />
     <ClInclude Include="DX12Lib\d3dx12.h" />
@@ -58,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt" />
+    <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DX12Lib\DX12Lib.rc" />
