@@ -4,16 +4,22 @@
     <Filter Include="DX12Lib">
       <UniqueIdentifier>{4cf826d2-fe7a-4457-9ab7-0a1daa073c40}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
+    <Filter Include="App2">
+      <UniqueIdentifier>{5c142b30-7457-466d-b0fd-bbfe9d7c3dad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="App2\Shaders">
       <UniqueIdentifier>{1e06c0df-f4b8-4d1b-8bf3-d142bca7b1b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="App3">
+      <UniqueIdentifier>{8334f026-291d-4d2a-a332-ed09fba6fcbf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="App2\shaders\PixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="App2\shaders\VertexShader.hlsl">
-      <Filter>Shaders</Filter>
+      <Filter>App2</Filter>
+    </FxCompile>
+    <FxCompile Include="App2\shaders\PixelShader.hlsl">
+      <Filter>App2</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -35,9 +41,13 @@
     <ClCompile Include="DX12Lib\Game.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
-    <ClCompile Include="App2\main.cpp" />
-    <ClCompile Include="App2\App2.cpp" />
-    <ClCompile Include="App3.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="App2\App2.cpp">
+      <Filter>App2</Filter>
+    </ClCompile>
+    <ClCompile Include="App3\App3.cpp">
+      <Filter>App3</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -73,8 +83,12 @@
     <ClInclude Include="DX12Lib\Helpers.h">
       <Filter>DX12Lib</Filter>
     </ClInclude>
-    <ClInclude Include="App2\App2.h" />
-    <ClInclude Include="App3.h" />
+    <ClInclude Include="App2\App2.h">
+      <Filter>App2</Filter>
+    </ClInclude>
+    <ClInclude Include="App3\App3.h">
+      <Filter>App3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">

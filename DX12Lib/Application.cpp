@@ -75,6 +75,10 @@ Application::Application(HINSTANCE hInst)
         m_CopyCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device, D3D12_COMMAND_LIST_TYPE_COPY);
 
         m_TearingSupported = CheckTearingSupport();
+
+        char buffer[512];
+        sprintf_s(buffer, "D3D12 Init: RayTracing: %d\n", (int)IsRayTracingSupported());
+        OutputDebugStringA(buffer);
     }
 }
 
@@ -222,6 +226,17 @@ bool Application::CheckTearingSupport()
 bool Application::IsTearingSupported() const
 {
     return m_TearingSupported;
+}
+
+bool Application::IsRayTracingSupported() const
+{
+    if(!m_d3d12Device)
+        return false;
+
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 featureSupportData = {};
+
+    return SUCCEEDED(m_d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &featureSupportData, sizeof(featureSupportData)))
+        && featureSupportData.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 }
 
 std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync )

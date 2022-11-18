@@ -37,6 +37,8 @@ public:
      */
     bool IsTearingSupported() const;
 
+    bool IsRayTracingSupported() const;
+
     /**
     * Create a new DirectX11 render window instance.
     * @param windowName The name of the window. This name will appear in the title bar of the window. This name should be unique.
