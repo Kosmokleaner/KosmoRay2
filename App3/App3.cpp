@@ -647,15 +647,17 @@ void App3::BuildGeometry()
 // Build acceleration structures needed for raytracing.
 void App3::BuildAccelerationStructures()
 {
-/* later
     auto device = Application::Get().GetDevice();
-    auto commandList = GetCommandList();
-   
-    auto commandQueue = Application::Get().GetCommandQueue();
-    auto commandAllocator = commandQueue->;
+//    auto commandList = GetCommandList();
+
+    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandList = commandQueue->GetCommandList();
+
+//    auto commandQueue = commandList->get Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+//    auto commandList = commandQueue->GetCommandList();
 
     // Reset the command list for the acceleration structure construction.
-    commandList->Reset(commandAllocator, nullptr);
+//not needed?    commandList->Reset(commandAllocator, nullptr);
 
     D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
     geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
@@ -746,11 +748,13 @@ void App3::BuildAccelerationStructures()
     BuildAccelerationStructure(m_dxrCommandList.Get());
 
     // Kick off acceleration structure construction.
-    m_deviceResources->ExecuteCommandList();
+//    m_deviceResources->ExecuteCommandList();
+
+    auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+    commandQueue->WaitForFenceValue(fenceValue);
 
     // Wait for GPU to finish as the locally created temporary GPU resources will get released once we go out of scope.
-    m_deviceResources->WaitForGpu();
-*/
+//    m_deviceResources->WaitForGpu();
 }
 
 
