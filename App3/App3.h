@@ -107,13 +107,13 @@ private:
     D3D12_VIEWPORT m_Viewport;
     D3D12_RECT m_ScissorRect;
 
-    float m_FoV;
+    float m_FoV = 0.0f;
 
     DirectX::XMMATRIX m_ModelMatrix;
     DirectX::XMMATRIX m_ViewMatrix;
     DirectX::XMMATRIX m_ProjectionMatrix;
 
-    bool m_ContentLoaded;
+    bool m_ContentLoaded = false;
 
     // ray tracing ----------------------------------
 
@@ -143,8 +143,8 @@ private:
 
     // Descriptors
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
-    UINT m_descriptorsAllocated;
-    UINT m_descriptorSize;
+    UINT m_descriptorsAllocated = 0;
+    UINT m_descriptorSize = 0;
 
     // Raytracing scene
     RayGenConstantBuffer m_rayGenCB;
@@ -163,7 +163,7 @@ private:
     // Raytracing output
     ComPtr<ID3D12Resource> m_raytracingOutput;
     D3D12_GPU_DESCRIPTOR_HANDLE m_raytracingOutputResourceUAVGpuDescriptor;
-    UINT m_raytracingOutputResourceUAVDescriptorHeapIndex;
+    UINT m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
 
     // Shader tables
     ComPtr<ID3D12Resource> m_missShaderTable;
