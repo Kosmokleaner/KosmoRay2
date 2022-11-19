@@ -4,6 +4,7 @@
 #include "DX12Lib/CommandQueue.h"
 #include "DX12Lib/Helpers.h"
 #include "DX12Lib/Window.h"
+#include "CompiledShaders\Raytracing.hlsl.h" // g_pRaytracing
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -20,7 +21,7 @@ using namespace Microsoft::WRL;
 #endif
 
 // todo
-char g_pRaytracing[] = "todo";
+//char g_pRaytracing[] = "todo";
 
 using namespace DirectX;
 

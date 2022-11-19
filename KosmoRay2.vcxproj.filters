@@ -13,6 +13,9 @@
     <Filter Include="App3">
       <UniqueIdentifier>{8334f026-291d-4d2a-a332-ed09fba6fcbf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="App3\Shaders">
+      <UniqueIdentifier>{92cbc2f0-a089-4257-be3b-9160fe374ea9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="App2\shaders\VertexShader.hlsl">
@@ -20,6 +23,9 @@
     </FxCompile>
     <FxCompile Include="App2\shaders\PixelShader.hlsl">
       <Filter>App2</Filter>
+    </FxCompile>
+    <FxCompile Include="App3\shaders\Raytracing.hlsl">
+      <Filter>App3\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="App3\App3.h">
       <Filter>App3</Filter>
+    </ClInclude>
+    <ClInclude Include="App3\shaders\RaytracingHlslCompat.h">
+      <Filter>App3\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
