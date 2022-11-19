@@ -79,6 +79,7 @@ App3::App3(const std::wstring& name, int width, int height, bool vSync)
     , m_FoV(45.0)
     , m_ContentLoaded(false)
 {
+    CreateDeviceDependentResources();
 }
 
 void App3::UpdateBufferResource(
@@ -464,12 +465,13 @@ void App3::OnMouseWheel(MouseWheelEventArgs& e)
 // Create raytracing device and command list.
 void App3::CreateRaytracingInterfaces()
 {
-//        auto device = Application::Get().GetDevice();
+    auto device = Application::Get().GetDevice();
+//    auto commandList = GetCommandList();
+    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandList = commandQueue->GetCommandList();
 
-//    auto commandList = m_deviceResources->GetCommandList();
-
-//    ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
-//    ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
+    ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
+    ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
 }
 
 
@@ -530,6 +532,8 @@ void App3::CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* raytrac
 // with all configuration options resolved, such as local signatures and other state.
 void App3::CreateRaytracingPipelineStateObject()
 {
+    assert(m_dxrDevice);
+
     // Create 7 subobjects that combine into a RTPSO:
     // Subobjects need to be associated with DXIL exports (i.e. shaders) either by way of default or explicit associations.
     // Default association applies to every exported shader entrypoint that doesn't have any of the same type of subobject associated with it.
