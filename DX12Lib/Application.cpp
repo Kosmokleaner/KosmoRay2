@@ -198,6 +198,30 @@ ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
     }
 #endif
 
+    // Determine maximum supported feature level for this device
+    static const D3D_FEATURE_LEVEL s_featureLevels[] =
+    {
+        D3D_FEATURE_LEVEL_12_1,
+        D3D_FEATURE_LEVEL_12_0,
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+    };
+
+    D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels =
+    {
+        _countof(s_featureLevels), s_featureLevels, D3D_FEATURE_LEVEL_11_0
+    };
+
+    HRESULT hr = d3d12Device2->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
+    if (SUCCEEDED(hr))
+    {
+//        m_d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
+    }
+    else
+    {
+//        m_d3dFeatureLevel = m_d3dMinFeatureLevel;
+    }
+
     return d3d12Device2;
 }
 

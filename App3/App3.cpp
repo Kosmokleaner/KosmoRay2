@@ -468,7 +468,7 @@ void App3::CreateRaytracingInterfaces()
 {
     auto device = Application::Get().GetDevice();
 //    auto commandList = GetCommandList();
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto commandList = commandQueue->GetCommandList();
 
     ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
@@ -655,8 +655,15 @@ void App3::BuildAccelerationStructures()
     auto device = Application::Get().GetDevice();
 //    auto commandList = GetCommandList();
 
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+//    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    assert(commandQueue);
     auto commandList = commandQueue->GetCommandList();
+
+    // debug
+    D3D12_COMMAND_QUEUE_DESC desc = commandQueue->GetD3D12CommandQueue()->GetDesc();
+
+    assert(desc.Type != D3D12_COMMAND_LIST_TYPE_COPY);
 
 //    auto commandQueue = commandList->get Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 //    auto commandList = commandQueue->GetCommandList();
@@ -753,8 +760,6 @@ void App3::BuildAccelerationStructures()
     BuildAccelerationStructure(m_dxrCommandList.Get());
 
     // Kick off acceleration structure construction.
-//    m_deviceResources->ExecuteCommandList();
-
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
     commandQueue->WaitForFenceValue(fenceValue);
 
