@@ -48,6 +48,9 @@
     <ClCompile Include="App3\App3.cpp">
       <Filter>App3</Filter>
     </ClCompile>
+    <ClCompile Include="DX12Lib\Helpers.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">

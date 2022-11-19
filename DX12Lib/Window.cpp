@@ -345,6 +345,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const
         m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 }
 
+
+DXGI_FORMAT Window::GetBackBufferFormat() const
+{
+    return DXGI_FORMAT_R8G8B8A8_UNORM;
+}
+
 ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const
 {
     return m_d3d12BackBuffers[m_CurrentBackBufferIndex];

@@ -39,6 +39,7 @@
     <ClCompile Include="DX12Lib\CommandQueue.cpp" />
     <ClCompile Include="DX12Lib\DX12LibPCH.cpp" />
     <ClCompile Include="DX12Lib\Game.cpp" />
+    <ClCompile Include="DX12Lib\Helpers.cpp" />
     <ClCompile Include="DX12Lib\HighResolutionClock.cpp" />
     <ClCompile Include="DX12Lib\Window.cpp" />
     <ClCompile Include="main.cpp" />

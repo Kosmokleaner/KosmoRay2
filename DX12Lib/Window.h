@@ -86,6 +86,7 @@ public:
      */
     ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
 
+    DXGI_FORMAT GetBackBufferFormat() const;
 
 protected:
     // The Window procedure needs to call protected methods of this class.
