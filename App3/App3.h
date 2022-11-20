@@ -98,8 +98,10 @@ private:
     // Descriptor heap for depth buffer.
     ComPtr<ID3D12DescriptorHeap> m_DSVHeap;
 
-    // Root signature
+    // Root signatures
     ComPtr<ID3D12RootSignature> m_RootSignature;
+    ComPtr<ID3D12RootSignature> m_raytracingGlobalRootSignature;
+    ComPtr<ID3D12RootSignature> m_raytracingLocalRootSignature;
 
     // Pipeline state object.
     ComPtr<ID3D12PipelineState> m_PipelineState;
@@ -131,15 +133,12 @@ private:
     void ReleaseDeviceDependentResources();
     UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse);
     ID3D12GraphicsCommandList4* GetCommandList() const { return m_dxrCommandList.Get(); }
+    void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList);
 
     // DirectX Raytracing (DXR) attributes
     ComPtr<ID3D12Device5> m_dxrDevice;
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
     ComPtr<ID3D12StateObject> m_dxrStateObject;
-
-    // Root signatures
-    ComPtr<ID3D12RootSignature> m_raytracingGlobalRootSignature;
-    ComPtr<ID3D12RootSignature> m_raytracingLocalRootSignature;
 
     // Descriptors
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
