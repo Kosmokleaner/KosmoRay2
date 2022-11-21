@@ -332,6 +332,7 @@ void Window::UpdateRenderTargetViews()
         ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
 
         device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtvHandle);
+        NAME_D3D12_OBJECT(backBuffer.Get());
 
         m_d3d12BackBuffers[i] = backBuffer;
 

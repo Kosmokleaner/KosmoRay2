@@ -64,6 +64,13 @@ void MyRaygenShader()
         // Render interpolated DispatchRaysIndex outside the stencil window
         RenderTarget[DispatchRaysIndex().xy] = float4(lerpValues, 0, 1);
     }
+
+
+    // hack
+//    RenderTarget[DispatchRaysIndex().xy] = float4(1,1,1,1);
+
+// crash to prove the shader is executed
+//    for (; DispatchRaysIndex().x < 100000000;);
 }
 
 [shader("closesthit")]

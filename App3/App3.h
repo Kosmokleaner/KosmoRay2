@@ -26,6 +26,7 @@ public:
     using super = Game;
 
     App3(const std::wstring& name, int width, int height, bool vSync = false);
+    ~App3();
     /**
      *  Load content required for the demo.
      */
@@ -132,12 +133,14 @@ private:
     void SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig);
     void ReleaseDeviceDependentResources();
     UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse);
-    ID3D12GraphicsCommandList4* GetCommandList() const { return m_dxrCommandList.Get(); }
+//    ID3D12GraphicsCommandList4* GetCommandList() const { return m_dxrCommandList.Get(); }
     void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList);
+    void CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
+    void CreateWindowSizeDependentResources();
 
     // DirectX Raytracing (DXR) attributes
     ComPtr<ID3D12Device5> m_dxrDevice;
-    ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
+//    ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
     ComPtr<ID3D12StateObject> m_dxrStateObject;
 
     // Descriptors
