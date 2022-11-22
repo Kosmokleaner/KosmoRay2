@@ -61,8 +61,8 @@ void MyRaygenShader()
     }
     else
     {
-        // Render interpolated DispatchRaysIndex outside the stencil window
-        RenderTarget[DispatchRaysIndex().xy] = float4(lerpValues, 0, 1);
+        // Render yellow outside the stencil window
+        RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
     }
 
 

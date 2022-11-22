@@ -22,6 +22,7 @@ https://www.youtube.com/watch?v=1RkBThKwnQE
 What is a root signature ?
 What is D3D12_CPU_DESCRIPTOR_HANDLE
 
+DXR spec https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
 
 
 D3D12 ERROR: ID3D12CommandQueue::ExecuteCommandLists: Using ResourceBarrier on Command List (0x000001BAD2D28F30:'Unnamed ID3D12GraphicsCommandList Object'):

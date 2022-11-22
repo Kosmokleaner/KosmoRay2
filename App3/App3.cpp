@@ -78,6 +78,8 @@ App3::App3(const std::wstring& name, int width, int height, bool vSync)
     , m_ContentLoaded(false)
 {
     m_rayGenCB.viewport = { -1.0f, -1.0f, 1.0f, 1.0f };
+    UpdateForSizeChange(width, height);
+
     CreateDeviceDependentResources();
     CreateWindowSizeDependentResources();
 }
@@ -443,7 +445,8 @@ void App3::OnRender(RenderEventArgs& e)
     UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
     auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 
-    static int t = 0; ++t; if(t>4000)t=0;
+//hack    static int t = 0; ++t; if(t>4000)t=0;
+    static int t = 2001;
 
     if(t > 2000) {
 //        TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COMMON);
@@ -452,9 +455,9 @@ void App3::OnRender(RenderEventArgs& e)
         CopyRaytracingOutputToBackbuffer(commandList);
 //        TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COMMON);
 
-        char buffer[512];
-        sprintf_s(buffer, "ExecuteCommandList: %p %p\n", commandList.Get(), &*commandQueue);
-        OutputDebugStringA(buffer);
+//        char buffer[512];
+//        sprintf_s(buffer, "ExecuteCommandList: %p %p\n", commandList.Get(), &*commandQueue);
+//        OutputDebugStringA(buffer);
 
 
         m_FenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
@@ -556,9 +559,9 @@ void App3::CreateRaytracingInterfaces()
 
     ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
 
-    char buffer[512];
-    sprintf_s(buffer, "CreateRaytracingInterfaces: %p %p\n", commandList.Get(), &*commandQueue);
-    OutputDebugStringA(buffer);
+//    char buffer[512];
+//    sprintf_s(buffer, "CreateRaytracingInterfaces: %p %p\n", commandList.Get(), &*commandQueue);
+//    OutputDebugStringA(buffer);
 
 //    ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
 }
@@ -598,6 +601,35 @@ void App3::CreateRootSignatures()
         SerializeAndCreateRaytracingRootSignature(localRootSignatureDesc, &m_raytracingLocalRootSignature);
     }
 }
+
+
+// Update the application state with the new resolution.
+void App3::UpdateForSizeChange(UINT width, UINT height)
+{
+//    DXSample::UpdateForSizeChange(width, height);
+    float border = 0.1f;
+
+    float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
+
+    if (GetClientWidth() <= GetClientHeight())
+    {
+        m_rayGenCB.stencil =
+        {
+            -1 + border, -1 + border * aspectRatio,
+            1.0f - border, 1 - border * aspectRatio
+        };
+    }
+    else
+    {
+        m_rayGenCB.stencil =
+        {
+            -1 + border / aspectRatio, -1 + border,
+             1 - border / aspectRatio, 1.0f - border
+        };
+
+    }
+}
+
 
 // Local root signature and shader association
 // This is a root signature that enables a shader to have unique arguments that come from shader tables.

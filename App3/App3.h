@@ -137,6 +137,7 @@ private:
     void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList);
     void CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
     void CreateWindowSizeDependentResources();
+    void UpdateForSizeChange(UINT width, UINT height);
 
     // DirectX Raytracing (DXR) attributes
     ComPtr<ID3D12Device5> m_dxrDevice;
