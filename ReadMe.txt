@@ -1,21 +1,25 @@
 KosmoRay2     by Martin Mittring    11/17/2022
 
+todo:
+* fix: window resize crash
+* 
 
-from LearningDirectX12
+ThirdParty / Copyright:
+* LearningDirectX12 https://github.com/jpvanoosten/LearningDirectX12, MIT license
+* tiny_obj_loader, to load Alias Wavefront .obj files, MIT license
 
-https://github.com/jpvanoosten/LearningDirectX12
-MIT License https://github.com/jpvanoosten/LearningDirectX12/blob/v0.0.2/LICENSE
+
+ ==========================================
+
 
 Adding Ray tracing:
 https://nvpro-samples.github.io/vk_raytracing_tutorial_KHR/
 https://developer.nvidia.com/rtx/raytracing/dxr/dx12-raytracing-tutorial-part-1
 
 
-
-
-
 Game Engine Programming 035.1 - DirectX 12 pipelines and the root signature | C++ Game Engine
 https://www.youtube.com/watch?v=1RkBThKwnQE
+
 
 =============================
 

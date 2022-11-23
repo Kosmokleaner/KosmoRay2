@@ -101,6 +101,9 @@
     <ClInclude Include="App3\shaders\RaytracingHlslCompat.h">
       <Filter>App3\Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="App3\external\tiny_obj_loader.h">
+      <Filter>App3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">

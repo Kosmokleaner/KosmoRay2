@@ -154,7 +154,7 @@ private:
 
     // Geometry
     typedef UINT16 Index;
-    struct Vertex { float v1, v2, v3; };
+    struct Vertex { float x, y, z; };
     ComPtr<ID3D12Resource> m_indexBuffer;
     ComPtr<ID3D12Resource> m_vertexBuffer;
 
