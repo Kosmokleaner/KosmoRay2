@@ -749,7 +749,8 @@ void App3::CreateDescriptorHeap()
 void App3::BuildGeometry()
 {
     auto device = Application::Get().GetDevice();
-    std::string inputfile = "../../data/NewXYZ.obj";
+    std::string inputfile = "../../data/monkey.obj";        // 1 shape
+//    std::string inputfile = "../../data/NewXYZ.obj";
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files
 
@@ -771,7 +772,7 @@ void App3::BuildGeometry()
     auto& materials = reader.GetMaterials();
 
     // for now unoptimized, see https://vulkan-tutorial.com/Loading_models
-    std::vector<uint32_t> indexBuffer;
+    std::vector<Index> indexBuffer;
     std::vector<Vertex> vertexBuffer;
 
     // if reader_config.triangulate we can use the indexbuffer more or less directly
@@ -795,16 +796,16 @@ void App3::BuildGeometry()
 
     // build vertexBuffer
     {
-        vertexBuffer.resize(attrib.vertices.size());
-        size_t count = attrib.vertices.size() / 3;
-        for(size_t i = 0; i < count; ++i) {
+        size_t vertexCount = attrib.vertices.size() / 3;
+        vertexBuffer.resize(vertexCount);
+        for(size_t i = 0; i < vertexCount; ++i) {
             tinyobj::real_t vx = attrib.vertices[3 * i + 0];
             tinyobj::real_t vy = attrib.vertices[3 * i + 1];
             tinyobj::real_t vz = attrib.vertices[3 * i + 2];
 
-            vertexBuffer[i].x = vx;
-            vertexBuffer[i].y = vy;
-            vertexBuffer[i].z = vz;
+            vertexBuffer[i].x = vx * 0.5f;
+            vertexBuffer[i].y = vy * 0.5f;
+            vertexBuffer[i].z = vz * 0.5f;
         }
     }
     AllocateUploadBuffer(device.Get(), indexBuffer.data(), indexBuffer.size() * sizeof(indexBuffer[0]), &m_indexBuffer);
