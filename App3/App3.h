@@ -2,9 +2,11 @@
 
 #include "DX12Lib/Game.h"
 #include "DX12Lib/Window.h"
+#include "DX12Lib/Helpers.h" // ConstantBuffer<>
 
 #include <DirectXMath.h>
 #include <d3dx12.h>
+using namespace DirectX; // XMFLOAT4
 
 struct Viewport
 {
@@ -18,6 +20,11 @@ struct RayGenConstantBuffer
 {
     Viewport viewport;
     Viewport stencil;
+};
+
+struct SceneConstantBuffer
+{
+    XMFLOAT4 sceneParam0;
 };
 
 class App3 : public Game
@@ -107,6 +114,8 @@ private:
     // Pipeline state object.
     ComPtr<ID3D12PipelineState> m_PipelineState;
 
+    ConstantBuffer<SceneConstantBuffer> m_sceneCB;
+
     D3D12_VIEWPORT m_Viewport;
     D3D12_RECT m_ScissorRect;
 
@@ -134,7 +143,7 @@ private:
     void ReleaseDeviceDependentResources();
     UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse);
 //    ID3D12GraphicsCommandList4* GetCommandList() const { return m_dxrCommandList.Get(); }
-    void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList);
+    void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT currentBackBufferIndex);
     void CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
     void CreateWindowSizeDependentResources();
     void UpdateForSizeChange(UINT width, UINT height);

@@ -3,6 +3,9 @@ KosmoRay2     by Martin Mittring    11/17/2022
 todo:
 * fix: window resize crash
 * 
+* fix hack, to query m_dxrCommandList each time
+* support uvs and normals from obj load
+* obj load vertex cache optimize
 
 ThirdParty / Copyright:
 * LearningDirectX12 https://github.com/jpvanoosten/LearningDirectX12, MIT license

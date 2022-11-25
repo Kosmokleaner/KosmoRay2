@@ -34,6 +34,7 @@ namespace GlobalRootSignatureParams {
     enum Value {
         OutputViewSlot = 0,
         AccelerationStructureSlot,
+        SceneConstant,
         Count
     };
 }
@@ -85,6 +86,9 @@ App3::App3(const std::wstring& name, int width, int height, bool vSync)
 
     CreateDeviceDependentResources();
     CreateWindowSizeDependentResources();
+
+    auto device = Application::Get().GetDevice();
+    m_sceneCB.Create(device.Get(), Window::BufferCount, L"Scene Constant Buffer");
 }
 
 App3::~App3()
@@ -385,7 +389,7 @@ void App3::ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList,
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
-void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList) 
+void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT currentBackBufferIndex)
 {
     auto DispatchRays = [&](auto* commandList, auto* stateObject, auto* dispatchDesc)
     {
@@ -406,6 +410,13 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList)
     };
 
     commandList->SetComputeRootSignature(m_raytracingGlobalRootSignature.Get());
+
+
+    // Copy dynamic buffers to GPU.
+    {
+        m_sceneCB.CopyStagingToGpu(currentBackBufferIndex);
+        commandList->SetComputeRootConstantBufferView(GlobalRootSignatureParams::SceneConstant, m_sceneCB.GpuVirtualAddress(currentBackBufferIndex));
+    }
 
     // Bind the heaps, acceleration structure and dispatch rays.    
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
@@ -454,7 +465,7 @@ void App3::OnRender(RenderEventArgs& e)
     if(t > 2000) {
 //        TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COMMON);
 
-        DoRaytracing(commandList);
+        DoRaytracing(commandList, currentBackBufferIndex);
         CopyRaytracingOutputToBackbuffer(commandList);
 //        TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COMMON);
 
@@ -590,6 +601,7 @@ void App3::CreateRootSignatures()
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &UAVDescriptor);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);
+        rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
     }
@@ -598,7 +610,7 @@ void App3::CreateRootSignatures()
     // This is a root signature that enables a shader to have unique arguments that come from shader tables.
     {
         CD3DX12_ROOT_PARAMETER rootParameters[LocalRootSignatureParams::Count];
-        rootParameters[LocalRootSignatureParams::ViewportConstantSlot].InitAsConstants(SizeOfInUint32(m_rayGenCB), 0, 0);
+        rootParameters[LocalRootSignatureParams::ViewportConstantSlot].InitAsConstants(SizeOfInUint32(m_rayGenCB), 1, 0);   // 1 -> b1
         CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
         SerializeAndCreateRaytracingRootSignature(localRootSignatureDesc, &m_raytracingLocalRootSignature);
