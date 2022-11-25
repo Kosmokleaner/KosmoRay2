@@ -326,6 +326,11 @@ void App3::UnloadContent()
     m_ContentLoaded = false;
 }
 
+float frac(float x)
+{
+    return x - floorf(x);
+}
+
 void App3::OnUpdate(UpdateEventArgs& e)
 {
     static uint64_t frameCount = 0;
@@ -335,6 +340,8 @@ void App3::OnUpdate(UpdateEventArgs& e)
 
     totalTime += e.ElapsedTime;
     frameCount++;
+
+    m_sceneCB->sceneParam0.x = frac(m_sceneCB->sceneParam0.x + (float)e.ElapsedTime);
 
     if (totalTime > 1.0)
     {

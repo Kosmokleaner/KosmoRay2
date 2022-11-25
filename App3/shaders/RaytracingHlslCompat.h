@@ -35,6 +35,7 @@ struct RayGenConstantBuffer
 
 struct SceneConstantBuffer
 {
+    // .x:frac(time)
     XMVECTOR sceneParam0;
 };
 

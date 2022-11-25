@@ -36,12 +36,8 @@ void MyRaygenShader()
 {
     float2 lerpValues = (float2)DispatchRaysIndex() / (float2)DispatchRaysDimensions();
 
-    // Orthographic projection since we're raytracing in screen space.
-//    float3 rayDir = float3(0, 0, 1);
-//    float3 origin = float3(
-//        lerp(g_rayGenCB.viewport.left, g_rayGenCB.viewport.right, lerpValues.x),
-//        lerp(g_rayGenCB.viewport.top, g_rayGenCB.viewport.bottom, lerpValues.y),
-//        0.0f);
+    float fracTime = g_sceneCB.sceneParam0.x;
+
     float3 origin = float3(0, 0, -1);
     float3 rayDir = float3(lerpValues.xy * 2.0f - 1.0f, 1);
 
