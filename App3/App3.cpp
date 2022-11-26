@@ -11,8 +11,6 @@
 #include "external/tiny_obj_loader.h"
 
 #include "Mathlib.h"
-#include "Camera.h"
-#include "RelativeMouseInput.h"
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -383,10 +381,61 @@ void App3::OnUpdate(UpdateEventArgs& e)
     }
 
     CRelativeMouseInput::MouseInputData data = g_MouseInput.ClaimMouseInputData("RightMouseButton");
-    const float s = 0.001f;
-    camera.Rotate(data.RelativeX * s, data.RelativeY * s);
-    m_ViewMatrix  = XMMatrixInverse(0, camera.GetViewMatrix());
-//    m_ViewMatrix = camera.GetViewMatrix();
+
+
+
+
+
+    static bool first = true;
+    if (first) {
+        camera.SetPos(float3(0, 0, -10));
+        camera.Rotate(3.1415f, 0.0f);
+        first = false;
+    }
+
+    //				const float rotateSpeed = 2 * InCamera.GetVerticalFov() / g_Renderer.GetHeight();
+    const float rotateSpeed = 2 * 0.002f;		// todo
+    const float movementSpeed = 150.0f / 10.0f;
+
+    if (data.IsValid())
+    {
+        float fInvMouse = 1.0;
+        camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
+    }
+
+    float3 forward = camera.GetForward();
+    float3 left = normalize(cross(forward, camera.GetUp()));
+
+    float dt = (float)e.ElapsedTime;
+    forward *= movementSpeed * dt;
+    left *= movementSpeed * dt;
+
+    float3 move(0, 0, 0);
+
+    if (GetAsyncKeyState('A'))
+    {
+        move += left;
+    }
+    else if (GetAsyncKeyState('D'))
+    {
+        move -= left;
+    }
+
+    if (GetAsyncKeyState('W'))
+    {
+        move += forward;
+    }
+    else if (GetAsyncKeyState('S'))
+    {
+        move -= forward;
+    }
+    camera.Move(move);
+
+
+
+
+//    m_ViewMatrix  = XMMatrixInverse(0, camera.GetViewMatrix());
+    m_ViewMatrix = camera.GetViewMatrix();
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());

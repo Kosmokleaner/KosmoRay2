@@ -5,10 +5,15 @@
 
 #include <DirectXMath.h>
 
+#include "Camera.h"
+
+
 class App2 : public Game
 {
 public:
     using super = Game;
+
+    CTransform camera;
 
     App2(const std::wstring& name, int width, int height, bool vSync = false);
     /**
