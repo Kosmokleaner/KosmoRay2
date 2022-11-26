@@ -5,9 +5,14 @@
 #include "DX12Lib/Helpers.h"
 #include "DX12Lib/Window.h"
 #include "CompiledShaders\Raytracing.hlsl.h" // g_pRaytracing
+#include "RelativeMouseInput.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "external/tiny_obj_loader.h"
+
+#include "Mathlib.h"
+#include "Camera.h"
+#include "RelativeMouseInput.h"
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -326,11 +331,6 @@ void App3::UnloadContent()
     m_ContentLoaded = false;
 }
 
-float frac(float x)
-{
-    return x - floorf(x);
-}
-
 void App3::OnUpdate(UpdateEventArgs& e)
 {
     static uint64_t frameCount = 0;
@@ -361,14 +361,43 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_ModelMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 
     // Update the view matrix.
-    const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
+    const XMVECTOR eyePosition = XMVectorSet(0, 0, 100, 1);
     const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
     const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
     m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
 
+//    camera.SetPos(float3(0,0,-10));
+//    camera.Rotate(0.01f, 0.0f);
+
+    extern CRelativeMouseInput g_MouseInput;
+    CRelativeMouseInput::MouseInputButtons Buttons = g_MouseInput.GetMouseButtons();
+
+    // right mouse button
+    if (Buttons & 2)
+    {
+        g_MouseInput.SetUserCapture("RightMouseButton");
+    }
+    else
+    {
+        g_MouseInput.ResetUserCapture("RightMouseButton");
+    }
+
+    CRelativeMouseInput::MouseInputData data = g_MouseInput.ClaimMouseInputData("RightMouseButton");
+    const float s = 0.001f;
+    camera.Rotate(data.RelativeX * s, data.RelativeY * s);
+    m_ViewMatrix  = XMMatrixInverse(0, camera.GetViewMatrix());
+//    m_ViewMatrix = camera.GetViewMatrix();
+
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
     m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+
+    {
+        XMMATRIX viewProj = m_ViewMatrix * m_ProjectionMatrix;
+//        m_sceneCB->cameraPosition = XMFLOAT4(XMVectorGetX(eyePosition), XMVectorGetY(eyePosition), XMVectorGetZ(eyePosition), 0.0f);
+        m_sceneCB->cameraPosition = eyePosition;
+        m_sceneCB->projectionToWorld = XMMatrixInverse(nullptr, viewProj);
+    }
 }
 
 // Transition a resource

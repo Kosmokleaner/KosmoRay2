@@ -54,11 +54,6 @@ inline void ThrowIfFailed(HRESULT hr, const wchar_t* msg = 0)
 // Pretty-print a state object tree.
 void PrintStateObjectDesc(const D3D12_STATE_OBJECT_DESC* desc);
 
-template<typename T>
-constexpr const T& clamp(const T& val, const T& min, const T& max)
-{
-    return val < min ? min : val > max ? max : val;
-}
 
 inline UINT Align(UINT size, UINT alignment)
 {

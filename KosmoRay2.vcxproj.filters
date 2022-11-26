@@ -57,6 +57,8 @@
     <ClCompile Include="DX12Lib\Helpers.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
+    <ClCompile Include="Mathlib.cpp" />
+    <ClCompile Include="RelativeMouseInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -104,6 +106,8 @@
     <ClInclude Include="App3\external\tiny_obj_loader.h">
       <Filter>App3</Filter>
     </ClInclude>
+    <ClInclude Include="Mathlib.h" />
+    <ClInclude Include="RelativeMouseInput.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">

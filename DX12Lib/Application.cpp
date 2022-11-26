@@ -6,6 +6,10 @@
 #include "DX12Lib/CommandQueue.h"
 #include "DX12Lib/Window.h"
 
+#include "../RelativeMouseInput.h"
+
+CRelativeMouseInput g_MouseInput;
+
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12RenderWindowClass";
 
 using WindowPtr = std::shared_ptr<Window>;
@@ -287,6 +291,8 @@ std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& wind
         return nullptr;
     }
 
+    g_MouseInput.Create(hWnd);
+
     WindowPtr pWindow = std::make_shared<MakeWindow>(hWnd, windowName, clientWidth, clientHeight, vSync);
 
     gs_Windows.insert(WindowMap::value_type(hWnd, pWindow));
@@ -450,6 +456,9 @@ MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID)
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    // retreave mouse movement
+    g_MouseInput.WndProc(hwnd, message, wParam, lParam);
+
     WindowPtr pWindow;
     {
         WindowMap::iterator iter = gs_Windows.find(hwnd);

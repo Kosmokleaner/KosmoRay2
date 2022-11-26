@@ -5,6 +5,8 @@
 #include "DX12Lib/Helpers.h"
 #include "DX12Lib/Window.h"
 
+#include "Mathlib.h" // clamp()
+
 #include <wrl.h>
 using namespace Microsoft::WRL;
 

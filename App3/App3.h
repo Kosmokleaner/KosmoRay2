@@ -3,6 +3,7 @@
 #include "DX12Lib/Game.h"
 #include "DX12Lib/Window.h"
 #include "DX12Lib/Helpers.h" // ConstantBuffer<>
+#include "Camera.h"
 
 #include <DirectXMath.h>
 #include <d3dx12.h>
@@ -24,6 +25,8 @@ struct RayGenConstantBuffer
 
 struct SceneConstantBuffer
 {
+    XMMATRIX projectionToWorld;
+    XMVECTOR cameraPosition;
     XMFLOAT4 sceneParam0;
 };
 
@@ -31,6 +34,8 @@ class App3 : public Game
 {
 public:
     using super = Game;
+
+    CTransform camera;
 
     App3(const std::wstring& name, int width, int height, bool vSync = false);
     ~App3();

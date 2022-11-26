@@ -57,6 +57,8 @@
     <ClCompile Include="DX12Lib\HighResolutionClock.cpp" />
     <ClCompile Include="DX12Lib\Window.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mathlib.cpp" />
+    <ClCompile Include="RelativeMouseInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App2\App2.h" />
@@ -74,6 +76,8 @@
     <ClInclude Include="DX12Lib\KeyCodes.h" />
     <ClInclude Include="DX12Lib\resource.h" />
     <ClInclude Include="DX12Lib\Window.h" />
+    <ClInclude Include="Mathlib.h" />
+    <ClInclude Include="RelativeMouseInput.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt" />

@@ -35,6 +35,8 @@ struct RayGenConstantBuffer
 
 struct SceneConstantBuffer
 {
+    XMMATRIX projectionToWorld;
+    XMVECTOR cameraPosition;
     // .x:frac(time)
     XMVECTOR sceneParam0;
 };

@@ -31,6 +31,31 @@ bool IsInsideViewport(float2 p, Viewport viewport)
         && (p.y >= viewport.top && p.y <= viewport.bottom);
 }
 
+struct Ray
+{
+    float3 origin;
+    float3 direction;
+};
+
+inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 projectionToWorld)
+{
+    float2 xy = index + 0.5f; // center in the middle of the pixel.
+    float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
+
+    // Invert Y for DirectX-style coordinates.
+    screenPos.y = -screenPos.y;
+
+    // Unproject the pixel coordinate into a world positon.
+    float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
+    world.xyz /= world.w;
+
+    Ray ray;
+    ray.origin = cameraPosition;
+    ray.direction = normalize(world.xyz - ray.origin);
+
+    return ray;
+}
+
 [shader("raygeneration")]
 void MyRaygenShader()
 {
@@ -38,8 +63,11 @@ void MyRaygenShader()
 
     float fracTime = g_sceneCB.sceneParam0.x;
 
-    float3 origin = float3(0, 0, -1);
-    float3 rayDir = float3(lerpValues.xy * 2.0f - 1.0f, 1);
+    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.projectionToWorld);
+    float3 origin = ray.origin;
+    float3 rayDir = ray.direction;
+//    float3 origin = float3(0, 0, -1);
+//    float3 rayDir = float3(lerpValues.xy * 2.0f - 1.0f, 1);
 
     if (IsInsideViewport(origin.xy, g_rayGenCB.stencil))
     {
