@@ -83,9 +83,15 @@ void App2::UpdateBufferResource(
         &a,
         D3D12_HEAP_FLAG_NONE,
         &b,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(pDestinationResource)));
+
+    {
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(*pDestinationResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        commandList->ResourceBarrier(1, &barrier);
+    }
 
     // Create an committed resource for the upload.
     if (bufferData)
@@ -319,13 +325,13 @@ void App2::OnUpdate(UpdateEventArgs& e)
     // Update the model matrix.
     float angle = static_cast<float>(e.TotalTime * 90.0);
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-    m_ModelMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+    m_ModelMatrix = XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle)));
 
     // Update the view matrix.
     const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
     const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
     const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-    m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
+    m_ViewMatrix = XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection));
 
 
     extern CRelativeMouseInput g_MouseInput;
@@ -394,11 +400,11 @@ void App2::OnUpdate(UpdateEventArgs& e)
 
     //camera.GetDirX();
     //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
-    m_ViewMatrix = camera.GetViewMatrix();
+    m_ViewMatrix = XMMatrixTranspose(camera.GetViewMatrix());
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
-    m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+    m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f));
 }
 
 // Transition a resource
@@ -462,8 +468,16 @@ void App2::OnRender(RenderEventArgs& e)
     commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 
     // Update the MVP matrix
-    XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-    mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
+
+    // worldFromLocal * eyeFromWorld * clipFromEye
+
+//    XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
+//    mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
+//    // same as
+//    XMMATRIX mvpMatrix = m_ModelMatrix * m_ViewMatrix * m_ProjectionMatrix;
+
+    XMMATRIX mvpMatrix = m_ProjectionMatrix * m_ViewMatrix * m_ModelMatrix;
+    mvpMatrix = XMMatrixTranspose(mvpMatrix);
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
 
     commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
