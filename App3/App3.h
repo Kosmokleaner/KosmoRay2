@@ -126,8 +126,11 @@ private:
 
     float m_FoV = 0.0f;
 
+    // local->world aka worldFromLocal
     DirectX::XMMATRIX m_ModelMatrix;
+    // world->eye aka eyeFromWorld
     DirectX::XMMATRIX m_ViewMatrix;
+    // eye->clip aka clipFromEye
     DirectX::XMMATRIX m_ProjectionMatrix;
 
     bool m_ContentLoaded = false;

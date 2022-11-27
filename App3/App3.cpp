@@ -118,7 +118,7 @@ void App3::UpdateBufferResource(
         &a,
         D3D12_HEAP_FLAG_NONE,
         &b,
-        D3D12_RESOURCE_STATE_COPY_DEST,
+        D3D12_RESOURCE_STATE_COMMON,
         nullptr,
         IID_PPV_ARGS(pDestinationResource)));
 
@@ -135,6 +135,12 @@ void App3::UpdateBufferResource(
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr,
             IID_PPV_ARGS(pIntermediateResource)));
+
+        {
+            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(*pDestinationResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+
+            commandList->ResourceBarrier(1, &barrier);
+        }
 
         D3D12_SUBRESOURCE_DATA subresourceData = {};
         subresourceData.pData = bufferData;
@@ -435,6 +441,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
 
 
 //    m_ViewMatrix  = XMMatrixInverse(0, camera.GetViewMatrix());
+    // world->eye aka eyeFromWorld
     m_ViewMatrix = camera.GetViewMatrix();
 
     // Update the projection matrix.
@@ -442,6 +449,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 
     {
+        // eyeFromWorld * clipFromEye
         XMMATRIX viewProj = m_ViewMatrix * m_ProjectionMatrix;
 //        m_sceneCB->cameraPosition = XMFLOAT4(XMVectorGetX(eyePosition), XMVectorGetY(eyePosition), XMVectorGetZ(eyePosition), 0.0f);
         m_sceneCB->cameraPosition = eyePosition;
@@ -1032,7 +1040,7 @@ void App3::BuildAccelerationStructures()
     ThrowIfFalse(bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes > 0);
 
     ComPtr<ID3D12Resource> scratchResource;
-    AllocateUAVBuffer(device.Get(), std::max(topLevelPrebuildInfo.ScratchDataSizeInBytes, bottomLevelPrebuildInfo.ScratchDataSizeInBytes), &scratchResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"ScratchResource");
+    AllocateUAVBuffer(device.Get(), commandList.Get(), std::max(topLevelPrebuildInfo.ScratchDataSizeInBytes, bottomLevelPrebuildInfo.ScratchDataSizeInBytes), &scratchResource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"ScratchResource");
 
     // Allocate resources for acceleration structures.
     // Acceleration structures can only be placed in resources that are created in the default heap (or custom heap equivalent). 
@@ -1044,8 +1052,8 @@ void App3::BuildAccelerationStructures()
     {
         D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
-        AllocateUAVBuffer(device.Get(), bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes, &m_bottomLevelAccelerationStructure, initialResourceState, L"BottomLevelAccelerationStructure");
-        AllocateUAVBuffer(device.Get(), topLevelPrebuildInfo.ResultDataMaxSizeInBytes, &m_topLevelAccelerationStructure, initialResourceState, L"TopLevelAccelerationStructure");
+        AllocateUAVBuffer(device.Get(), commandList.Get(), bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes, &m_bottomLevelAccelerationStructure, initialResourceState, L"BottomLevelAccelerationStructure");
+        AllocateUAVBuffer(device.Get(), commandList.Get(), topLevelPrebuildInfo.ResultDataMaxSizeInBytes, &m_topLevelAccelerationStructure, initialResourceState, L"TopLevelAccelerationStructure");
     }
 
     // Create an instance desc for the bottom-level acceleration structure.
