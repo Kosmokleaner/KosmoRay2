@@ -362,13 +362,13 @@ void App3::OnUpdate(UpdateEventArgs& e)
     // Update the model matrix.
     float angle = static_cast<float>(e.TotalTime * 90.0);
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-    m_ModelMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+    m_ModelMatrix = XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle)));
 
     // Update the view matrix.
     const XMVECTOR eyePosition = XMVectorSet(0, 0, 100, 1);
     const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
     const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-    m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
+    m_ViewMatrix = XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection));
 
 //    camera.SetPos(float3(0,0,-10));
 //    camera.Rotate(0.01f, 0.0f);
@@ -440,20 +440,20 @@ void App3::OnUpdate(UpdateEventArgs& e)
 
 
 
-//    m_ViewMatrix  = XMMatrixInverse(0, camera.GetViewMatrix());
     // world->eye aka eyeFromWorld
-    m_ViewMatrix = camera.GetViewMatrix();
+    m_ViewMatrix = XMMatrixTranspose(camera.GetViewMatrix());
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
-    m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+    m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f));
 
     {
-        // eyeFromWorld * clipFromEye
-        XMMATRIX viewProj = m_ViewMatrix * m_ProjectionMatrix;
+        // clipFromWorld = clipFromEye * eyeFromWorld
+        XMMATRIX clipFromWorld = m_ProjectionMatrix * m_ViewMatrix;
 //        m_sceneCB->cameraPosition = XMFLOAT4(XMVectorGetX(eyePosition), XMVectorGetY(eyePosition), XMVectorGetZ(eyePosition), 0.0f);
         m_sceneCB->cameraPosition = eyePosition;
-        m_sceneCB->projectionToWorld = XMMatrixInverse(nullptr, viewProj);
+        m_sceneCB->clipFromWorld = XMMatrixTranspose(clipFromWorld);
+        m_sceneCB->worldFromClip = XMMatrixTranspose(XMMatrixInverse(nullptr, clipFromWorld));
     }
 }
 
@@ -599,8 +599,7 @@ void App3::OnRender(RenderEventArgs& e)
         commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 
         // Update the MVP matrix
-        XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-        mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
+        XMMATRIX mvpMatrix = XMMatrixTranspose(m_ProjectionMatrix * m_ViewMatrix * m_ModelMatrix);
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
 
         commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);

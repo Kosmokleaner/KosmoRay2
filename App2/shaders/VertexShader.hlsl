@@ -3,6 +3,7 @@ struct ModelViewProjection
     matrix MVP;
 };
 
+// model->clip aka clipFromModel
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
 
 struct VertexPosColor

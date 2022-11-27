@@ -25,7 +25,8 @@ struct RayGenConstantBuffer
 
 struct SceneConstantBuffer
 {
-    XMMATRIX projectionToWorld;
+    XMMATRIX clipFromWorld;
+    XMMATRIX worldFromClip;
     XMVECTOR cameraPosition;
     XMFLOAT4 sceneParam0;
 };

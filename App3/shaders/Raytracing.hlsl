@@ -37,7 +37,7 @@ struct Ray
     float3 direction;
 };
 
-inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 projectionToWorld)
+inline Ray GenerateCameraRay(uint2 index, in float4x4 worldFromClip)
 {
     float2 xy = index + 0.5f; // center in the middle of the pixel.
     float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
@@ -45,8 +45,11 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
     // Invert Y for DirectX-style coordinates.
     screenPos.y = -screenPos.y;
 
+    float4 cameraPositionHom = mul(worldFromClip, float4(screenPos, 0, 1));
+    float3 cameraPosition = cameraPositionHom.xyz / cameraPositionHom.w;
+
     // Unproject the pixel coordinate into a world positon.
-    float4 world = mul(float4(screenPos, 0, 1), projectionToWorld);
+    float4 world = mul(worldFromClip, float4(screenPos, 1, 1));
     world.xyz /= world.w;
 
     Ray ray;
@@ -63,7 +66,7 @@ void MyRaygenShader()
 
     float fracTime = g_sceneCB.sceneParam0.x;
 
-    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.projectionToWorld);
+    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.worldFromClip);
     float3 origin = ray.origin;
     float3 rayDir = ray.direction;
 //    float3 origin = float3(0, 0, -1);
