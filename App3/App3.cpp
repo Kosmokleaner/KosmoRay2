@@ -360,15 +360,16 @@ void App3::OnUpdate(UpdateEventArgs& e)
     }
 
     // Update the model matrix.
-    float angle = static_cast<float>(e.TotalTime * 90.0);
+//    float angle = static_cast<float>(e.TotalTime * 90.0);
+    float angle = 0.0f;
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
     m_ModelMatrix = XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle)));
 
     // Update the view matrix.
-    const XMVECTOR eyePosition = XMVectorSet(0, 0, 100, 1);
-    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
-    const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-    m_ViewMatrix = XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection));
+//    const XMVECTOR eyePosition = XMVectorSet(0, 0, 100, 1);
+//    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
+//    const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
+//    m_ViewMatrix = XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection));
 
 //    camera.SetPos(float3(0,0,-10));
 //    camera.Rotate(0.01f, 0.0f);
@@ -450,8 +451,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     {
         // clipFromWorld = clipFromEye * eyeFromWorld
         XMMATRIX clipFromWorld = m_ProjectionMatrix * m_ViewMatrix;
-//        m_sceneCB->cameraPosition = XMFLOAT4(XMVectorGetX(eyePosition), XMVectorGetY(eyePosition), XMVectorGetZ(eyePosition), 0.0f);
-        m_sceneCB->cameraPosition = eyePosition;
+        m_sceneCB->cameraPosition = XMFLOAT4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
         m_sceneCB->clipFromWorld = XMMatrixTranspose(clipFromWorld);
         m_sceneCB->worldFromClip = XMMatrixTranspose(XMMatrixInverse(nullptr, clipFromWorld));
     }
@@ -552,7 +552,8 @@ void App3::OnRender(RenderEventArgs& e)
     UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
     auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 
-//hack    static int t = 0; ++t; if(t>4000)t=0;
+    // hack
+//    static int t = 0; ++t; if(t>4000)t=0;
     static int t = 2001;
 
     if(t > 2000) {

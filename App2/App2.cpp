@@ -323,7 +323,8 @@ void App2::OnUpdate(UpdateEventArgs& e)
     }
 
     // Update the model matrix.
-    float angle = static_cast<float>(e.TotalTime * 90.0);
+//    float angle = static_cast<float>(e.TotalTime * 90.0);
+    float angle = 0.0f;
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
     m_ModelMatrix = XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle)));
 

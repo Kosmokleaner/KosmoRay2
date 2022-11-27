@@ -37,7 +37,7 @@ struct Ray
     float3 direction;
 };
 
-inline Ray GenerateCameraRay(uint2 index, in float4x4 worldFromClip)
+inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 worldFromClip)
 {
     float2 xy = index + 0.5f; // center in the middle of the pixel.
     float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
@@ -45,16 +45,17 @@ inline Ray GenerateCameraRay(uint2 index, in float4x4 worldFromClip)
     // Invert Y for DirectX-style coordinates.
     screenPos.y = -screenPos.y;
 
-    float4 cameraPositionHom = mul(worldFromClip, float4(screenPos, 0, 1));
-    float3 cameraPosition = cameraPositionHom.xyz / cameraPositionHom.w;
+    // a way to compute cameraPosition, need to rename the input parameter
+//    float4 cameraPositionHom = mul(worldFromClip, float4(0, 0, 0, 1));
+//    float3 cameraPosition = cameraPositionHom.xyz / cameraPositionHom.w;
 
     // Unproject the pixel coordinate into a world positon.
-    float4 world = mul(worldFromClip, float4(screenPos, 1, 1));
-    world.xyz /= world.w;
+    float4 worldHom = mul(worldFromClip, float4(screenPos, 1, 1));
+    float3 world = worldHom.xyz / worldHom.w;
 
     Ray ray;
     ray.origin = cameraPosition;
-    ray.direction = normalize(world.xyz - ray.origin);
+    ray.direction = normalize(world - ray.origin);
 
     return ray;
 }
@@ -66,13 +67,13 @@ void MyRaygenShader()
 
     float fracTime = g_sceneCB.sceneParam0.x;
 
-    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.worldFromClip);
+    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.worldFromClip);
     float3 origin = ray.origin;
     float3 rayDir = ray.direction;
 //    float3 origin = float3(0, 0, -1);
 //    float3 rayDir = float3(lerpValues.xy * 2.0f - 1.0f, 1);
 
-    if (IsInsideViewport(origin.xy, g_rayGenCB.stencil))
+//    if (IsInsideViewport(origin.xy, g_rayGenCB.stencil))
     {
         // Trace the ray.
         // Set the ray's extents.
@@ -89,11 +90,11 @@ void MyRaygenShader()
         // Write the raytraced color to the output texture.
         RenderTarget[DispatchRaysIndex().xy] = payload.color;
     }
-    else
-    {
+//    else
+//    {
         // Render yellow outside the stencil window
-        RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
-    }
+//        RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
+//    }
 
 
     // hack

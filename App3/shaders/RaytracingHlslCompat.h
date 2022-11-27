@@ -37,6 +37,7 @@ struct SceneConstantBuffer
 {
     XMMATRIX clipFromWorld;
     XMMATRIX worldFromClip;
+    XMVECTOR cameraPosition;
     // .x:frac(time)
     XMVECTOR sceneParam0;
 };
