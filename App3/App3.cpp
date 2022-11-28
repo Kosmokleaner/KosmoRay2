@@ -31,6 +31,7 @@ using namespace DirectX;
 const wchar_t* c_hitGroupName = L"MyHitGroup";
 const wchar_t* c_raygenShaderName = L"MyRaygenShader";
 const wchar_t* c_closestHitShaderName = L"MyClosestHitShader";
+const wchar_t* c_anyHitShaderName = L"MyAnyHitShader";
 const wchar_t* c_missShaderName = L"MyMissShader";
 
 namespace GlobalRootSignatureParams {
@@ -401,8 +402,8 @@ void App3::OnUpdate(UpdateEventArgs& e)
     }
 
     //				const float rotateSpeed = 2 * InCamera.GetVerticalFov() / g_Renderer.GetHeight();
-    const float rotateSpeed = 2 * 0.002f;		// todo
-    const float movementSpeed = 150.0f / 10.0f;
+    const float rotateSpeed = 0.002f;		// todo
+    const float movementSpeed = 50.0f / 10.0f;
 
     if (data.IsValid())
     {
@@ -789,6 +790,7 @@ void App3::CreateRaytracingPipelineStateObject()
     {
         lib->DefineExport(c_raygenShaderName);
         lib->DefineExport(c_closestHitShaderName);
+        lib->DefineExport(c_anyHitShaderName);
         lib->DefineExport(c_missShaderName);
     }
 
@@ -797,13 +799,16 @@ void App3::CreateRaytracingPipelineStateObject()
     // In this sample, we only use triangle geometry with a closest hit shader, so others are not set.
     auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
     hitGroup->SetClosestHitShaderImport(c_closestHitShaderName);
+    hitGroup->SetAnyHitShaderImport(c_anyHitShaderName);
     hitGroup->SetHitGroupExport(c_hitGroupName);
     hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
 
     // Shader config
     // Defines the maximum sizes in bytes for the ray payload and attribute structure.
     auto shaderConfig = raytracingPipeline.CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
-    UINT payloadSize = 4 * sizeof(float);   // float4 color
+    // see struct RayPayload
+    UINT payloadSize = 4 * sizeof(float) + 4 + 4; // color + count + depth
+
     UINT attributeSize = 2 * sizeof(float); // float2 barycentrics
     shaderConfig->Config(payloadSize, attributeSize);
 
@@ -822,6 +827,7 @@ void App3::CreateRaytracingPipelineStateObject()
     // PERFOMANCE TIP: Set max recursion depth as low as needed 
     // as drivers may apply optimization strategies for low recursion depths. 
     UINT maxRecursionDepth = 1; // ~ primary rays only. 
+//    UINT maxRecursionDepth = 20;
     pipelineConfig->Config(maxRecursionDepth);
 
 #if _DEBUG
@@ -854,8 +860,8 @@ void App3::CreateDescriptorHeap()
 void App3::BuildGeometry()
 {
     auto device = Application::Get().GetDevice();
-    std::string inputfile = "../../data/monkey.obj";        // 1 shape
-//    std::string inputfile = "../../data/NewXYZ.obj";
+//    std::string inputfile = "../../data/monkey.obj";        // 1 shape
+    std::string inputfile = "../../data/NewXYZ.obj";
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files
 
@@ -1019,6 +1025,7 @@ void App3::BuildAccelerationStructures()
     // PERFORMANCE TIP: mark geometry as opaque whenever applicable as it can enable important ray processing optimizations.
     // Note: When rays encounter opaque geometry an any hit shader will not be executed whether it is present or not.
     geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+//    geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 
     // Get required sizes for an acceleration structure.
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;

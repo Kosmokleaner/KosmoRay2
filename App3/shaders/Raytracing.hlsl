@@ -20,9 +20,12 @@ ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
 typedef BuiltInTriangleIntersectionAttributes MyAttributes;
+
 struct RayPayload
 {
     float4 color;
+    int count;
+    float minT;
 };
 
 bool IsInsideViewport(float2 p, Viewport viewport)
@@ -67,12 +70,26 @@ void MyRaygenShader()
 
     float fracTime = g_sceneCB.sceneParam0.x;
 
+    uint section = DispatchRaysIndex().x / 8;
+
     Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.worldFromClip);
     float3 origin = ray.origin;
     float3 rayDir = ray.direction;
 //    float3 origin = float3(0, 0, -1);
 //    float3 rayDir = float3(lerpValues.xy * 2.0f - 1.0f, 1);
-
+/*
+    RAY_FLAG_NONE = 0x00,
+//    RAY_FLAG_FORCE_OPAQUE = 0x01, // no any hit shader
+    RAY_FLAG_FORCE_NON_OPAQUE = 0x02,
+    RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH = 0x04,
+    RAY_FLAG_SKIP_CLOSEST_HIT_SHADER = 0x08,
+    RAY_FLAG_CULL_BACK_FACING_TRIANGLES = 0x10,
+    RAY_FLAG_CULL_FRONT_FACING_TRIANGLES = 0x20,
+    RAY_FLAG_CULL_OPAQUE = 0x40,
+    RAY_FLAG_CULL_NON_OPAQUE = 0x80,
+    RAY_FLAG_SKIP_TRIANGLES = 0x100,
+    RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES = 0x200,
+*/
 //    if (IsInsideViewport(origin.xy, g_rayGenCB.stencil))
     {
         // Trace the ray.
@@ -82,13 +99,29 @@ void MyRaygenShader()
         ray.Direction = rayDir;
         // Set TMin to a non-zero small value to avoid aliasing issues due to floating - point errors.
         // TMin should be kept small to prevent missing geometry at close contact areas.
-        ray.TMin = 0.001;
-        ray.TMax = 10000.0;
-        RayPayload payload = { float4(0, 0, 0, 0) };
-        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, ray, payload);
+        ray.TMin = 0.001f;
+        ray.TMax = 10000.0f;
+        RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), 0, ray.TMax };
+        // closesthit
+//        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, ray, payload);
+        // closesthit
+//        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, ~0, 0, 1, 0, ray, payload);
+        // anyhit
+//        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
+        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
+
+//        TraceRay(Scene, section, ~0, 0, 1, 0, ray, payload);
 
         // Write the raytraced color to the output texture.
-        RenderTarget[DispatchRaysIndex().xy] = payload.color;
+        if(DispatchRaysIndex().y < 200)
+            RenderTarget[DispatchRaysIndex().xy] = frac(payload.minT / 100.0f);
+        else if (DispatchRaysIndex().y < 400)
+            RenderTarget[DispatchRaysIndex().xy] = payload.color;
+        else
+            RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
+
+//        if(section == 50 && (DispatchRaysIndex().x % 8) == 4)
+//            RenderTarget[DispatchRaysIndex().xy] = float4(1,1,0,1);
     }
 //    else
 //    {
@@ -108,13 +141,35 @@ void MyRaygenShader()
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-    payload.color = float4(barycentrics, 1);
+//    payload.color = float4(barycentrics, 1);
+    payload.color.r = barycentrics.x; // red
+    ++payload.count;
+}
+
+
+[shader("anyhit")]
+void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
+{
+    float t = RayTCurrent();
+    if(t < payload.minT)
+    {
+        payload.minT = t;
+        float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+        payload.color = float4(barycentrics, 1);
+//        payload.color.b += 0.5f;
+//        payload.color.b = 1.0f;
+//        payload.color.g = barycentrics.y; // green
+    }
+    ++payload.count;
+
+    // do not stop ray intersection, also calls miss shader
+    IgnoreHit();
 }
 
 [shader("miss")]
 void MyMissShader(inout RayPayload payload)
 {
-    payload.color = float4(0, 0, 0, 1);
+//    payload.color = float4(0, 0, 0, 1);
 }
 
 #endif // RAYTRACING_HLSL
