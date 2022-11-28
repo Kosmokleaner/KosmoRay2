@@ -113,12 +113,19 @@ void MyRaygenShader()
 //        TraceRay(Scene, section, ~0, 0, 1, 0, ray, payload);
 
         // Write the raytraced color to the output texture.
-        if(DispatchRaysIndex().y < 200)
+/*        if(DispatchRaysIndex().y < 100)
             RenderTarget[DispatchRaysIndex().xy] = frac(payload.minT / 100.0f);
-        else if (DispatchRaysIndex().y < 400)
+        else if (DispatchRaysIndex().y < 200)
             RenderTarget[DispatchRaysIndex().xy] = payload.color;
-        else
+        else if (DispatchRaysIndex().y < 300)
             RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
+        else 
+*/      {
+            if((payload.count % 2) == 1)
+                RenderTarget[DispatchRaysIndex().xy] = float4(1,1,0,1);
+            else
+                RenderTarget[DispatchRaysIndex().xy] = payload.color;
+        }
 
 //        if(section == 50 && (DispatchRaysIndex().x % 8) == 4)
 //            RenderTarget[DispatchRaysIndex().xy] = float4(1,1,0,1);
@@ -142,25 +149,34 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
 //    payload.color = float4(barycentrics, 1);
-    payload.color.r = barycentrics.x; // red
-    ++payload.count;
+//    payload.color.r = barycentrics.x; // red
+//    ++payload.count;
 }
 
 
 [shader("anyhit")]
 void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 {
+    float clipDepth = 3.0f;
+
     float t = RayTCurrent();
-    if(t < payload.minT)
+    float3 pos = WorldRayOrigin() + WorldRayDirection() * t;
+
+//    if(length(pos) > clipDepth)
+    if (t > clipDepth) 
+//    if (length(pos + float3(0.5f, 0, 0)) > 0.9f)
     {
-        payload.minT = t;
-        float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-        payload.color = float4(barycentrics, 1);
-//        payload.color.b += 0.5f;
-//        payload.color.b = 1.0f;
-//        payload.color.g = barycentrics.y; // green
+        if (t < payload.minT) {
+            payload.minT = t;
+            float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+            payload.color = float4(barycentrics, 1);
+
+//            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
+//                payload.color = float4(1,0,0,1);
+        }
+        ++payload.count;
     }
-    ++payload.count;
+//    ++payload.count;
 
     // do not stop ray intersection, also calls miss shader
     IgnoreHit();

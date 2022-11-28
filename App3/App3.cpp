@@ -861,7 +861,7 @@ void App3::BuildGeometry()
 {
     auto device = Application::Get().GetDevice();
 //    std::string inputfile = "../../data/monkey.obj";        // 1 shape
-    std::string inputfile = "../../data/NewXYZ.obj";
+    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files
 
