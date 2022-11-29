@@ -878,6 +878,11 @@ void App3::BuildGeometry()
     auto device = Application::Get().GetDevice();
 //    std::string inputfile = "../../data/monkey.obj";        // 1 shape
     std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
+//    std::string inputfile = "../../data/LShape.obj";    // no clipping errors
+//    std::string inputfile = "../../data/saucer.obj";
+    //std::string inputfile = "../../data/justDANCE.obj";
+//    std::string inputfile = "../../data/justDANCE2.obj";
+    //    std::string inputfile = "../../data/GroundPlane.obj";
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files
 
@@ -1042,6 +1047,8 @@ void App3::BuildAccelerationStructures()
     // Note: When rays encounter opaque geometry an any hit shader will not be executed whether it is present or not.
     geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 //    geometryDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
+    // needed for clipping shader
+    geometryDesc.Flags |= D3D12_RAYTRACING_GEOMETRY_FLAG_NO_DUPLICATE_ANYHIT_INVOCATION;
 
     // Get required sizes for an acceleration structure.
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS buildFlags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
