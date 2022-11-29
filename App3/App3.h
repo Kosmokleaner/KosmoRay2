@@ -29,6 +29,8 @@ struct SceneConstantBuffer
     XMMATRIX worldFromClip;
     XMFLOAT4 cameraPosition;
     XMFLOAT4 sceneParam0;
+    uint32 raytraceFlags;
+    uint32 dummy[3];
 };
 
 class App3 : public Game
@@ -133,6 +135,9 @@ private:
     DirectX::XMMATRIX m_ViewMatrix;
     // eye->clip aka clipFromEye
     DirectX::XMMATRIX m_ProjectionMatrix;
+
+    // RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER
+    uint raytraceFlags = 0x2 | 0x8;
 
     bool m_ContentLoaded = false;
 

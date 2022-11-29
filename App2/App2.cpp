@@ -502,19 +502,21 @@ void App2::OnKeyPressed(KeyEventArgs& e)
 
     switch (e.Key)
     {
-    case KeyCode::Escape:
-        Application::Get().Quit(0);
-        break;
-    case KeyCode::Enter:
-        if (e.Alt)
-        {
-    case KeyCode::F11:
-        m_pWindow->ToggleFullscreen();
-        break;
-        }
-    case KeyCode::V:
-        m_pWindow->ToggleVSync();
-        break;
+        case KeyCode::Escape:
+            Application::Get().Quit(0);
+            break;
+
+        case KeyCode::Enter:
+            break;
+
+        case KeyCode::F11:
+            if (e.Alt)
+                m_pWindow->ToggleFullscreen();
+            break;
+
+        case KeyCode::V:
+            m_pWindow->ToggleVSync();
+            break;
     }
 }
 

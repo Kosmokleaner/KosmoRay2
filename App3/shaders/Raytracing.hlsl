@@ -108,7 +108,10 @@ void MyRaygenShader()
 //        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, ~0, 0, 1, 0, ray, payload);
         // anyhit
 //        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
-        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
+//        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
+
+        
+            TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, ray, payload);
 
 //        TraceRay(Scene, section, ~0, 0, 1, 0, ray, payload);
 

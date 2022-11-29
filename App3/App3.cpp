@@ -347,6 +347,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     frameCount++;
 
     m_sceneCB->sceneParam0.x = frac(m_sceneCB->sceneParam0.x + (float)e.ElapsedTime);
+    m_sceneCB->raytraceFlags = raytraceFlags;
 
     if (totalTime > 1.0)
     {
@@ -626,20 +627,35 @@ void App3::OnKeyPressed(KeyEventArgs& e)
 
     switch (e.Key)
     {
-    case KeyCode::Escape:
-        Application::Get().Quit(0);
-        break;
-    case KeyCode::Enter:
-        if (e.Alt)
-        {
-    case KeyCode::F11:
-        m_pWindow->ToggleFullscreen();
-        break;
-        }
-    case KeyCode::V:
-        m_pWindow->ToggleVSync();
-        break;
+        case KeyCode::Escape:
+            Application::Get().Quit(0);
+            break;
+
+        case KeyCode::Enter:
+            break;
+
+        case KeyCode::PageUp:
+            --raytraceFlags;
+            break;
+
+        case KeyCode::PageDown:
+            ++raytraceFlags;
+            break;
+
+        case KeyCode::F11:
+            if (e.Alt)
+                m_pWindow->ToggleFullscreen();
+            break;
+
+        case KeyCode::V:
+            m_pWindow->ToggleVSync();
+            break;
     }
+
+    char buffer[512];
+    sprintf_s(buffer, "raytraceFlags: 0x%x\n", raytraceFlags);
+    OutputDebugStringA(buffer);
+
 }
 
 void App3::OnMouseWheel(MouseWheelEventArgs& e)

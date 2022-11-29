@@ -40,6 +40,8 @@ struct SceneConstantBuffer
     XMVECTOR cameraPosition;
     // .x:frac(time)
     XMVECTOR sceneParam0;
+    uint raytraceFlags;
+    uint3 dummy;
 };
 
 
