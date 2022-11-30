@@ -347,6 +347,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     frameCount++;
 
     m_sceneCB->sceneParam0.x = frac(m_sceneCB->sceneParam0.x + (float)e.ElapsedTime);
+    m_sceneCB->sceneParam0.y = frac(m_sceneCB->sceneParam0.y + (float)e.ElapsedTime * 0.1f);
     m_sceneCB->raytraceFlags = raytraceFlags;
 
     if (totalTime > 1.0)
@@ -876,12 +877,10 @@ void App3::CreateDescriptorHeap()
 void App3::BuildGeometry()
 {
     auto device = Application::Get().GetDevice();
-//    std::string inputfile = "../../data/monkey.obj";        // 1 shape
-    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
+    std::string inputfile = "../../data/monkey.obj";        // 1 shape
+//    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
 //    std::string inputfile = "../../data/LShape.obj";    // no clipping errors
 //    std::string inputfile = "../../data/saucer.obj";
-    //std::string inputfile = "../../data/justDANCE.obj";
-//    std::string inputfile = "../../data/justDANCE2.obj";
     //    std::string inputfile = "../../data/GroundPlane.obj";
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files

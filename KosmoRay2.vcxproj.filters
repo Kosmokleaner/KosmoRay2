@@ -27,6 +27,9 @@
     <FxCompile Include="App3\shaders\Raytracing.hlsl">
       <Filter>App3\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="App3\shaders\cellular.hlsl">
+      <Filter>App3\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DX12Lib\HighResolutionClock.cpp">

@@ -38,7 +38,7 @@ struct SceneConstantBuffer
     XMMATRIX clipFromWorld;
     XMMATRIX worldFromClip;
     XMVECTOR cameraPosition;
-    // .x:frac(time)
+    // .x:frac(time), y.:frac(time*0.1)
     XMVECTOR sceneParam0;
     uint raytraceFlags;
     uint3 dummy;

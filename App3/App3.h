@@ -28,6 +28,7 @@ struct SceneConstantBuffer
     XMMATRIX clipFromWorld;
     XMMATRIX worldFromClip;
     XMFLOAT4 cameraPosition;
+    // .x:frac(time), y.:frac(time*0.1)
     XMFLOAT4 sceneParam0;
     uint32 raytraceFlags;
     uint32 dummy[3];
