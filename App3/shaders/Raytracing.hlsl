@@ -141,9 +141,9 @@ void MyRaygenShader()
         RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
     else if (DispatchRaysIndex().y < 400)
  */
-//       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
+       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
  //   else
-        RenderTarget[DispatchRaysIndex().xy] = payload.color;
+//        RenderTarget[DispatchRaysIndex().xy] = payload.color;
 
     if(0)
     {
@@ -210,9 +210,9 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
     float t = RayTCurrent();
 
     // not animated, 0.9f to clip suzanne
-    const float radius = 0.9f;
+//    const float radius = 0.9f;
     // animated
-//    const float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
+    const float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
 
     // (tEnter, tExit)
     const float3 sphereCenter = float3(-0.5f, 0, 0);
@@ -246,7 +246,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 const float3 p1 = g_vertices[ii.y].position;
                 const float3 p2 = g_vertices[ii.z].position;
                 // visualize position id as color, gourand shading
-                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
+//                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
 
                 // visualize indexbuffer id as color, gourand shading
 //                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
@@ -280,7 +280,8 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                     payload.minT = t;
                     payload.minTfront = tSphere.x;
                     float3 localPos = WorldRayOrigin() - sphereCenter + payload.minT * WorldRayDirection();
-                    payload.normal = normalize(localPos);
+                    // world normal
+                    payload.normal = normalize(-localPos);
                 }
         }
     /*    if (t >= tSphere.x && tSphere.x != -1) {
