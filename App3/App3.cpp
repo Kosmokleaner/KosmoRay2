@@ -980,9 +980,9 @@ void App3::BuildGeometry()
     AllocateUploadBuffer(device.Get(), vertexBuffer.data(), vertexBuffer.size() * sizeof(vertexBuffer[0]), &m_vertexBuffer.resource);
 
     // Vertex buffer is passed to the shader along with index buffer as a descriptor range.
-    UINT descriptorIndexIB = CreateBufferSRV(&m_indexBuffer, (UINT)indexBuffer.size() * sizeof(indexBuffer[0]) / 4, 0);
-//    UINT descriptorIndexVB = CreateBufferSRV(&m_vertexBuffer, (UINT)vertexBuffer.size() * sizeof(vertexBuffer[0]), sizeof(vertexBuffer[0]));
- //todo   ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index");
+    UINT descriptorIndexIB = CreateBufferSRV(&m_indexBuffer, (UINT)indexBuffer.size(), 2);
+    UINT descriptorIndexVB = CreateBufferSRV(&m_vertexBuffer, (UINT)vertexBuffer.size(), sizeof(vertexBuffer[0]));
+    ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index");
 
 /*
     // Loop over shapes

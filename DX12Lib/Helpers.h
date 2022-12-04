@@ -60,9 +60,9 @@ inline UINT Align(UINT size, UINT alignment)
     return (size + (alignment - 1)) & ~(alignment - 1);
 }
 
-inline void ThrowIfFalse(bool value)
+inline void ThrowIfFalse(bool value, const wchar_t* msg = 0)
 {
-    ThrowIfFailed(value ? S_OK : E_FAIL);
+    ThrowIfFailed(value ? S_OK : E_FAIL, msg);
 }
 
 
