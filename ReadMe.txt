@@ -28,6 +28,9 @@ Game Engine Programming 035.1 - DirectX 12 pipelines and the root signature | C+
 https://www.youtube.com/watch?v=1RkBThKwnQE
 
 
+shading knowledge
+https://blog.selfshadow.com/publications/s2015-shading-course/hoffman/s2015_pbs_physics_math_slides.pdf
+
 =============================
 
 What is a root signature ?

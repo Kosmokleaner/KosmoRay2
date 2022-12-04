@@ -41,8 +41,14 @@ struct SceneConstantBuffer
     // .x:frac(time), y.:frac(time*0.1)
     XMVECTOR sceneParam0;
     uint raytraceFlags;
-    uint3 dummy;
+    uint dummy[3];
 };
 
+// see struct VertexPosColor
+struct Vertex
+{
+    XMFLOAT3 position;
+    XMFLOAT3 color;
+};
 
 #endif // RAYTRACINGHLSLCOMPAT_H

@@ -20,13 +20,23 @@ RWTexture2D<float4> RenderTarget : register(u0);
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
+// 16 bit index buffer
+ByteAddressBuffer g_indices : register(t1);
+StructuredBuffer<Vertex> g_vertices : register(t2);
+
 typedef BuiltInTriangleIntersectionAttributes MyAttributes;
 
+// update App3.cpp if this gets larger
 struct RayPayload
 {
     float4 color;
+    // in world space
+    float3 normal;
+    // to count intersections after sphere start, to test if inside the object
     int count;
+    // used like z buffer, the smallest valus is used
     float minT;
+    float minTfront;
 };
 
 struct Ray
@@ -34,6 +44,31 @@ struct Ray
     float3 origin;
     float3 direction;
 };
+
+
+uint3 Load3x16BitIndices( uint offsetBytes)
+{
+    const uint dwordAlignedOffset = offsetBytes & ~3;
+
+    const uint2 four16BitIndices = g_indices.Load2(dwordAlignedOffset);
+
+    uint3 indices;
+
+    if (dwordAlignedOffset == offsetBytes)
+    {
+        indices.x = four16BitIndices.x & 0xffff;
+        indices.y = (four16BitIndices.x >> 16) & 0xffff;
+        indices.z = four16BitIndices.y & 0xffff;
+    }
+    else
+    {
+        indices.x = (four16BitIndices.x >> 16) & 0xffff;
+        indices.y = four16BitIndices.y & 0xffff;
+        indices.z = (four16BitIndices.y >> 16) & 0xffff;
+    }
+
+    return indices;
+}
 
 inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 worldFromClip)
 {
@@ -82,7 +117,7 @@ void MyRaygenShader()
     // TMin should be kept small to prevent missing geometry at close contact areas.
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
-    RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), 0, rayDesc.TMax };
+    RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, rayDesc.TMax, rayDesc.TMax };
     // closesthit
 //        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, ray, payload);
     // closesthit
@@ -97,33 +132,37 @@ void MyRaygenShader()
 //        TraceRay(Scene, section, ~0, 0, 1, 0, ray, payload);
 
     // Write the raytraced color to the output texture.
-/*
-    if(DispatchRaysIndex().y < 100)
+
+/*    if(DispatchRaysIndex().y < 100)
         RenderTarget[DispatchRaysIndex().xy] = frac(payload.minT / 100.0f);
     else if (DispatchRaysIndex().y < 200)
         RenderTarget[DispatchRaysIndex().xy] = payload.color;
     else if (DispatchRaysIndex().y < 300)
         RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
-    else 
-*/
+    else if (DispatchRaysIndex().y < 400)
+ */       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
+ //   else
+
+if(0)
     {
         float col = 0;
 
-        if(payload.count) {
+        if(payload.count)
+        {
             // world space position
             float3 pos = rayDesc.Origin + rayDesc.Direction * payload.minT;
 
             float2 cel = cellular(pos * 10.0f);
             col = 1.0f - cel.x;
-         }
+        }
 
-        if((payload.count % 2) == 1) {
+//        if((payload.count % 2) == 1) {
             RenderTarget[DispatchRaysIndex().xy] = float4(col, 0, 0, 1);
-        }
-        else {
-                RenderTarget[DispatchRaysIndex().xy] = payload.color;
-//            RenderTarget[DispatchRaysIndex().xy] = float4(0, col, 0, 1);
-        }
+//        }
+//        else 
+//        {
+//            RenderTarget[DispatchRaysIndex().xy] = payload.color;
+//        }
     }
 
 //        if(section == 50 && (DispatchRaysIndex().x % 8) == 4)
@@ -175,45 +214,85 @@ float2 raySphereIntersect(float3 r0, float3 rd, float3 s0, float sr) {
 [shader("anyhit")]
 void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 {
-//    const float clipDepth = 3.0f;
-
     // [tMin..tMax]
     float t = RayTCurrent();
 
-    // not animated
-//    const float radius = 0.9f;
+    // not animated, 0.9f to clip suzanne
+    const float radius = 0.9f;
     // animated
-    const float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
+//    const float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
 
     // (tEnter, tExit)
-    float2 tSphere = raySphereIntersect(WorldRayOrigin(), WorldRayDirection(), float3(-0.5f, 0, 0), radius);
+    const float3 sphereCenter = float3(-0.5f, 0, 0);
+    float2 tSphere = raySphereIntersect(WorldRayOrigin(), WorldRayDirection(), sphereCenter, radius);
 
-//    if(length(pos) > clipDepth)
-//    if (t > clipDepth) 
-//    if (length(pos + float3(0.5f, 0, 0)) < 0.9f)
-    if (t > tSphere.x && t < tSphere.y && tSphere.x != -1)
+    if(tSphere.x != -1) 
     {
-        if (t < payload.minT) {
-            payload.minT = t;
-            float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-            payload.color = float4(barycentrics, 1);
+        // if ray triangle hit is in clip object
+        if (t > tSphere.x && t < tSphere.y)
+        {
+            // z buffer the triangle intersection
+            if (t < payload.minT)
+            {
+                payload.minT = t;
+                payload.minTfront = t;
+                float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+                payload.color = float4(barycentrics, 1);
+                payload.normal = float3(0, 1, 0);
+
+                const uint indexOffsetBytes = 0;    // for now
+                const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * 3 * 2);
+                float3 bary = float3(1.0 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+                // in object space
+//                const float3 p0 = asfloat(g_attributes.Load3(g_sceneCB.m_positionAttributeOffsetBytes + ii.x * g_sceneCB.m_attributeStrideBytes));
+                const float3 p0 = g_vertices[ii.x].position;
+                const float3 p1 = g_vertices[ii.y].position;
+                const float3 p2 = g_vertices[ii.z].position;
+                float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
+
+                float3 worldPosition = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+//                float3 worldNormal = mul(attr.normal, (float3x3)ObjectToWorld3x4());
+                float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
 
-//            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
-//                payload.color = float4(1,0,0,1);
+    //            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
+    //                payload.color = float4(1,0,0,1);
+            }
         }
+
+        if (t >= tSphere.x) {
+            // count the number of triangle hit events after the sphere start
+            // odd/even tells us if we are inside the surface
+            ++payload.count;
+        }
+
+        if (t < tSphere.x) {
+            // if hit is backfacing
+//            if(HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE)
+                // z buffer the sphere entrance
+                if (t < payload.minT) {
+                    payload.minT = t;
+                    payload.minTfront = tSphere.x;
+                    float3 localPos = WorldRayOrigin() - sphereCenter + payload.minT * WorldRayDirection();
+                    payload.normal = normalize(localPos);
+                }
+        }
+    /*    if (t >= tSphere.x && tSphere.x != -1) {
+            // count the number of triangle hit events after the sphere start
+            // odd/even tells us if we are inside the surface
+            ++payload.count;
+
+            // if hit is backfacing
+            if (HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE)
+                // z buffer the sphere entrance
+                if (tSphere.x < payload.minT) {
+                    payload.minT = tSphere.x;
+                    float3 localPos = WorldRayOrigin() - sphereCenter + payload.minT * WorldRayDirection();
+                    payload.normal = normalize(localPos);
+                }
+        }
+    */
     }
-
-    // count the number of triangle hit events after the sphere start
-    // odd/even tells us if we are inside the surface
-    if (t > tSphere.x && tSphere.x != -1) {
-        ++payload.count;
-
-        if(HitKind() != HIT_KIND_TRIANGLE_FRONT_FACE)
-            if (tSphere.x < payload.minT)
-                payload.minT = tSphere.x;
-    }
-
 
     // do not stop ray intersection, also calls miss shader
     IgnoreHit();

@@ -34,6 +34,13 @@ struct SceneConstantBuffer
     uint32 dummy[3];
 };
 
+struct D3DBuffer
+{
+    ComPtr<ID3D12Resource> resource;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
+};
+
 class App3 : public Game
 {
 public:
@@ -103,11 +110,13 @@ private:
     
     uint64_t m_FenceValues[Window::BufferCount] = {};
 
-    // Vertex buffer for the cube.
+    // cube, todo: remove
     ComPtr<ID3D12Resource> m_VertexBuffer;
+    // cube, todo: remove
     D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
-    // Index buffer for the cube.
+    // cube, todo: remove
     ComPtr<ID3D12Resource> m_IndexBuffer;
+    // cube, todo: remove
     D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 
     // Depth buffer.
@@ -156,12 +165,13 @@ private:
     void CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* raytracingPipeline);
     void SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig);
     void ReleaseDeviceDependentResources();
-    UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse);
+    UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse = UINT_MAX);
 //    ID3D12GraphicsCommandList4* GetCommandList() const { return m_dxrCommandList.Get(); }
     void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT currentBackBufferIndex);
     void CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
     void CreateWindowSizeDependentResources();
     void UpdateForSizeChange(UINT width, UINT height);
+    UINT CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize);
 
     // DirectX Raytracing (DXR) attributes
     ComPtr<ID3D12Device5> m_dxrDevice;
@@ -179,8 +189,10 @@ private:
     // Geometry
     typedef UINT16 Index;
     struct Vertex { float x, y, z; };
-    ComPtr<ID3D12Resource> m_indexBuffer;
-    ComPtr<ID3D12Resource> m_vertexBuffer;
+    // mesh
+    D3DBuffer m_indexBuffer;
+    // mesh
+    D3DBuffer m_vertexBuffer;
 
     // Acceleration structure
     ComPtr<ID3D12Resource> m_accelerationStructure;
