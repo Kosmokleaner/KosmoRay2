@@ -743,7 +743,7 @@ void App3::CreateRootSignatures()
         UAVDescriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptor;
-        SRVDescriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // t1, t2
+        SRVDescriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // t1:IndexBuffer, t2:VertexBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &UAVDescriptor);
@@ -1024,28 +1024,6 @@ void App3::BuildGeometry()
 //            shapes[s].mesh.material_ids[f];
         }
     }
-*/
-
-/*
-    Index indices[] =
-    {
-        0, 1, 2
-    };
-
-    float depthValue = 1.0;
-    float offset = 0.7f;
-    Vertex vertices[] =
-    {
-        // The sample raytraces in screen space coordinates.
-        // Since DirectX screen space coordinates are right handed (i.e. Y axis points down).
-        // Define the vertices in counter clockwise order ~ clockwise in left handed.
-        { 0, -offset, depthValue },
-        { -offset, offset, depthValue },
-        { offset, offset, depthValue }
-    };
-
-    AllocateUploadBuffer(device.Get(), vertices, sizeof(vertices), &m_vertexBuffer);
-    AllocateUploadBuffer(device.Get(), indices, sizeof(indices), &m_indexBuffer);
 */
 }
 

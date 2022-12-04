@@ -14,6 +14,7 @@
 
 #include "RaytracingHlslCompat.h"
 #include "cellular.hlsl"
+#include "Helper.hlsl"
 
 RaytracingAccelerationStructure Scene : register(t0, space0);
 RWTexture2D<float4> RenderTarget : register(u0);
@@ -44,7 +45,6 @@ struct Ray
     float3 origin;
     float3 direction;
 };
-
 
 uint3 Load3x16BitIndices( uint offsetBytes)
 {
@@ -140,10 +140,12 @@ void MyRaygenShader()
     else if (DispatchRaysIndex().y < 300)
         RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
     else if (DispatchRaysIndex().y < 400)
- */       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
+ */
+//       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
  //   else
+        RenderTarget[DispatchRaysIndex().xy] = payload.color;
 
-if(0)
+    if(0)
     {
         float col = 0;
 
@@ -238,21 +240,34 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 payload.minTfront = t;
                 float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
                 payload.color = float4(barycentrics, 1);
+
+                // debug triangleId
+                payload.color = float4(IndexToColor(PrimitiveIndex()), 1);
+
                 payload.normal = float3(0, 1, 0);
 
                 const uint indexOffsetBytes = 0;    // for now
                 const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * 3 * 2);
-                float3 bary = float3(1.0 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+
+//                float3 bary = float3(1.0 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+                float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
+
                 // in object space
 //                const float3 p0 = asfloat(g_attributes.Load3(g_sceneCB.m_positionAttributeOffsetBytes + ii.x * g_sceneCB.m_attributeStrideBytes));
-                const float3 p0 = g_vertices[ii.x].position;
-                const float3 p1 = g_vertices[ii.y].position;
-                const float3 p2 = g_vertices[ii.z].position;
-                float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
+//                const float3 p0 = g_vertices[ii.x].position;
+//                const float3 p1 = g_vertices[ii.y].position;
+//                const float3 p2 = g_vertices[ii.z].position;
+                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
+                const float4 vCol1 = float4(IndexToColor(ii.y), 1);
+                const float4 vCol2 = float4(IndexToColor(ii.z), 1);
+
+                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
+
+//                float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
 
                 float3 worldPosition = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 //                float3 worldNormal = mul(attr.normal, (float3x3)ObjectToWorld3x4());
-                float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+//                float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
 
     //            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
