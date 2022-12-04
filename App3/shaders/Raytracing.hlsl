@@ -166,16 +166,6 @@ void MyRaygenShader()
 //            RenderTarget[DispatchRaysIndex().xy] = payload.color;
 //        }
     }
-
-//        if(section == 50 && (DispatchRaysIndex().x % 8) == 4)
-//            RenderTarget[DispatchRaysIndex().xy] = float4(1,1,0,1);
-
-
-    // hack
-//    RenderTarget[DispatchRaysIndex().xy] = float4(1,1,1,1);
-
-// crash to prove the shader is executed
-//    for (; DispatchRaysIndex().x < 100000000;);
 }
 
 [shader("closesthit")]
@@ -241,35 +231,36 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
                 payload.color = float4(barycentrics, 1);
 
-                // debug triangleId
-                payload.color = float4(IndexToColor(PrimitiveIndex()), 1);
+                // visualize triangleId as color, flat shading
+//                payload.color = float4(IndexToColor(PrimitiveIndex()), 1);
 
                 payload.normal = float3(0, 1, 0);
 
                 const uint indexOffsetBytes = 0;    // for now
                 const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * 3 * 2);
 
-//                float3 bary = float3(1.0 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
                 float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
 
-                // in object space
-//                const float3 p0 = asfloat(g_attributes.Load3(g_sceneCB.m_positionAttributeOffsetBytes + ii.x * g_sceneCB.m_attributeStrideBytes));
-//                const float3 p0 = g_vertices[ii.x].position;
-//                const float3 p1 = g_vertices[ii.y].position;
-//                const float3 p2 = g_vertices[ii.z].position;
-                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
-                const float4 vCol1 = float4(IndexToColor(ii.y), 1);
-                const float4 vCol2 = float4(IndexToColor(ii.z), 1);
+                // position in object space
+                const float3 p0 = g_vertices[ii.x].position;
+                const float3 p1 = g_vertices[ii.y].position;
+                const float3 p2 = g_vertices[ii.z].position;
+                // visualize position id as color, gourand shading
+                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
 
-                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
+                // visualize indexbuffer id as color, gourand shading
+//                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
+//                const float4 vCol1 = float4(IndexToColor(ii.y), 1);
+//                const float4 vCol2 = float4(IndexToColor(ii.z), 1);
+//                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
 
-//                float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
+                float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
 
                 float3 worldPosition = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
 //                float3 worldNormal = mul(attr.normal, (float3x3)ObjectToWorld3x4());
-//                float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+                float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
-
+                payload.normal = worldNormal;
     //            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
     //                payload.color = float4(1,0,0,1);
             }

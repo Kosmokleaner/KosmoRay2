@@ -941,7 +941,7 @@ void App3::BuildGeometry()
 
     // for now unoptimized, see https://vulkan-tutorial.com/Loading_models
     std::vector<Index> indexBuffer;
-    std::vector<Vertex> vertexBuffer;
+    std::vector<VertexPosColor> vertexBuffer;
 
     // if reader_config.triangulate we can use the indexbuffer more or less directly
 
@@ -971,9 +971,9 @@ void App3::BuildGeometry()
             tinyobj::real_t vy = attrib.vertices[3 * i + 1];
             tinyobj::real_t vz = attrib.vertices[3 * i + 2];
 
-            vertexBuffer[i].x = vx * 0.5f;
-            vertexBuffer[i].y = vy * 0.5f;
-            vertexBuffer[i].z = vz * 0.5f;
+            vertexBuffer[i].Position.x = vx * 0.5f;
+            vertexBuffer[i].Position.y = vy * 0.5f;
+            vertexBuffer[i].Position.z = vz * 0.5f;
         }
     }
     AllocateUploadBuffer(device.Get(), indexBuffer.data(), indexBuffer.size() * sizeof(indexBuffer[0]), &m_indexBuffer.resource);
@@ -1057,9 +1057,9 @@ void App3::BuildAccelerationStructures()
     geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
     geometryDesc.Triangles.Transform3x4 = 0;
     geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-    geometryDesc.Triangles.VertexCount = static_cast<UINT>(m_vertexBuffer.resource->GetDesc().Width) / sizeof(Vertex);
+    geometryDesc.Triangles.VertexCount = static_cast<UINT>(m_vertexBuffer.resource->GetDesc().Width) / sizeof(VertexPosColor);
     geometryDesc.Triangles.VertexBuffer.StartAddress = m_vertexBuffer.resource->GetGPUVirtualAddress();
-    geometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
+    geometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(VertexPosColor);
 
     // Mark the geometry as opaque. 
     // PERFORMANCE TIP: mark geometry as opaque whenever applicable as it can enable important ray processing optimizations.

@@ -188,7 +188,7 @@ private:
 
     // Geometry
     typedef UINT16 Index;
-    struct Vertex { float x, y, z; };
+//    struct Vertex { float x, y, z; };
     // mesh
     D3DBuffer m_indexBuffer;
     // mesh
