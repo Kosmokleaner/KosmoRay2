@@ -72,6 +72,7 @@
     <ClCompile Include="Mathlib.cpp">
       <Filter>Hidden</Filter>
     </ClCompile>
+    <ClCompile Include="Mock12.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -125,6 +126,7 @@
     <ClInclude Include="App3\external\tiny_obj_loader.h">
       <Filter>Hidden</Filter>
     </ClInclude>
+    <ClInclude Include="Mock12.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">

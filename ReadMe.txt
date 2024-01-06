@@ -7,15 +7,19 @@ Multiple experiments in different Apps:
 
 
 todo:
-* implement more classic renderer stuff (Resource management, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
+* implement more classic renderer stuff (Resource management / barriers, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
 * never quit while coding = renderer process
 * plugin concept ?
 * network
-* multi dfraw indirect
+* multi draw indirect
 * gaussian splatting ray tracer
+* map all Dx12 features by reimplementing API wrapper
+* implement handle based or shared_ptr resource management
 
 todo low prio:
 * fix: window resize crash
+* fps should not go to OutputDebugString
+* red disk icon can be improved
 * fix hack, to query m_dxrCommandList each time
 * support uvs and normals from obj load
 * obj load vertex cache optimize

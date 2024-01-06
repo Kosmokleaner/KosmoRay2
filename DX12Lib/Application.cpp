@@ -5,6 +5,7 @@
 #include "DX12Lib/Game.h"
 #include "DX12Lib/CommandQueue.h"
 #include "DX12Lib/Window.h"
+#include "Mock12.h"
 
 #include "../RelativeMouseInput.h"
 
@@ -162,7 +163,11 @@ ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp)
 ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 {
     ComPtr<ID3D12Device2> d3d12Device2;
+
+//    d3d12Device2 = new Mock12Device2();
+
     ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2)));
+
 //    NAME_D3D12_OBJECT(d3d12Device2);
 
     // Enable debug messages in debug mode.

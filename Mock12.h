@@ -1,0 +1,452 @@
+#pragma once
+#include <d3d12.h>
+
+#include <wrl.h>
+using namespace Microsoft::WRL;
+
+struct Mock12Device2 : public ID3D12Device2
+{
+    ULONG m_dwRef = 0;
+
+    BEGIN_INTERFACE
+        virtual HRESULT STDMETHODCALLTYPE QueryInterface(
+            /* [in] */ REFIID riid,
+            /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
+    {
+        __debugbreak();
+        return E_NOTIMPL;
+    }
+
+    virtual ULONG STDMETHODCALLTYPE AddRef(void)
+    {
+        return ++m_dwRef;
+    }
+
+
+    virtual ULONG STDMETHODCALLTYPE Release(void)
+    {
+        if (--m_dwRef == 0)
+        {
+            delete this;
+            return 0;
+        }
+        return m_dwRef;
+    }
+
+
+    // 
+
+    virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
+        _In_  REFGUID guid,
+        _Inout_  UINT* pDataSize,
+        _Out_writes_bytes_opt_(*pDataSize)  void* pData)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
+        _In_  REFGUID guid,
+        _In_  UINT DataSize,
+        _In_reads_bytes_opt_(DataSize)  const void* pData)
+    {
+        return E_NOTIMPL;
+    }
+
+
+    virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
+        _In_  REFGUID guid,
+        _In_opt_  const IUnknown* pData)
+    {
+        return E_NOTIMPL;
+    }
+
+
+    virtual HRESULT STDMETHODCALLTYPE SetName(
+        _In_z_  LPCWSTR Name)
+    {
+        return E_NOTIMPL;
+    }
+
+    //
+
+    virtual UINT STDMETHODCALLTYPE GetNodeCount(void)
+    {
+        __debugbreak();
+        return 0;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateCommandQueue(
+        _In_  const D3D12_COMMAND_QUEUE_DESC* pDesc,
+        REFIID riid,
+        _COM_Outptr_  void** ppCommandQueue)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateCommandAllocator(
+        _In_  D3D12_COMMAND_LIST_TYPE type,
+        REFIID riid,
+        _COM_Outptr_  void** ppCommandAllocator)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateGraphicsPipelineState(
+        _In_  const D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc,
+        REFIID riid,
+        _COM_Outptr_  void** ppPipelineState)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateComputePipelineState(
+        _In_  const D3D12_COMPUTE_PIPELINE_STATE_DESC* pDesc,
+        REFIID riid,
+        _COM_Outptr_  void** ppPipelineState)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateCommandList(
+        _In_  UINT nodeMask,
+        _In_  D3D12_COMMAND_LIST_TYPE type,
+        _In_  ID3D12CommandAllocator* pCommandAllocator,
+        _In_opt_  ID3D12PipelineState* pInitialState,
+        REFIID riid,
+        _COM_Outptr_  void** ppCommandList)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CheckFeatureSupport(
+        D3D12_FEATURE Feature,
+        _Inout_updates_bytes_(FeatureSupportDataSize)  void* pFeatureSupportData,
+        UINT FeatureSupportDataSize)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateDescriptorHeap(
+        _In_  const D3D12_DESCRIPTOR_HEAP_DESC* pDescriptorHeapDesc,
+        REFIID riid,
+        _COM_Outptr_  void** ppvHeap)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual UINT STDMETHODCALLTYPE GetDescriptorHandleIncrementSize(
+        _In_  D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
+    {
+        __debugbreak();
+        return 0;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateRootSignature(
+        _In_  UINT nodeMask,
+        _In_reads_(blobLengthInBytes)  const void* pBlobWithRootSignature,
+        _In_  SIZE_T blobLengthInBytes,
+        REFIID riid,
+        _COM_Outptr_  void** ppvRootSignature)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual void STDMETHODCALLTYPE CreateConstantBufferView(
+        _In_opt_  const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CreateShaderResourceView(
+        _In_opt_  ID3D12Resource* pResource,
+        _In_opt_  const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CreateUnorderedAccessView(
+        _In_opt_  ID3D12Resource* pResource,
+        _In_opt_  ID3D12Resource* pCounterResource,
+        _In_opt_  const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CreateRenderTargetView(
+        _In_opt_  ID3D12Resource* pResource,
+        _In_opt_  const D3D12_RENDER_TARGET_VIEW_DESC* pDesc,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CreateDepthStencilView(
+        _In_opt_  ID3D12Resource* pResource,
+        _In_opt_  const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CreateSampler(
+        _In_  const D3D12_SAMPLER_DESC* pDesc,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CopyDescriptors(
+        _In_  UINT NumDestDescriptorRanges,
+        _In_reads_(NumDestDescriptorRanges)  const D3D12_CPU_DESCRIPTOR_HANDLE* pDestDescriptorRangeStarts,
+        _In_reads_opt_(NumDestDescriptorRanges)  const UINT* pDestDescriptorRangeSizes,
+        _In_  UINT NumSrcDescriptorRanges,
+        _In_reads_(NumSrcDescriptorRanges)  const D3D12_CPU_DESCRIPTOR_HANDLE* pSrcDescriptorRangeStarts,
+        _In_reads_opt_(NumSrcDescriptorRanges)  const UINT* pSrcDescriptorRangeSizes,
+        _In_  D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
+    {
+        __debugbreak();
+    }
+
+    virtual void STDMETHODCALLTYPE CopyDescriptorsSimple(
+        _In_  UINT NumDescriptors,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart,
+        _In_  D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
+    {
+        __debugbreak();
+    }
+
+#if defined(_MSC_VER) || !defined(_WIN32)
+    virtual D3D12_RESOURCE_ALLOCATION_INFO STDMETHODCALLTYPE GetResourceAllocationInfo(
+        _In_  UINT visibleMask,
+        _In_  UINT numResourceDescs,
+        _In_reads_(numResourceDescs)  const D3D12_RESOURCE_DESC* pResourceDescs)
+    {
+        __debugbreak();
+        return D3D12_RESOURCE_ALLOCATION_INFO();
+    }
+#else
+    virtual D3D12_RESOURCE_ALLOCATION_INFO* STDMETHODCALLTYPE GetResourceAllocationInfo(
+        D3D12_RESOURCE_ALLOCATION_INFO* RetVal,
+        _In_  UINT visibleMask,
+        _In_  UINT numResourceDescs,
+        _In_reads_(numResourceDescs)  const D3D12_RESOURCE_DESC* pResourceDescs)
+    {
+        __debugbreak();
+        return nullptr;
+    }
+#endif
+
+#if defined(_MSC_VER) || !defined(_WIN32)
+    virtual D3D12_HEAP_PROPERTIES STDMETHODCALLTYPE GetCustomHeapProperties(
+        _In_  UINT nodeMask,
+        D3D12_HEAP_TYPE heapType)
+    {
+        __debugbreak();
+        return D3D12_HEAP_PROPERTIES();
+    }
+#else
+    virtual D3D12_HEAP_PROPERTIES* STDMETHODCALLTYPE GetCustomHeapProperties(
+        D3D12_HEAP_PROPERTIES* RetVal,
+        _In_  UINT nodeMask,
+        D3D12_HEAP_TYPE heapType)
+    {
+        __debugbreak();
+        return nullptr;
+    }
+#endif
+
+    virtual HRESULT STDMETHODCALLTYPE CreateCommittedResource(
+        _In_  const D3D12_HEAP_PROPERTIES* pHeapProperties,
+        D3D12_HEAP_FLAGS HeapFlags,
+        _In_  const D3D12_RESOURCE_DESC* pDesc,
+        D3D12_RESOURCE_STATES InitialResourceState,
+        _In_opt_  const D3D12_CLEAR_VALUE* pOptimizedClearValue,
+        REFIID riidResource,
+        _COM_Outptr_opt_  void** ppvResource)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateHeap(
+        _In_  const D3D12_HEAP_DESC* pDesc,
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvHeap)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreatePlacedResource(
+        _In_  ID3D12Heap* pHeap,
+        UINT64 HeapOffset,
+        _In_  const D3D12_RESOURCE_DESC* pDesc,
+        D3D12_RESOURCE_STATES InitialState,
+        _In_opt_  const D3D12_CLEAR_VALUE* pOptimizedClearValue,
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvResource)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateReservedResource(
+        _In_  const D3D12_RESOURCE_DESC* pDesc,
+        D3D12_RESOURCE_STATES InitialState,
+        _In_opt_  const D3D12_CLEAR_VALUE* pOptimizedClearValue,
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvResource)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateSharedHandle(
+        _In_  ID3D12DeviceChild* pObject,
+        _In_opt_  const SECURITY_ATTRIBUTES* pAttributes,
+        DWORD Access,
+        _In_opt_  LPCWSTR Name,
+        _Out_  HANDLE* pHandle)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE OpenSharedHandle(
+        _In_  HANDLE NTHandle,
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvObj)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE OpenSharedHandleByName(
+        _In_  LPCWSTR Name,
+        DWORD Access,
+        /* [annotation][out] */
+        _Out_  HANDLE* pNTHandle)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE MakeResident(
+        UINT NumObjects,
+        _In_reads_(NumObjects)  ID3D12Pageable* const* ppObjects)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Evict(
+        UINT NumObjects,
+        _In_reads_(NumObjects)  ID3D12Pageable* const* ppObjects)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateFence(
+        UINT64 InitialValue,
+        D3D12_FENCE_FLAGS Flags,
+        REFIID riid,
+        _COM_Outptr_  void** ppFence)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE GetDeviceRemovedReason(void)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual void STDMETHODCALLTYPE GetCopyableFootprints(
+        _In_  const D3D12_RESOURCE_DESC* pResourceDesc,
+        _In_range_(0, D3D12_REQ_SUBRESOURCES)  UINT FirstSubresource,
+        _In_range_(0, D3D12_REQ_SUBRESOURCES - FirstSubresource)  UINT NumSubresources,
+        UINT64 BaseOffset,
+        _Out_writes_opt_(NumSubresources)  D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts,
+        _Out_writes_opt_(NumSubresources)  UINT* pNumRows,
+        _Out_writes_opt_(NumSubresources)  UINT64* pRowSizeInBytes,
+        _Out_opt_  UINT64* pTotalBytes)
+    {
+        __debugbreak();
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateQueryHeap(
+        _In_  const D3D12_QUERY_HEAP_DESC* pDesc,
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvHeap)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetStablePowerState(
+        BOOL Enable)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE CreateCommandSignature(
+        _In_  const D3D12_COMMAND_SIGNATURE_DESC* pDesc,
+        _In_opt_  ID3D12RootSignature* pRootSignature,
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvCommandSignature)
+    {
+        return E_NOTIMPL;
+    }
+
+    virtual void STDMETHODCALLTYPE GetResourceTiling(
+        _In_  ID3D12Resource* pTiledResource,
+        _Out_opt_  UINT* pNumTilesForEntireResource,
+        _Out_opt_  D3D12_PACKED_MIP_INFO* pPackedMipDesc,
+        _Out_opt_  D3D12_TILE_SHAPE* pStandardTileShapeForNonPackedMips,
+        _Inout_opt_  UINT* pNumSubresourceTilings,
+        _In_  UINT FirstSubresourceTilingToGet,
+        _Out_writes_(*pNumSubresourceTilings)  D3D12_SUBRESOURCE_TILING* pSubresourceTilingsForNonPackedMips)
+    {
+        __debugbreak();
+    }
+
+#if defined(_MSC_VER) || !defined(_WIN32)
+    virtual LUID STDMETHODCALLTYPE GetAdapterLuid(void)
+    {
+        __debugbreak();
+        return LUID();
+    }
+#else
+    virtual LUID* STDMETHODCALLTYPE GetAdapterLuid(
+        LUID* RetVal)
+    {
+        __debugbreak();
+        return nullptr;
+    }
+#endif
+
+
+    //
+
+    virtual HRESULT STDMETHODCALLTYPE CreatePipelineLibrary(
+        _In_reads_(BlobLength)  const void* pLibraryBlob,
+        SIZE_T BlobLength,
+        REFIID riid,
+        _COM_Outptr_  void** ppPipelineLibrary);
+
+    virtual HRESULT STDMETHODCALLTYPE SetEventOnMultipleFenceCompletion(
+        _In_reads_(NumFences)  ID3D12Fence* const* ppFences,
+        _In_reads_(NumFences)  const UINT64* pFenceValues,
+        UINT NumFences,
+        D3D12_MULTIPLE_FENCE_WAIT_FLAGS Flags,
+        HANDLE hEvent);
+
+    virtual HRESULT STDMETHODCALLTYPE SetResidencyPriority(
+        UINT NumObjects,
+        _In_reads_(NumObjects)  ID3D12Pageable* const* ppObjects,
+        _In_reads_(NumObjects)  const D3D12_RESIDENCY_PRIORITY* pPriorities);
+
+    // 
+
+    virtual HRESULT STDMETHODCALLTYPE CreatePipelineState(
+        const D3D12_PIPELINE_STATE_STREAM_DESC* pDesc,
+        REFIID riid,
+        _COM_Outptr_  void** ppPipelineState);
+
+    ComPtr<ID3D12Device2> redirect;
+};
+
