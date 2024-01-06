@@ -6,6 +6,7 @@
 #include "DX12Lib/Window.h"
 #include "CompiledShaders\Raytracing.hlsl.h" // g_pRaytracing
 #include "RelativeMouseInput.h"
+#include "external/nv-api/nvapi.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "external/tiny_obj_loader.h"
@@ -27,6 +28,9 @@ using namespace Microsoft::WRL;
 #endif
 
 using namespace DirectX;
+
+// only on NVidia
+bool g_NVAPI_enabled = false;
 
 const wchar_t* c_hitGroupName = L"MyHitGroup";
 const wchar_t* c_raygenShaderName = L"MyRaygenShader";
@@ -739,14 +743,15 @@ void App3::CreateRootSignatures()
     // Global Root Signature
     // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
     {
-        CD3DX12_DESCRIPTOR_RANGE UAVDescriptor;
-        UAVDescriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+        CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2];
+        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);   // space 0: u0
+        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
 
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptor;
         SRVDescriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // t1:IndexBuffer, t2:VertexBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
-        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(1, &UAVDescriptor);
+        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(2, UAVDescriptors);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
         rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(1, &SRVDescriptor);
@@ -888,8 +893,27 @@ void App3::CreateRaytracingPipelineStateObject()
     PrintStateObjectDesc(raytracingPipeline);
 #endif
 
+    if(g_NVAPI_enabled)
+    {
+        NvAPI_Status NvapiStatus = NvAPI_D3D12_SetNvShaderExtnSlotSpace(m_dxrDevice.Get(), 1, 1);
+        if (NvapiStatus != NVAPI_OK)
+        {
+            assert(0);
+        }
+    }
+
     // Create the state object.
     ThrowIfFailed(m_dxrDevice->CreateStateObject(raytracingPipeline, IID_PPV_ARGS(&m_dxrStateObject)), L"Couldn't create DirectX Raytracing state object.\n");
+
+    if (g_NVAPI_enabled)
+    {
+        // Disable the NVAPI extension slot again after state object creation.
+        NvAPI_Status NvapiStatus = NvAPI_D3D12_SetNvShaderExtnSlotSpace(m_dxrDevice.Get(), ~0u, 1);
+        if (NvapiStatus != NVAPI_OK)
+        {
+            assert(0);
+        }
+    }
 }
 
 void App3::CreateDescriptorHeap()

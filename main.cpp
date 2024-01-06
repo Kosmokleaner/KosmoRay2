@@ -5,6 +5,7 @@
 #include "DX12Lib/Application.h"
 #include "App2/App2.h"
 #include "App3/App3.h"
+#include "external/nv-api/nvapi.h"
 
 #include <dxgidebug.h>
 
@@ -13,6 +14,7 @@
 #pragma comment(lib, "Shlwapi.lib") // PathRemoveFileSpecW()
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "D3DCompiler.lib")
+#pragma comment(lib, "external/nv-api/amd64/nvapi64.lib")
 
 void ReportLiveObjects()
 {
@@ -22,6 +24,8 @@ void ReportLiveObjects()
 //later    dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_IGNORE_INTERNAL);
 //later    dxgiDebug->Release();
 }
+
+extern bool g_NVAPI_enabled;
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
@@ -36,6 +40,17 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
         SetCurrentDirectoryW(path);
     }
 
+    NvAPI_Status NvapiStatus = NvAPI_Initialize();
+    if (NvapiStatus != NVAPI_OK)
+    {
+        printf("NVAPI ERROR %d\n", NvapiStatus);
+    }
+    else 
+    {
+        g_NVAPI_enabled = true;
+    }
+
+
     Application::Create(hInstance);
     {
 //        std::shared_ptr<App2> demo = std::make_shared<App2>(L"KosmoRay2 App2 DX12 Rasterization", 1280, 720);
@@ -43,6 +58,12 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
         retCode = Application::Get().Run(demo);
     }
     Application::Destroy();
+
+    if (NvapiStatus == NVAPI_OK)
+    {
+        NvAPI_Unload();
+        g_NVAPI_enabled = false;
+    }
 
     atexit(&ReportLiveObjects);
 

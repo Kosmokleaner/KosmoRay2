@@ -16,6 +16,10 @@
 #include "cellular.hlsl"
 #include "Helper.hlsl"
 
+#define NV_SHADER_EXTN_SLOT u1
+#define NV_SHADER_EXTN_REGISTER_SPACE space1
+#include "../../external/nv-api/nvHLSLExtns.h"
+
 RaytracingAccelerationStructure Scene : register(t0, space0);
 RWTexture2D<float4> RenderTarget : register(u0);
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
@@ -96,6 +100,8 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
 [shader("raygeneration")]
 void MyRaygenShader()
 {
+    uint startTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
+
     float2 lerpValues = (float2)DispatchRaysIndex() / (float2)DispatchRaysDimensions();
 
     float fracTime = g_sceneCB.sceneParam0.x;
@@ -141,6 +147,9 @@ void MyRaygenShader()
         RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
     else if (DispatchRaysIndex().y < 400)
  */
+       uint endTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
+//       float f = endTime * 0.1f;
+//      RenderTarget[DispatchRaysIndex().xy] = float4(f,f,f, 1.0f);
        RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
  //   else
 //        RenderTarget[DispatchRaysIndex().xy] = payload.color;
@@ -157,6 +166,8 @@ void MyRaygenShader()
             float2 cel = cellular(pos * 10.0f);
             col = 1.0f - cel.x;
         }
+
+
 
 //        if((payload.count % 2) == 1) {
             RenderTarget[DispatchRaysIndex().xy] = float4(col, 0, 0, 1);
