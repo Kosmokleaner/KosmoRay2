@@ -7,21 +7,25 @@ using namespace Microsoft::WRL;
 struct Mock12Device2 : public ID3D12Device2
 {
     ULONG m_dwRef = 0;
+    ComPtr<ID3D12Device2> redirect;
+
+    Mock12Device2(ComPtr<ID3D12Device2>& inRedirect)
+    {
+        redirect = inRedirect;
+    }
 
     BEGIN_INTERFACE
         virtual HRESULT STDMETHODCALLTYPE QueryInterface(
             /* [in] */ REFIID riid,
             /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
     {
-        __debugbreak();
-        return E_NOTIMPL;
+        return redirect->QueryInterface(riid, ppvObject);
     }
 
     virtual ULONG STDMETHODCALLTYPE AddRef(void)
     {
         return ++m_dwRef;
     }
-
 
     virtual ULONG STDMETHODCALLTYPE Release(void)
     {
@@ -80,7 +84,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppCommandQueue)
     {
-        return E_NOTIMPL;
+        return redirect->CreateCommandQueue(pDesc, riid, ppCommandQueue);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateCommandAllocator(
@@ -88,7 +92,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppCommandAllocator)
     {
-        return E_NOTIMPL;
+        return redirect->CreateCommandAllocator(type, riid, ppCommandAllocator);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateGraphicsPipelineState(
@@ -96,7 +100,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppPipelineState)
     {
-        return E_NOTIMPL;
+        return redirect->CreateGraphicsPipelineState(pDesc, riid, ppPipelineState);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateComputePipelineState(
@@ -115,7 +119,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppCommandList)
     {
-        return E_NOTIMPL;
+        return redirect->CreateCommandList(nodeMask, type, pCommandAllocator, pInitialState, riid, ppCommandList);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CheckFeatureSupport(
@@ -123,7 +127,7 @@ struct Mock12Device2 : public ID3D12Device2
         _Inout_updates_bytes_(FeatureSupportDataSize)  void* pFeatureSupportData,
         UINT FeatureSupportDataSize)
     {
-        return E_NOTIMPL;
+        return redirect->CheckFeatureSupport(Feature, pFeatureSupportData, FeatureSupportDataSize);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateDescriptorHeap(
@@ -131,14 +135,13 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppvHeap)
     {
-        return E_NOTIMPL;
+        return redirect->CreateDescriptorHeap(pDescriptorHeapDesc, riid, ppvHeap);
     }
 
     virtual UINT STDMETHODCALLTYPE GetDescriptorHandleIncrementSize(
         _In_  D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
     {
-        __debugbreak();
-        return 0;
+        return redirect->GetDescriptorHandleIncrementSize(DescriptorHeapType);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateRootSignature(
@@ -148,7 +151,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppvRootSignature)
     {
-        return E_NOTIMPL;
+        return redirect->CreateRootSignature(nodeMask, pBlobWithRootSignature, blobLengthInBytes, riid, ppvRootSignature);
     }
 
     virtual void STDMETHODCALLTYPE CreateConstantBufferView(
@@ -163,7 +166,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        __debugbreak();
+        redirect->CreateShaderResourceView(pResource, pDesc, DestDescriptor);
     }
 
     virtual void STDMETHODCALLTYPE CreateUnorderedAccessView(
@@ -172,7 +175,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        __debugbreak();
+        redirect->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, DestDescriptor);
     }
 
     virtual void STDMETHODCALLTYPE CreateRenderTargetView(
@@ -180,7 +183,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_RENDER_TARGET_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        __debugbreak();
+        redirect->CreateRenderTargetView(pResource, pDesc, DestDescriptor);
     }
 
     virtual void STDMETHODCALLTYPE CreateDepthStencilView(
@@ -188,14 +191,14 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        __debugbreak();
+        redirect->CreateDepthStencilView(pResource, pDesc, DestDescriptor);
     }
 
     virtual void STDMETHODCALLTYPE CreateSampler(
         _In_  const D3D12_SAMPLER_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
-        __debugbreak();
+        redirect->CreateSampler(pDesc, DestDescriptor);
     }
 
     virtual void STDMETHODCALLTYPE CopyDescriptors(
@@ -268,7 +271,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riidResource,
         _COM_Outptr_opt_  void** ppvResource)
     {
-        return E_NOTIMPL;
+        return redirect->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateHeap(
@@ -348,7 +351,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppFence)
     {
-        return E_NOTIMPL;
+        return redirect->CreateFence(InitialValue, Flags, riid, ppFence);
     }
 
     virtual HRESULT STDMETHODCALLTYPE GetDeviceRemovedReason(void)
@@ -426,27 +429,37 @@ struct Mock12Device2 : public ID3D12Device2
         _In_reads_(BlobLength)  const void* pLibraryBlob,
         SIZE_T BlobLength,
         REFIID riid,
-        _COM_Outptr_  void** ppPipelineLibrary);
+        _COM_Outptr_  void** ppPipelineLibrary)
+    {
+        return redirect->CreatePipelineLibrary(pLibraryBlob, BlobLength, riid, ppPipelineLibrary);
+    }
 
     virtual HRESULT STDMETHODCALLTYPE SetEventOnMultipleFenceCompletion(
         _In_reads_(NumFences)  ID3D12Fence* const* ppFences,
         _In_reads_(NumFences)  const UINT64* pFenceValues,
         UINT NumFences,
         D3D12_MULTIPLE_FENCE_WAIT_FLAGS Flags,
-        HANDLE hEvent);
+        HANDLE hEvent)
+    {
+        return redirect->SetEventOnMultipleFenceCompletion(ppFences, pFenceValues, NumFences, Flags, hEvent);
+    }
 
     virtual HRESULT STDMETHODCALLTYPE SetResidencyPriority(
         UINT NumObjects,
         _In_reads_(NumObjects)  ID3D12Pageable* const* ppObjects,
-        _In_reads_(NumObjects)  const D3D12_RESIDENCY_PRIORITY* pPriorities);
+        _In_reads_(NumObjects)  const D3D12_RESIDENCY_PRIORITY* pPriorities)
+    {
+        return redirect->SetResidencyPriority(NumObjects, ppObjects, pPriorities);
+    }
 
     // 
 
     virtual HRESULT STDMETHODCALLTYPE CreatePipelineState(
         const D3D12_PIPELINE_STATE_STREAM_DESC* pDesc,
         REFIID riid,
-        _COM_Outptr_  void** ppPipelineState);
-
-    ComPtr<ID3D12Device2> redirect;
+        _COM_Outptr_  void** ppPipelineState)
+    {
+        return redirect->CreatePipelineState(pDesc, riid, ppPipelineState);
+    }
 };
 
