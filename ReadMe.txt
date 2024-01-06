@@ -1,7 +1,18 @@
 KosmoRay2     by Martin Mittring    11/17/2022
 
+Multiple experiments in different Apps:
+  comment one of the lines starting with   std::shared_ptr<App2> demo = std::make_shared<App2>(L"KosmoRay2 App2 DX12 Rasterization", 1280, 720);
+  "App2": rasterization
+  "App3": ray tracing, Constructive Solid Geometry (CSG) Intersection of sphere and 3d mesh object
+
+
 todo:
-* 
+* implement more classic renderer stuff (Resource management, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
+* never quit while coding = renderer process
+* plugin concept ?
+* network
+* multi dfraw indirect
+* gaussian splatting ray tracer
 
 todo low prio:
 * fix: window resize crash
@@ -14,9 +25,13 @@ ThirdParty / Copyright:
 * LearningDirectX12 https://github.com/jpvanoosten/LearningDirectX12, MIT license
 * tiny_obj_loader, to load Alias Wavefront .obj files, MIT license
 * DearGPU, various helper code, WTFPL http://www.wtfpl.net
+* Cellular noise ("Worley noise") in 3D in GLSL. Stefan Gustavson MIT license. https://github.com/stegu/webgl-noise
 
 
- ==========================================
+
+==========================================
+
+References:
 
 
 Adding Ray tracing:

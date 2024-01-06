@@ -16,6 +16,9 @@
     <Filter Include="App3\Shaders">
       <UniqueIdentifier>{92cbc2f0-a089-4257-be3b-9160fe374ea9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Hidden">
+      <UniqueIdentifier>{518ff92b-f1c6-4461-819e-e4dda5315e65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="App2\shaders\VertexShader.hlsl">
@@ -63,8 +66,12 @@
     <ClCompile Include="DX12Lib\Helpers.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
-    <ClCompile Include="Mathlib.cpp" />
-    <ClCompile Include="RelativeMouseInput.cpp" />
+    <ClCompile Include="RelativeMouseInput.cpp">
+      <Filter>Hidden</Filter>
+    </ClCompile>
+    <ClCompile Include="Mathlib.cpp">
+      <Filter>Hidden</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -109,11 +116,15 @@
     <ClInclude Include="App3\shaders\RaytracingHlslCompat.h">
       <Filter>App3\Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="App3\external\tiny_obj_loader.h">
-      <Filter>App3</Filter>
+    <ClInclude Include="RelativeMouseInput.h">
+      <Filter>Hidden</Filter>
     </ClInclude>
-    <ClInclude Include="Mathlib.h" />
-    <ClInclude Include="RelativeMouseInput.h" />
+    <ClInclude Include="Mathlib.h">
+      <Filter>Hidden</Filter>
+    </ClInclude>
+    <ClInclude Include="App3\external\tiny_obj_loader.h">
+      <Filter>Hidden</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">
