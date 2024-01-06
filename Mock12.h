@@ -19,6 +19,13 @@ struct Mock12Device2 : public ID3D12Device2
             /* [in] */ REFIID riid,
             /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
     {
+        if(riid == __uuidof(ID3D12InfoQueue))
+            int d = 0;
+        else if (riid == __uuidof(ID3D12Device5))
+            int d = 0;
+        else
+            int d = 0;
+
         return redirect->QueryInterface(riid, ppvObject);
     }
 
@@ -36,7 +43,6 @@ struct Mock12Device2 : public ID3D12Device2
         }
         return m_dwRef;
     }
-
 
     // 
 
