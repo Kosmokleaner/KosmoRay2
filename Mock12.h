@@ -42,6 +42,13 @@ struct Mock12CommandQueue : public ID3D12CommandQueue
         redirect = inRedirect;
     }
 
+    BEGIN_INTERFACE virtual HRESULT STDMETHODCALLTYPE QueryInterface(
+            /* [in] */ REFIID riid,
+            /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
+    {
+        return redirect->QueryInterface(riid, ppvObject);
+    }
+
     virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
         _In_  REFGUID guid,
         _Inout_  UINT* pDataSize,
@@ -140,27 +147,27 @@ struct Mock12CommandQueue : public ID3D12CommandQueue
         ID3D12Fence* pFence,
         UINT64 Value)
     {
-        redirect->Signal(pFence, Value);
+        return redirect->Signal(pFence, Value);
     }
 
     virtual HRESULT STDMETHODCALLTYPE Wait(
         ID3D12Fence* pFence,
         UINT64 Value)
     {
-        redirect->Wait(pFence, Value);
+        return redirect->Wait(pFence, Value);
     }
 
     virtual HRESULT STDMETHODCALLTYPE GetTimestampFrequency(
         _Out_  UINT64* pFrequency)
     {
-        redirect->GetTimestampFrequency(pFrequency);
+        return redirect->GetTimestampFrequency(pFrequency);
     }
 
     virtual HRESULT STDMETHODCALLTYPE GetClockCalibration(
         _Out_  UINT64* pGpuTimestamp,
         _Out_  UINT64* pCpuTimestamp)
     {
-        redirect->GetClockCalibration(pGpuTimestamp, pCpuTimestamp);
+        return redirect->GetClockCalibration(pGpuTimestamp, pCpuTimestamp);
     }
 
 #if defined(_MSC_VER) || !defined(_WIN32)
@@ -1007,7 +1014,18 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppCommandQueue)
     {
-        return redirect->CreateCommandQueue(pDesc, riid, ppCommandQueue);
+        HRESULT ret = redirect->CreateCommandQueue(pDesc, riid, ppCommandQueue);
+
+        IUnknown* unk = *(IUnknown**)ppCommandQueue;
+        ID3D12CommandQueue* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12CommandQueue), (void**)&res);
+        if (res)
+        {
+            Mock12CommandQueue* mock = new Mock12CommandQueue(res);
+            *ppCommandQueue = (void*)mock;
+        }
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateCommandAllocator(
