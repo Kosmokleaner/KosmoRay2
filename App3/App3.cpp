@@ -577,7 +577,7 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
     preCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(castDown(m_raytracingOutput.Get()), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     commandList->ResourceBarrier(ARRAYSIZE(preCopyBarriers), preCopyBarriers);
 
-    commandList->CopyResource(renderTarget.Get(), m_raytracingOutput.Get());
+    commandList->CopyResource(castDown(renderTarget.Get()), castDown(m_raytracingOutput.Get()));
 
     D3D12_RESOURCE_BARRIER postCopyBarriers[2];
     postCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(castDown(renderTarget.Get()), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
