@@ -9,23 +9,65 @@ using namespace Microsoft::WRL;
 // Mock12Device2 : ID3D12InfoQueue
 // Mock12Device2 : ID3D12Device5
 // 
-// ID3D12CommandAllocator
-// ID3D12PipelineState
-// WIP ID3D12Resource
-// ID3D12Heap
-// ID3D12DeviceChild
-// ID3D12Pageable
-// ID3D12RootSignature
-// ID3D12Fence
+// TODO ID3D12CommandAllocator
+// TODO ID3D12PipelineState
+// DONE ID3D12Resource
+// TODO ID3D12Heap
+// TODO ID3D12DeviceChild
+// TODO ID3D12Pageable
+// TODO ID3D12RootSignature
+// TODO ID3D12Fence
+// WIP ID3D12CommandList
 
 void Mock12Test();
 
+#define IMPLEMENT_IUNKNOWN \
+    ULONG m_dwRef = 1; \
+    virtual ULONG STDMETHODCALLTYPE AddRef() \
+    { return ++m_dwRef; } \
+    virtual ULONG STDMETHODCALLTYPE Release() \
+    { if (--m_dwRef == 0) { delete this; return 0; } \
+        return m_dwRef; \
+    }
+
+/*struct Mock12CommandList : public ID3D12CommandList
+{
+    virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
+        _In_  REFGUID guid,
+        _Inout_  UINT* pDataSize,
+        _Out_writes_bytes_opt_(*pDataSize)  void* pData) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
+        _In_  REFGUID guid,
+        _In_  UINT DataSize,
+        _In_reads_bytes_opt_(DataSize)  const void* pData) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
+        _In_  REFGUID guid,
+        _In_opt_  const IUnknown* pData) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE SetName(
+        _In_z_  LPCWSTR Name) = 0;
+
+    //
+
+    virtual HRESULT STDMETHODCALLTYPE GetDevice(
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvDevice) = 0;
+
+    //
+
+    virtual D3D12_COMMAND_LIST_TYPE STDMETHODCALLTYPE GetType(void) = 0;
+};
+*/
+
 struct Mock12Resource : public ID3D12Resource
 {
+    IMPLEMENT_IUNKNOWN
+
     // {E4D1943F-0E48-4B63-8017-E9F8FC650C8C}
     static const GUID guid;
 
-    ULONG m_dwRef = 1;
     ComPtr<ID3D12Resource> redirect2;
 
     Mock12Resource(ID3D12Resource* inRedirect)
@@ -45,21 +87,6 @@ struct Mock12Resource : public ID3D12Resource
         }
 
         return redirect2->QueryInterface(riid, ppvObject);
-    }
-
-    virtual ULONG STDMETHODCALLTYPE AddRef(void)
-    {
-        return ++m_dwRef;
-    }
-
-    virtual ULONG STDMETHODCALLTYPE Release(void)
-    {
-        if (--m_dwRef == 0)
-        {
-            delete this;
-            return 0;
-        }
-        return m_dwRef;
     }
 
     //
@@ -188,7 +215,8 @@ inline ID3D12Resource* castDown(ID3D12Resource* res)
 
 struct Mock12Device2 : public ID3D12Device2
 {
-    ULONG m_dwRef = 1;
+    IMPLEMENT_IUNKNOWN
+
     ComPtr<ID3D12Device2> redirect;
 
     Mock12Device2(ComPtr<ID3D12Device2>& inRedirect)
@@ -209,21 +237,6 @@ struct Mock12Device2 : public ID3D12Device2
             int d = 0;
 
         return redirect->QueryInterface(riid, ppvObject);
-    }
-
-    virtual ULONG STDMETHODCALLTYPE AddRef(void)
-    {
-        return ++m_dwRef;
-    }
-
-    virtual ULONG STDMETHODCALLTYPE Release(void)
-    {
-        if (--m_dwRef == 0)
-        {
-            delete this;
-            return 0;
-        }
-        return m_dwRef;
     }
 
     // 
