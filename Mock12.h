@@ -18,6 +18,7 @@ using namespace Microsoft::WRL;
 // TODO ID3D12RootSignature
 // TODO ID3D12Fence
 // WIP ID3D12CommandList
+// WIP ID3D12CommandQueue
 
 void Mock12Test();
 
@@ -29,6 +30,152 @@ void Mock12Test();
     { if (--m_dwRef == 0) { delete this; return 0; } \
         return m_dwRef; \
     }
+
+struct Mock12CommandQueue : public ID3D12CommandQueue
+{
+    IMPLEMENT_IUNKNOWN
+
+    ComPtr<ID3D12CommandQueue> redirect;
+
+    Mock12CommandQueue(ID3D12CommandQueue* inRedirect)
+    {
+        redirect = inRedirect;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
+        _In_  REFGUID guid,
+        _Inout_  UINT* pDataSize,
+        _Out_writes_bytes_opt_(*pDataSize)  void* pData)
+    {
+        return redirect->GetPrivateData(guid, pDataSize, pData);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
+        _In_  REFGUID guid,
+        _In_  UINT DataSize,
+        _In_reads_bytes_opt_(DataSize)  const void* pData)
+    {
+        return redirect->SetPrivateData(guid, DataSize, pData);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
+        _In_  REFGUID guid,
+        _In_opt_  const IUnknown* pData)
+    {
+        return redirect->SetPrivateDataInterface(guid, pData);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetName(
+        _In_z_  LPCWSTR Name)
+    {
+        return redirect->SetName(Name);
+    }
+
+    // ID3D12DeviceChild
+
+    virtual HRESULT STDMETHODCALLTYPE GetDevice(
+        REFIID riid,
+        _COM_Outptr_opt_  void** ppvDevice)
+    {
+        return redirect->GetDevice(riid, ppvDevice);
+    }
+
+    //
+
+    virtual void STDMETHODCALLTYPE UpdateTileMappings(
+        _In_  ID3D12Resource* pResource,
+        UINT NumResourceRegions,
+        _In_reads_opt_(NumResourceRegions)  const D3D12_TILED_RESOURCE_COORDINATE* pResourceRegionStartCoordinates,
+        _In_reads_opt_(NumResourceRegions)  const D3D12_TILE_REGION_SIZE* pResourceRegionSizes,
+        _In_opt_  ID3D12Heap* pHeap,
+        UINT NumRanges,
+        _In_reads_opt_(NumRanges)  const D3D12_TILE_RANGE_FLAGS* pRangeFlags,
+        _In_reads_opt_(NumRanges)  const UINT* pHeapRangeStartOffsets,
+        _In_reads_opt_(NumRanges)  const UINT* pRangeTileCounts,
+        D3D12_TILE_MAPPING_FLAGS Flags)
+    {
+        redirect->UpdateTileMappings(pResource, NumResourceRegions, pResourceRegionStartCoordinates, pResourceRegionSizes, pHeap, NumRanges, pRangeFlags, pHeapRangeStartOffsets, pRangeTileCounts, Flags);
+    }
+
+    virtual void STDMETHODCALLTYPE CopyTileMappings(
+        _In_  ID3D12Resource* pDstResource,
+        _In_  const D3D12_TILED_RESOURCE_COORDINATE* pDstRegionStartCoordinate,
+        _In_  ID3D12Resource* pSrcResource,
+        _In_  const D3D12_TILED_RESOURCE_COORDINATE* pSrcRegionStartCoordinate,
+        _In_  const D3D12_TILE_REGION_SIZE* pRegionSize,
+        D3D12_TILE_MAPPING_FLAGS Flags)
+    {
+        redirect->CopyTileMappings(pDstResource, pDstRegionStartCoordinate, pSrcResource, pSrcRegionStartCoordinate, pRegionSize, Flags);
+    }
+
+    virtual void STDMETHODCALLTYPE ExecuteCommandLists(
+        _In_  UINT NumCommandLists,
+        _In_reads_(NumCommandLists)  ID3D12CommandList* const* ppCommandLists)
+    {
+        redirect->ExecuteCommandLists(NumCommandLists, ppCommandLists);
+    }
+
+    virtual void STDMETHODCALLTYPE SetMarker(
+        UINT Metadata,
+        _In_reads_bytes_opt_(Size)  const void* pData,
+        UINT Size)
+    {
+        redirect->SetMarker(Metadata, pData, Size);
+    }
+
+    virtual void STDMETHODCALLTYPE BeginEvent(
+        UINT Metadata,
+        _In_reads_bytes_opt_(Size)  const void* pData,
+        UINT Size)
+    {
+        redirect->BeginEvent(Metadata, pData, Size);
+    }
+
+    virtual void STDMETHODCALLTYPE EndEvent(void)
+    {
+        redirect->EndEvent();
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Signal(
+        ID3D12Fence* pFence,
+        UINT64 Value)
+    {
+        redirect->Signal(pFence, Value);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Wait(
+        ID3D12Fence* pFence,
+        UINT64 Value)
+    {
+        redirect->Wait(pFence, Value);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE GetTimestampFrequency(
+        _Out_  UINT64* pFrequency)
+    {
+        redirect->GetTimestampFrequency(pFrequency);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE GetClockCalibration(
+        _Out_  UINT64* pGpuTimestamp,
+        _Out_  UINT64* pCpuTimestamp)
+    {
+        redirect->GetClockCalibration(pGpuTimestamp, pCpuTimestamp);
+    }
+
+#if defined(_MSC_VER) || !defined(_WIN32)
+    virtual D3D12_COMMAND_QUEUE_DESC STDMETHODCALLTYPE GetDesc(void)
+    {
+        return redirect->GetDesc();
+    }
+#else
+    virtual D3D12_COMMAND_QUEUE_DESC* STDMETHODCALLTYPE GetDesc(
+        D3D12_COMMAND_QUEUE_DESC* RetVal)
+    {
+        return redirect->GetDesc(RetVal);
+    }
+#endif
+};
 
 struct Mock12CommandList : public ID3D12GraphicsCommandList4
 {
