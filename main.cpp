@@ -29,6 +29,9 @@ extern bool g_NVAPI_enabled;
 
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLine, int nCmdShow)
 {
+    void Mock12Test();
+    Mock12Test();
+
     int retCode = 0;
 
     // Set the working directory to the path of the executable.

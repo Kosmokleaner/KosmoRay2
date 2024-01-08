@@ -7,6 +7,7 @@
 #include "RelativeMouseInput.h"
 
 #include "Mathlib.h" // clamp()
+#include <Mock12.h>
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -88,7 +89,8 @@ void App2::UpdateBufferResource(
         IID_PPV_ARGS(pDestinationResource)));
 
     {
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(*pDestinationResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+        ID3D12Resource *dst = castDown(*pDestinationResource);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(dst, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
         commandList->ResourceBarrier(1, &barrier);
     }
@@ -112,8 +114,10 @@ void App2::UpdateBufferResource(
         subresourceData.RowPitch = bufferSize;
         subresourceData.SlicePitch = subresourceData.RowPitch;
 
+        ID3D12Resource* dst = castDown(*pDestinationResource);
+        ID3D12Resource* inter = castDown(*pIntermediateResource);
         UpdateSubresources(commandList.Get(),
-            *pDestinationResource, *pIntermediateResource,
+            dst, inter,
             0, 0, 1, &subresourceData);
     }
 }
@@ -413,6 +417,8 @@ void App2::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> commandList,
     ComPtr<ID3D12Resource> resource,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
+    resource = castDown(resource.Get());
+
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
         resource.Get(),
         beforeState, afterState);

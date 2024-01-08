@@ -46,7 +46,7 @@ inline void ThrowIfFailed(HRESULT hr, const wchar_t* msg = 0)
     if (FAILED(hr))
     {
         if(msg)
-            OutputDebugString(msg);
+            OutputDebugStringW(msg);
         throw std::exception();
     }
 }

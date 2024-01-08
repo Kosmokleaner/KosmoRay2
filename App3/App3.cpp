@@ -12,6 +12,7 @@
 #include "external/tiny_obj_loader.h"
 
 #include "Mathlib.h"
+#include <Mock12.h>
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -170,8 +171,10 @@ void App3::UpdateBufferResource(
             nullptr,
             IID_PPV_ARGS(pIntermediateResource)));
 
+        ID3D12Resource* inter = castDown(*pIntermediateResource);
+
         {
-            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(*pDestinationResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(inter, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
             commandList->ResourceBarrier(1, &barrier);
         }
@@ -181,8 +184,9 @@ void App3::UpdateBufferResource(
         subresourceData.RowPitch = bufferSize;
         subresourceData.SlicePitch = subresourceData.RowPitch;
 
+        ID3D12Resource* dst = castDown(*pDestinationResource);
         UpdateSubresources(commandList.Get(),
-            *pDestinationResource, *pIntermediateResource,
+            dst, inter,
             0, 0, 1, &subresourceData);
     }
 }
@@ -499,7 +503,7 @@ void App3::TransitionResource(ComPtr<ID3D12GraphicsCommandList2> commandList,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        resource.Get(),
+        castDown(resource.Get()),
         beforeState, afterState);
 
     commandList->ResourceBarrier(1, &barrier);
@@ -567,9 +571,9 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
     auto renderTarget = m_pWindow->GetCurrentBackBuffer();
 
     D3D12_RESOURCE_BARRIER preCopyBarriers[2];
-    preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+    preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(castDown(renderTarget.Get()), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 //    preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
-    preCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_raytracingOutput.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    preCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(castDown(m_raytracingOutput.Get()), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     commandList->ResourceBarrier(ARRAYSIZE(preCopyBarriers), preCopyBarriers);
 
     commandList->CopyResource(renderTarget.Get(), m_raytracingOutput.Get());
@@ -1157,7 +1161,7 @@ void App3::BuildAccelerationStructures()
     auto BuildAccelerationStructure = [&](auto* raytracingCommandList)
     {
         raytracingCommandList->BuildRaytracingAccelerationStructure(&bottomLevelBuildDesc, 0, nullptr);
-        CD3DX12_RESOURCE_BARRIER a = CD3DX12_RESOURCE_BARRIER::UAV(m_bottomLevelAccelerationStructure.Get());
+        CD3DX12_RESOURCE_BARRIER a = CD3DX12_RESOURCE_BARRIER::UAV(castDown(m_bottomLevelAccelerationStructure.Get()));
         commandList->ResourceBarrier(1, &a);
         raytracingCommandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
     };

@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d12.h>
+#include <stdio.h>
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -10,21 +11,26 @@ using namespace Microsoft::WRL;
 // 
 // ID3D12CommandAllocator
 // ID3D12PipelineState
-// ID3D12Resource
+// WIP ID3D12Resource
 // ID3D12Heap
 // ID3D12DeviceChild
 // ID3D12Pageable
 // ID3D12RootSignature
 // ID3D12Fence
 
+void Mock12Test();
+
 struct Mock12Resource : public ID3D12Resource
 {
-    ULONG m_dwRef = 0;
-    ComPtr<ID3D12Resource> redirect;
+    // {E4D1943F-0E48-4B63-8017-E9F8FC650C8C}
+    static const GUID guid;
 
-    Mock12Resource(ComPtr<ID3D12Resource>& inRedirect)
+    ULONG m_dwRef = 1;
+    ComPtr<ID3D12Resource> redirect2;
+
+    Mock12Resource(ID3D12Resource* inRedirect)
     {
-        redirect = inRedirect;
+        redirect2 = inRedirect;
     }
 
     BEGIN_INTERFACE
@@ -32,7 +38,13 @@ struct Mock12Resource : public ID3D12Resource
             /* [in] */ REFIID riid,
             /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
     {
-        return redirect->QueryInterface(riid, ppvObject);
+        if(riid == guid)
+        {
+            *ppvObject = redirect2.Get();
+            return S_OK;
+        }
+
+        return redirect2->QueryInterface(riid, ppvObject);
     }
 
     virtual ULONG STDMETHODCALLTYPE AddRef(void)
@@ -57,7 +69,7 @@ struct Mock12Resource : public ID3D12Resource
         _Inout_  UINT* pDataSize,
         _Out_writes_bytes_opt_(*pDataSize)  void* pData)
     {
-        return redirect->GetPrivateData(guid, pDataSize, pData);
+        return redirect2->GetPrivateData(guid, pDataSize, pData);
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
@@ -65,20 +77,23 @@ struct Mock12Resource : public ID3D12Resource
         _In_  UINT DataSize,
         _In_reads_bytes_opt_(DataSize)  const void* pData)
     {
-        return redirect->SetPrivateData(guid, DataSize, pData);
+        return redirect2->SetPrivateData(guid, DataSize, pData);
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
         _In_  REFGUID guid,
         _In_opt_  const IUnknown* pData)
     {
-        return redirect->SetPrivateDataInterface(guid, pData);
+        return redirect2->SetPrivateDataInterface(guid, pData);
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetName(
         _In_z_  LPCWSTR Name)
     {
-        return redirect->SetName(Name);
+        char str[1024];
+        sprintf_s(str, sizeof(str), "SetName %p: '%ls'\n", this, Name);
+        OutputDebugStringA(str);
+        return redirect2->SetName(Name);
     }
 
     //
@@ -87,7 +102,7 @@ struct Mock12Resource : public ID3D12Resource
         REFIID riid,
         _COM_Outptr_opt_  void** ppvDevice)
     {
-        return redirect->GetDevice(riid, ppvDevice);
+        return redirect2->GetDevice(riid, ppvDevice);
     }
 
     //
@@ -97,20 +112,20 @@ struct Mock12Resource : public ID3D12Resource
         _In_opt_  const D3D12_RANGE* pReadRange,
         _Outptr_opt_result_bytebuffer_(_Inexpressible_("Dependent on resource"))  void** ppData)
     {
-        return redirect->Map(Subresource, pReadRange, ppData);
+        return redirect2->Map(Subresource, pReadRange, ppData);
     }
 
     virtual void STDMETHODCALLTYPE Unmap(
         UINT Subresource,
         _In_opt_  const D3D12_RANGE* pWrittenRange)
     {
-        return redirect->Unmap(Subresource, pWrittenRange);
+        return redirect2->Unmap(Subresource, pWrittenRange);
     }
 
 #if defined(_MSC_VER) || !defined(_WIN32)
     virtual D3D12_RESOURCE_DESC STDMETHODCALLTYPE GetDesc(void)
     {
-        return redirect->GetDesc();
+        return redirect2->GetDesc();
     }
 
 #else
@@ -123,7 +138,7 @@ struct Mock12Resource : public ID3D12Resource
 
     virtual D3D12_GPU_VIRTUAL_ADDRESS STDMETHODCALLTYPE GetGPUVirtualAddress(void)
     {
-        return redirect->GetGPUVirtualAddress();
+        return redirect2->GetGPUVirtualAddress();
     }
 
     virtual HRESULT STDMETHODCALLTYPE WriteToSubresource(
@@ -133,7 +148,7 @@ struct Mock12Resource : public ID3D12Resource
         UINT SrcRowPitch,
         UINT SrcDepthPitch)
     {
-        return redirect->WriteToSubresource(DstSubresource, pDstBox, pSrcData, SrcRowPitch, SrcDepthPitch);
+        return redirect2->WriteToSubresource(DstSubresource, pDstBox, pSrcData, SrcRowPitch, SrcDepthPitch);
     }
 
     virtual HRESULT STDMETHODCALLTYPE ReadFromSubresource(
@@ -143,20 +158,37 @@ struct Mock12Resource : public ID3D12Resource
         UINT SrcSubresource,
         _In_opt_  const D3D12_BOX* pSrcBox)
     {
-        return redirect->ReadFromSubresource(pDstData, DstRowPitch, DstDepthPitch, SrcSubresource, pSrcBox);
+        return redirect2->ReadFromSubresource(pDstData, DstRowPitch, DstDepthPitch, SrcSubresource, pSrcBox);
     }
 
     virtual HRESULT STDMETHODCALLTYPE GetHeapProperties(
         _Out_opt_  D3D12_HEAP_PROPERTIES* pHeapProperties,
         _Out_opt_  D3D12_HEAP_FLAGS* pHeapFlags)
     {
-        return redirect->GetHeapProperties(pHeapProperties, pHeapFlags);
+        return redirect2->GetHeapProperties(pHeapProperties, pHeapFlags);
     }
 };
 
+inline ID3D12Resource* castDown(ID3D12Resource* res)
+{
+    if (res)
+    {
+        ID3D12Resource* tmp = nullptr;
+        if (res->QueryInterface(Mock12Resource::guid, (void**)&tmp) == S_OK)
+        {
+            return tmp;
+        }
+            
+    }
+
+    return res;
+}
+
+// ----------------------------------------------------------------------------
+
 struct Mock12Device2 : public ID3D12Device2
 {
-    ULONG m_dwRef = 0;
+    ULONG m_dwRef = 1;
     ComPtr<ID3D12Device2> redirect;
 
     Mock12Device2(ComPtr<ID3D12Device2>& inRedirect)
@@ -320,6 +352,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
+        pResource = castDown(pResource);
         redirect->CreateShaderResourceView(pResource, pDesc, DestDescriptor);
     }
 
@@ -329,6 +362,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
+        pResource = castDown(pResource);
         redirect->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, DestDescriptor);
     }
 
@@ -337,6 +371,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_RENDER_TARGET_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
+        pResource = castDown(pResource);
         redirect->CreateRenderTargetView(pResource, pDesc, DestDescriptor);
     }
 
@@ -345,6 +380,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc,
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
+        pResource = castDown(pResource);
         redirect->CreateDepthStencilView(pResource, pDesc, DestDescriptor);
     }
 
@@ -421,7 +457,18 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riidResource,
         _COM_Outptr_opt_  void** ppvResource)
     {
-        return redirect->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
+        HRESULT ret = redirect->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
+
+        IUnknown* unk = *(IUnknown**)ppvResource;
+        ID3D12Resource* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if (res)
+        {
+            Mock12Resource *mock = new Mock12Resource(res);
+            *ppvResource = (void*)mock;
+        }
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateHeap(
@@ -429,7 +476,15 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvHeap)
     {
-        return redirect->CreateHeap(pDesc, riid, ppvHeap);
+        HRESULT ret = redirect->CreateHeap(pDesc, riid, ppvHeap);
+
+        IUnknown* unk = *(IUnknown**)ppvHeap;
+        ID3D12Resource* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if (res)
+            __debugbreak();
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreatePlacedResource(
@@ -441,7 +496,15 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvResource)
     {
-        return redirect->CreatePlacedResource(pHeap, HeapOffset, pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
+        HRESULT ret = redirect->CreatePlacedResource(pHeap, HeapOffset, pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
+
+        IUnknown* unk = *(IUnknown**)ppvResource;
+        ID3D12Resource *res = nullptr; 
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if(res)
+            __debugbreak();
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateReservedResource(
@@ -451,7 +514,15 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvResource)
     {
-        return redirect->CreateReservedResource(pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
+        HRESULT ret = redirect->CreateReservedResource(pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
+
+        IUnknown* unk = *(IUnknown**)ppvResource;
+        ID3D12Resource* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if (res)
+            __debugbreak();
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE CreateSharedHandle(
@@ -469,7 +540,15 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvObj)
     {
-        return redirect->OpenSharedHandle(NTHandle, riid, ppvObj);
+        HRESULT ret = redirect->OpenSharedHandle(NTHandle, riid, ppvObj);
+
+        IUnknown* unk = *(IUnknown**)ppvObj;
+        ID3D12Resource* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if (res)
+            __debugbreak();
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE OpenSharedHandleByName(
@@ -527,7 +606,15 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvHeap)
     {
-        return redirect->CreateQueryHeap(pDesc, riid, ppvHeap);
+        HRESULT ret = redirect->CreateQueryHeap(pDesc, riid, ppvHeap);
+
+        IUnknown* unk = *(IUnknown**)ppvHeap;
+        ID3D12Resource* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if (res)
+            __debugbreak();
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetStablePowerState(
@@ -542,7 +629,15 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvCommandSignature)
     {
-        return redirect->CreateCommandSignature(pDesc, pRootSignature, riid, ppvCommandSignature);
+        HRESULT ret = redirect->CreateCommandSignature(pDesc, pRootSignature, riid, ppvCommandSignature);
+
+        IUnknown* unk = *(IUnknown**)ppvCommandSignature;
+        ID3D12Resource* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
+        if (res)
+            __debugbreak();
+
+        return ret;
     }
 
     virtual void STDMETHODCALLTYPE GetResourceTiling(

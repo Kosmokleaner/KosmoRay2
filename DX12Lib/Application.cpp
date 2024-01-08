@@ -166,7 +166,8 @@ ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
 
     ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&_d3d12Device2)));
 
-    ComPtr<ID3D12Device2> d3d12Device2 = new Mock12Device2(_d3d12Device2);
+//    ComPtr<ID3D12Device2> d3d12Device2 = new Mock12Device2(_d3d12Device2);
+    ComPtr<ID3D12Device2> d3d12Device2 = _d3d12Device2;
 
 
 //    NAME_D3D12_OBJECT(d3d12Device2);

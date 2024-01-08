@@ -7,6 +7,7 @@ Multiple experiments in different Apps:
 
 
 todo:
+* remove C++ exception handling
 * implement more classic renderer stuff (Resource management / barriers, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
 * never quit while coding = renderer process
 * plugin concept ?
