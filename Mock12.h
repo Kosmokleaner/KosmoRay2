@@ -30,13 +30,13 @@ void Mock12Test();
         return m_dwRef; \
     }
 
-struct Mock12CommandList : public ID3D12CommandList
+struct Mock12CommandList : public ID3D12GraphicsCommandList4
 {
     IMPLEMENT_IUNKNOWN
 
-    ComPtr<ID3D12CommandList> redirect;
+    ComPtr<ID3D12GraphicsCommandList4> redirect;
 
-    Mock12CommandList(ID3D12CommandList* inRedirect)
+    Mock12CommandList(ID3D12GraphicsCommandList4* inRedirect)
     {
         redirect = inRedirect;
     }
@@ -70,7 +70,7 @@ struct Mock12CommandList : public ID3D12CommandList
         return redirect->SetName(Name);
     }
 
-    //
+    // ID3D12DeviceChild
 
     virtual HRESULT STDMETHODCALLTYPE GetDevice(
         REFIID riid,
@@ -79,11 +79,561 @@ struct Mock12CommandList : public ID3D12CommandList
         return redirect->GetDevice(riid, ppvDevice);
     }
 
-    //
+    // ID3D12CommandList
 
     virtual D3D12_COMMAND_LIST_TYPE STDMETHODCALLTYPE GetType(void)
     {
         return redirect->GetType();
+    }
+
+    // ID3D12GraphicsCommandList
+
+    virtual HRESULT STDMETHODCALLTYPE Close(void)
+    {
+        return redirect->Close();
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Reset(
+        _In_  ID3D12CommandAllocator* pAllocator,
+        _In_opt_  ID3D12PipelineState* pInitialState) 
+    {
+        return redirect->Reset(pAllocator, pInitialState);
+    }
+
+    virtual void STDMETHODCALLTYPE ClearState(
+        _In_opt_  ID3D12PipelineState* pPipelineState)
+    {
+        return redirect->ClearState(pPipelineState);
+    }
+
+    virtual void STDMETHODCALLTYPE DrawInstanced(
+        _In_  UINT VertexCountPerInstance,
+        _In_  UINT InstanceCount,
+        _In_  UINT StartVertexLocation,
+        _In_  UINT StartInstanceLocation)
+    {
+        return redirect->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE DrawIndexedInstanced(
+        _In_  UINT IndexCountPerInstance,
+        _In_  UINT InstanceCount,
+        _In_  UINT StartIndexLocation,
+        _In_  INT BaseVertexLocation,
+        _In_  UINT StartInstanceLocation)
+    {
+        redirect->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE Dispatch(
+        _In_  UINT ThreadGroupCountX,
+        _In_  UINT ThreadGroupCountY,
+        _In_  UINT ThreadGroupCountZ)
+    {
+        redirect->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
+    }
+
+    virtual void STDMETHODCALLTYPE CopyBufferRegion(
+        _In_  ID3D12Resource* pDstBuffer,
+        UINT64 DstOffset,
+        _In_  ID3D12Resource* pSrcBuffer,
+        UINT64 SrcOffset,
+        UINT64 NumBytes)
+    {
+        redirect->CopyBufferRegion(pDstBuffer, DstOffset, pSrcBuffer, SrcOffset, NumBytes);
+    }
+
+    virtual void STDMETHODCALLTYPE CopyTextureRegion(
+        _In_  const D3D12_TEXTURE_COPY_LOCATION* pDst,
+        UINT DstX,
+        UINT DstY,
+        UINT DstZ,
+        _In_  const D3D12_TEXTURE_COPY_LOCATION* pSrc,
+        _In_opt_  const D3D12_BOX* pSrcBox)
+    {
+        redirect->CopyTextureRegion(pDst, DstX, DstY, DstZ, pSrc, pSrcBox);
+    }
+
+    virtual void STDMETHODCALLTYPE CopyResource(
+        _In_  ID3D12Resource* pDstResource,
+        _In_  ID3D12Resource* pSrcResource)
+    {
+        redirect->CopyResource(pDstResource, pSrcResource);
+    }
+
+    virtual void STDMETHODCALLTYPE CopyTiles(
+        _In_  ID3D12Resource* pTiledResource,
+        _In_  const D3D12_TILED_RESOURCE_COORDINATE* pTileRegionStartCoordinate,
+        _In_  const D3D12_TILE_REGION_SIZE* pTileRegionSize,
+        _In_  ID3D12Resource* pBuffer,
+        UINT64 BufferStartOffsetInBytes,
+        D3D12_TILE_COPY_FLAGS Flags)
+    {
+        redirect->CopyTiles(pTiledResource, pTileRegionStartCoordinate, pTileRegionSize, pBuffer, BufferStartOffsetInBytes, Flags);
+    }
+
+    virtual void STDMETHODCALLTYPE ResolveSubresource(
+        _In_  ID3D12Resource* pDstResource,
+        _In_  UINT DstSubresource,
+        _In_  ID3D12Resource* pSrcResource,
+        _In_  UINT SrcSubresource,
+        _In_  DXGI_FORMAT Format)
+    {
+        redirect->ResolveSubresource(pDstResource, DstSubresource, pSrcResource, SrcSubresource, Format);
+    }
+
+    virtual void STDMETHODCALLTYPE IASetPrimitiveTopology(
+        _In_  D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology)
+    {
+        redirect->IASetPrimitiveTopology(PrimitiveTopology);
+    }
+
+    virtual void STDMETHODCALLTYPE RSSetViewports(
+        _In_range_(0, D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE)  UINT NumViewports,
+        _In_reads_(NumViewports)  const D3D12_VIEWPORT* pViewports)
+    {
+        redirect->RSSetViewports(NumViewports, pViewports);
+    }
+
+    virtual void STDMETHODCALLTYPE RSSetScissorRects(
+        _In_range_(0, D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE)  UINT NumRects,
+        _In_reads_(NumRects)  const D3D12_RECT* pRects)
+    {
+        redirect->RSSetScissorRects(NumRects, pRects);
+    }
+
+    virtual void STDMETHODCALLTYPE OMSetBlendFactor(
+        _In_reads_opt_(4)  const FLOAT BlendFactor[4])
+    {
+        redirect->OMSetBlendFactor(BlendFactor);
+    }
+
+    virtual void STDMETHODCALLTYPE OMSetStencilRef(
+        _In_  UINT StencilRef)
+    {
+        redirect->OMSetStencilRef(StencilRef);
+    }
+
+    virtual void STDMETHODCALLTYPE SetPipelineState(
+        _In_  ID3D12PipelineState* pPipelineState)
+    {
+        redirect->SetPipelineState(pPipelineState);
+    }
+
+    virtual void STDMETHODCALLTYPE ResourceBarrier(
+        _In_  UINT NumBarriers,
+        _In_reads_(NumBarriers)  const D3D12_RESOURCE_BARRIER* pBarriers)
+    {
+        redirect->ResourceBarrier(NumBarriers, pBarriers);
+    }
+
+    virtual void STDMETHODCALLTYPE ExecuteBundle(
+        _In_  ID3D12GraphicsCommandList* pCommandList)
+    {
+        redirect->ExecuteBundle(pCommandList);
+    }
+
+    virtual void STDMETHODCALLTYPE SetDescriptorHeaps(
+        _In_  UINT NumDescriptorHeaps,
+        _In_reads_(NumDescriptorHeaps)  ID3D12DescriptorHeap* const* ppDescriptorHeaps)
+    {
+        redirect->SetDescriptorHeaps(NumDescriptorHeaps, ppDescriptorHeaps);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRootSignature(
+        _In_opt_  ID3D12RootSignature* pRootSignature)
+    {
+        redirect->SetComputeRootSignature(pRootSignature);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRootSignature(
+        _In_opt_  ID3D12RootSignature* pRootSignature)
+    {
+        redirect->SetGraphicsRootSignature(pRootSignature);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRootDescriptorTable(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor)
+    {
+        redirect->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRootDescriptorTable(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor)
+    {
+        redirect->SetGraphicsRootDescriptorTable(RootParameterIndex, BaseDescriptor);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRoot32BitConstant(
+        _In_  UINT RootParameterIndex,
+        _In_  UINT SrcData,
+        _In_  UINT DestOffsetIn32BitValues)
+    {
+        redirect->SetComputeRoot32BitConstant(RootParameterIndex, SrcData, DestOffsetIn32BitValues);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRoot32BitConstant(
+        _In_  UINT RootParameterIndex,
+        _In_  UINT SrcData,
+        _In_  UINT DestOffsetIn32BitValues)
+    {
+        redirect->SetGraphicsRoot32BitConstant(RootParameterIndex, SrcData, DestOffsetIn32BitValues);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRoot32BitConstants(
+        _In_  UINT RootParameterIndex,
+        _In_  UINT Num32BitValuesToSet,
+        _In_reads_(Num32BitValuesToSet * sizeof(UINT))  const void* pSrcData,
+        _In_  UINT DestOffsetIn32BitValues)
+    {
+        redirect->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValuesToSet, pSrcData, DestOffsetIn32BitValues);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRoot32BitConstants(
+        _In_  UINT RootParameterIndex,
+        _In_  UINT Num32BitValuesToSet,
+        _In_reads_(Num32BitValuesToSet * sizeof(UINT))  const void* pSrcData,
+        _In_  UINT DestOffsetIn32BitValues)
+    {
+        redirect->SetGraphicsRoot32BitConstants(RootParameterIndex, Num32BitValuesToSet, pSrcData, DestOffsetIn32BitValues);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRootConstantBufferView(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS BufferLocation)
+    {
+        redirect->SetComputeRootConstantBufferView(RootParameterIndex, BufferLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRootConstantBufferView(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS BufferLocation)
+    {
+        redirect->SetGraphicsRootConstantBufferView(RootParameterIndex, BufferLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRootShaderResourceView(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS BufferLocation)
+    {
+        redirect->SetComputeRootShaderResourceView(RootParameterIndex, BufferLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRootShaderResourceView(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS BufferLocation)
+    {
+        redirect->SetGraphicsRootShaderResourceView(RootParameterIndex, BufferLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE SetComputeRootUnorderedAccessView(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS BufferLocation)
+    {
+        redirect->SetComputeRootUnorderedAccessView(RootParameterIndex, BufferLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE SetGraphicsRootUnorderedAccessView(
+        _In_  UINT RootParameterIndex,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS BufferLocation)
+    {
+        redirect->SetGraphicsRootUnorderedAccessView(RootParameterIndex, BufferLocation);
+    }
+
+    virtual void STDMETHODCALLTYPE IASetIndexBuffer(
+        _In_opt_  const D3D12_INDEX_BUFFER_VIEW* pView)
+    {
+        redirect->IASetIndexBuffer(pView);
+    }
+
+    virtual void STDMETHODCALLTYPE IASetVertexBuffers(
+        _In_  UINT StartSlot,
+        _In_  UINT NumViews,
+        _In_reads_opt_(NumViews)  const D3D12_VERTEX_BUFFER_VIEW* pViews)
+    {
+        redirect->IASetVertexBuffers(StartSlot, NumViews, pViews);
+    }
+
+    virtual void STDMETHODCALLTYPE SOSetTargets(
+        _In_  UINT StartSlot,
+        _In_  UINT NumViews,
+        _In_reads_opt_(NumViews)  const D3D12_STREAM_OUTPUT_BUFFER_VIEW* pViews)
+    {
+        redirect->SOSetTargets(StartSlot, NumViews, pViews);
+    }
+
+    virtual void STDMETHODCALLTYPE OMSetRenderTargets(
+        _In_  UINT NumRenderTargetDescriptors,
+        _In_opt_  const D3D12_CPU_DESCRIPTOR_HANDLE* pRenderTargetDescriptors,
+        _In_  BOOL RTsSingleHandleToDescriptorRange,
+        _In_opt_  const D3D12_CPU_DESCRIPTOR_HANDLE* pDepthStencilDescriptor)
+    {
+        redirect->OMSetRenderTargets(NumRenderTargetDescriptors, pRenderTargetDescriptors, RTsSingleHandleToDescriptorRange, pDepthStencilDescriptor);
+    }
+
+    virtual void STDMETHODCALLTYPE ClearDepthStencilView(
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView,
+        _In_  D3D12_CLEAR_FLAGS ClearFlags,
+        _In_  FLOAT Depth,
+        _In_  UINT8 Stencil,
+        _In_  UINT NumRects,
+        _In_reads_(NumRects)  const D3D12_RECT* pRects)
+    {
+        redirect->ClearDepthStencilView(DepthStencilView, ClearFlags, Depth, Stencil, NumRects, pRects);
+    }
+
+    virtual void STDMETHODCALLTYPE ClearRenderTargetView(
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView,
+        _In_  const FLOAT ColorRGBA[4],
+        _In_  UINT NumRects,
+        _In_reads_(NumRects)  const D3D12_RECT* pRects)
+    {
+        redirect->ClearRenderTargetView(RenderTargetView, ColorRGBA, NumRects, pRects);
+    }
+
+    virtual void STDMETHODCALLTYPE ClearUnorderedAccessViewUint(
+        _In_  D3D12_GPU_DESCRIPTOR_HANDLE ViewGPUHandleInCurrentHeap,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE ViewCPUHandle,
+        _In_  ID3D12Resource* pResource,
+        _In_  const UINT Values[4],
+        _In_  UINT NumRects,
+        _In_reads_(NumRects)  const D3D12_RECT* pRects)
+    {
+        redirect->ClearUnorderedAccessViewUint(ViewGPUHandleInCurrentHeap, ViewCPUHandle, pResource, Values, NumRects, pRects);
+    }
+
+    virtual void STDMETHODCALLTYPE ClearUnorderedAccessViewFloat(
+        _In_  D3D12_GPU_DESCRIPTOR_HANDLE ViewGPUHandleInCurrentHeap,
+        _In_  D3D12_CPU_DESCRIPTOR_HANDLE ViewCPUHandle,
+        _In_  ID3D12Resource* pResource,
+        _In_  const FLOAT Values[4],
+        _In_  UINT NumRects,
+        _In_reads_(NumRects)  const D3D12_RECT* pRects)
+    {
+        redirect->ClearUnorderedAccessViewFloat(ViewGPUHandleInCurrentHeap, ViewCPUHandle, pResource, Values, NumRects, pRects);
+    }
+
+    virtual void STDMETHODCALLTYPE DiscardResource(
+        _In_  ID3D12Resource* pResource,
+        _In_opt_  const D3D12_DISCARD_REGION* pRegion)
+    {
+        redirect->DiscardResource(pResource, pRegion);
+    }
+
+    virtual void STDMETHODCALLTYPE BeginQuery(
+        _In_  ID3D12QueryHeap* pQueryHeap,
+        _In_  D3D12_QUERY_TYPE Type,
+        _In_  UINT Index)
+    {
+        redirect->BeginQuery(pQueryHeap, Type, Index);
+    }
+
+    virtual void STDMETHODCALLTYPE EndQuery(
+        _In_  ID3D12QueryHeap* pQueryHeap,
+        _In_  D3D12_QUERY_TYPE Type,
+        _In_  UINT Index)
+    {
+        redirect->EndQuery(pQueryHeap, Type, Index);
+    }
+
+    virtual void STDMETHODCALLTYPE ResolveQueryData(
+        _In_  ID3D12QueryHeap* pQueryHeap,
+        _In_  D3D12_QUERY_TYPE Type,
+        _In_  UINT StartIndex,
+        _In_  UINT NumQueries,
+        _In_  ID3D12Resource* pDestinationBuffer,
+        _In_  UINT64 AlignedDestinationBufferOffset)
+    {
+        redirect->ResolveQueryData(pQueryHeap, Type, StartIndex, NumQueries, pDestinationBuffer, AlignedDestinationBufferOffset);
+    }
+
+    virtual void STDMETHODCALLTYPE SetPredication(
+        _In_opt_  ID3D12Resource* pBuffer,
+        _In_  UINT64 AlignedBufferOffset,
+        _In_  D3D12_PREDICATION_OP Operation)
+    {
+        redirect->SetPredication(pBuffer, AlignedBufferOffset, Operation);
+    }
+
+    virtual void STDMETHODCALLTYPE SetMarker(
+        UINT Metadata,
+        _In_reads_bytes_opt_(Size)  const void* pData,
+        UINT Size)
+    {
+        redirect->SetMarker(Metadata, pData, Size);
+    }
+
+    virtual void STDMETHODCALLTYPE BeginEvent(
+        UINT Metadata,
+        _In_reads_bytes_opt_(Size)  const void* pData,
+        UINT Size)
+    {
+        redirect->BeginEvent(Metadata, pData, Size);
+    }
+
+    virtual void STDMETHODCALLTYPE EndEvent(void)
+    {
+        redirect->EndEvent();
+    }
+
+    virtual void STDMETHODCALLTYPE ExecuteIndirect(
+        _In_  ID3D12CommandSignature* pCommandSignature,
+        _In_  UINT MaxCommandCount,
+        _In_  ID3D12Resource* pArgumentBuffer,
+        _In_  UINT64 ArgumentBufferOffset,
+        _In_opt_  ID3D12Resource* pCountBuffer,
+        _In_  UINT64 CountBufferOffset)
+    {
+        redirect->ExecuteIndirect(pCommandSignature, MaxCommandCount, pArgumentBuffer, ArgumentBufferOffset, pCountBuffer, CountBufferOffset);
+    }
+
+    // ID3D12GraphicsCommandList1
+
+    virtual void STDMETHODCALLTYPE AtomicCopyBufferUINT(
+        _In_  ID3D12Resource* pDstBuffer,
+        UINT64 DstOffset,
+        _In_  ID3D12Resource* pSrcBuffer,
+        UINT64 SrcOffset,
+        UINT Dependencies,
+        _In_reads_(Dependencies)  ID3D12Resource* const* ppDependentResources,
+        _In_reads_(Dependencies)  const D3D12_SUBRESOURCE_RANGE_UINT64* pDependentSubresourceRanges)
+    {
+        redirect->AtomicCopyBufferUINT(pDstBuffer, DstOffset, pSrcBuffer, SrcOffset, Dependencies, ppDependentResources, pDependentSubresourceRanges);
+    }
+
+    virtual void STDMETHODCALLTYPE AtomicCopyBufferUINT64(
+        _In_  ID3D12Resource* pDstBuffer,
+        UINT64 DstOffset,
+        _In_  ID3D12Resource* pSrcBuffer,
+        UINT64 SrcOffset,
+        UINT Dependencies,
+        _In_reads_(Dependencies)  ID3D12Resource* const* ppDependentResources,
+        _In_reads_(Dependencies)  const D3D12_SUBRESOURCE_RANGE_UINT64* pDependentSubresourceRanges)
+    {
+        redirect->AtomicCopyBufferUINT64(pDstBuffer, DstOffset, pSrcBuffer, SrcOffset, Dependencies, ppDependentResources, pDependentSubresourceRanges);
+    }
+
+    virtual void STDMETHODCALLTYPE OMSetDepthBounds(
+        _In_  FLOAT Min,
+        _In_  FLOAT Max)
+    {
+        redirect->OMSetDepthBounds(Min, Max);
+    }
+
+    virtual void STDMETHODCALLTYPE SetSamplePositions(
+        _In_  UINT NumSamplesPerPixel,
+        _In_  UINT NumPixels,
+        _In_reads_(NumSamplesPerPixel* NumPixels)  D3D12_SAMPLE_POSITION* pSamplePositions)
+    {
+        redirect->SetSamplePositions(NumSamplesPerPixel, NumPixels, pSamplePositions);
+    }
+
+    virtual void STDMETHODCALLTYPE ResolveSubresourceRegion(
+        _In_  ID3D12Resource* pDstResource,
+        _In_  UINT DstSubresource,
+        _In_  UINT DstX,
+        _In_  UINT DstY,
+        _In_  ID3D12Resource* pSrcResource,
+        _In_  UINT SrcSubresource,
+        _In_opt_  D3D12_RECT* pSrcRect,
+        _In_  DXGI_FORMAT Format,
+        _In_  D3D12_RESOLVE_MODE ResolveMode)
+    {
+        redirect->ResolveSubresourceRegion(pDstResource, DstSubresource, DstX, DstY, pSrcResource, SrcSubresource, pSrcRect, Format, ResolveMode);
+    }
+
+    virtual void STDMETHODCALLTYPE SetViewInstanceMask(
+        _In_  UINT Mask)
+    {
+        redirect->SetViewInstanceMask(Mask);
+    }
+
+    // ID3D12GraphicsCommandList2
+
+    virtual void STDMETHODCALLTYPE WriteBufferImmediate(
+        UINT Count,
+        _In_reads_(Count)  const D3D12_WRITEBUFFERIMMEDIATE_PARAMETER* pParams,
+        _In_reads_opt_(Count)  const D3D12_WRITEBUFFERIMMEDIATE_MODE* pModes)
+    {
+        redirect->WriteBufferImmediate(Count, pParams, pModes);
+    }
+
+    // ID3D12GraphicsCommandList3
+
+    virtual void STDMETHODCALLTYPE SetProtectedResourceSession(
+        _In_opt_  ID3D12ProtectedResourceSession* pProtectedResourceSession)
+    {
+        redirect->SetProtectedResourceSession(pProtectedResourceSession);
+    }
+
+    // ID3D12GraphicsCommandList4
+
+    virtual void STDMETHODCALLTYPE BeginRenderPass(
+        _In_  UINT NumRenderTargets,
+        _In_reads_opt_(NumRenderTargets)  const D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderTargets,
+        _In_opt_  const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pDepthStencil,
+        D3D12_RENDER_PASS_FLAGS Flags)
+    {
+        redirect->BeginRenderPass(NumRenderTargets, pRenderTargets, pDepthStencil, Flags);
+    }
+
+    virtual void STDMETHODCALLTYPE EndRenderPass(void)
+    {
+        redirect->EndRenderPass();
+    }
+
+    virtual void STDMETHODCALLTYPE InitializeMetaCommand(
+        _In_  ID3D12MetaCommand* pMetaCommand,
+        _In_reads_bytes_opt_(InitializationParametersDataSizeInBytes)  const void* pInitializationParametersData,
+        _In_  SIZE_T InitializationParametersDataSizeInBytes)
+    {
+        redirect->InitializeMetaCommand(pMetaCommand, pInitializationParametersData, InitializationParametersDataSizeInBytes);
+    }
+
+    virtual void STDMETHODCALLTYPE ExecuteMetaCommand(
+        _In_  ID3D12MetaCommand* pMetaCommand,
+        _In_reads_bytes_opt_(ExecutionParametersDataSizeInBytes)  const void* pExecutionParametersData,
+        _In_  SIZE_T ExecutionParametersDataSizeInBytes)
+    {
+        redirect->ExecuteMetaCommand(pMetaCommand, pExecutionParametersData, ExecutionParametersDataSizeInBytes);
+    }
+
+    virtual void STDMETHODCALLTYPE BuildRaytracingAccelerationStructure(
+        _In_  const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* pDesc,
+        _In_  UINT NumPostbuildInfoDescs,
+        _In_reads_opt_(NumPostbuildInfoDescs)  const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pPostbuildInfoDescs)
+    {
+        redirect->BuildRaytracingAccelerationStructure(pDesc, NumPostbuildInfoDescs, pPostbuildInfoDescs);
+    }
+
+    virtual void STDMETHODCALLTYPE EmitRaytracingAccelerationStructurePostbuildInfo(
+        _In_  const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pDesc,
+        _In_  UINT NumSourceAccelerationStructures,
+        _In_reads_(NumSourceAccelerationStructures)  const D3D12_GPU_VIRTUAL_ADDRESS* pSourceAccelerationStructureData)
+    {
+        redirect->EmitRaytracingAccelerationStructurePostbuildInfo(pDesc, NumSourceAccelerationStructures, pSourceAccelerationStructureData);
+    }
+
+    virtual void STDMETHODCALLTYPE CopyRaytracingAccelerationStructure(
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS DestAccelerationStructureData,
+        _In_  D3D12_GPU_VIRTUAL_ADDRESS SourceAccelerationStructureData,
+        _In_  D3D12_RAYTRACING_ACCELERATION_STRUCTURE_COPY_MODE Mode)
+    {
+        redirect->CopyRaytracingAccelerationStructure(DestAccelerationStructureData, SourceAccelerationStructureData, Mode);
+    }
+
+    virtual void STDMETHODCALLTYPE SetPipelineState1(
+        _In_  ID3D12StateObject* pStateObject)
+    {
+        redirect->SetPipelineState1(pStateObject);
+    }
+
+    virtual void STDMETHODCALLTYPE DispatchRays(
+        _In_  const D3D12_DISPATCH_RAYS_DESC* pDesc)
+    {
+        redirect->DispatchRays(pDesc);
     }
 };
 
