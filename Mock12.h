@@ -30,36 +30,63 @@ void Mock12Test();
         return m_dwRef; \
     }
 
-/*struct Mock12CommandList : public ID3D12CommandList
+struct Mock12CommandList : public ID3D12CommandList
 {
+    IMPLEMENT_IUNKNOWN
+
+    ComPtr<ID3D12CommandList> redirect;
+
+    Mock12CommandList(ID3D12CommandList* inRedirect)
+    {
+        redirect = inRedirect;
+    }
+
     virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
         _In_  REFGUID guid,
         _Inout_  UINT* pDataSize,
-        _Out_writes_bytes_opt_(*pDataSize)  void* pData) = 0;
+        _Out_writes_bytes_opt_(*pDataSize)  void* pData)
+    {
+        return redirect->GetPrivateData(guid, pDataSize, pData);
+    }
 
     virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
         _In_  REFGUID guid,
         _In_  UINT DataSize,
-        _In_reads_bytes_opt_(DataSize)  const void* pData) = 0;
+        _In_reads_bytes_opt_(DataSize)  const void* pData)
+    {
+        return redirect->SetPrivateData(guid, DataSize, pData);
+    }
 
     virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
         _In_  REFGUID guid,
-        _In_opt_  const IUnknown* pData) = 0;
+        _In_opt_  const IUnknown* pData)
+    {
+        return redirect->SetPrivateDataInterface(guid, pData);
+    }
 
     virtual HRESULT STDMETHODCALLTYPE SetName(
-        _In_z_  LPCWSTR Name) = 0;
+        _In_z_  LPCWSTR Name)
+    {
+        return redirect->SetName(Name);
+    }
 
     //
 
     virtual HRESULT STDMETHODCALLTYPE GetDevice(
         REFIID riid,
-        _COM_Outptr_opt_  void** ppvDevice) = 0;
+        _COM_Outptr_opt_  void** ppvDevice)
+    {
+        return redirect->GetDevice(riid, ppvDevice);
+    }
 
     //
 
-    virtual D3D12_COMMAND_LIST_TYPE STDMETHODCALLTYPE GetType(void) = 0;
+    virtual D3D12_COMMAND_LIST_TYPE STDMETHODCALLTYPE GetType(void)
+    {
+        return redirect->GetType();
+    }
 };
-*/
+
 
 struct Mock12Resource : public ID3D12Resource
 {
@@ -68,11 +95,11 @@ struct Mock12Resource : public ID3D12Resource
     // {E4D1943F-0E48-4B63-8017-E9F8FC650C8C}
     static const GUID guid;
 
-    ComPtr<ID3D12Resource> redirect2;
+    ComPtr<ID3D12Resource> redirect;
 
     Mock12Resource(ID3D12Resource* inRedirect)
     {
-        redirect2 = inRedirect;
+        redirect = inRedirect;
     }
 
     BEGIN_INTERFACE
@@ -82,11 +109,11 @@ struct Mock12Resource : public ID3D12Resource
     {
         if(riid == guid)
         {
-            *ppvObject = redirect2.Get();
+            *ppvObject = redirect.Get();
             return S_OK;
         }
 
-        return redirect2->QueryInterface(riid, ppvObject);
+        return redirect->QueryInterface(riid, ppvObject);
     }
 
     //
@@ -96,7 +123,7 @@ struct Mock12Resource : public ID3D12Resource
         _Inout_  UINT* pDataSize,
         _Out_writes_bytes_opt_(*pDataSize)  void* pData)
     {
-        return redirect2->GetPrivateData(guid, pDataSize, pData);
+        return redirect->GetPrivateData(guid, pDataSize, pData);
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetPrivateData(
@@ -104,14 +131,14 @@ struct Mock12Resource : public ID3D12Resource
         _In_  UINT DataSize,
         _In_reads_bytes_opt_(DataSize)  const void* pData)
     {
-        return redirect2->SetPrivateData(guid, DataSize, pData);
+        return redirect->SetPrivateData(guid, DataSize, pData);
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetPrivateDataInterface(
         _In_  REFGUID guid,
         _In_opt_  const IUnknown* pData)
     {
-        return redirect2->SetPrivateDataInterface(guid, pData);
+        return redirect->SetPrivateDataInterface(guid, pData);
     }
 
     virtual HRESULT STDMETHODCALLTYPE SetName(
@@ -120,7 +147,7 @@ struct Mock12Resource : public ID3D12Resource
         char str[1024];
         sprintf_s(str, sizeof(str), "SetName %p: '%ls'\n", this, Name);
         OutputDebugStringA(str);
-        return redirect2->SetName(Name);
+        return redirect->SetName(Name);
     }
 
     //
@@ -129,7 +156,7 @@ struct Mock12Resource : public ID3D12Resource
         REFIID riid,
         _COM_Outptr_opt_  void** ppvDevice)
     {
-        return redirect2->GetDevice(riid, ppvDevice);
+        return redirect->GetDevice(riid, ppvDevice);
     }
 
     //
@@ -139,20 +166,20 @@ struct Mock12Resource : public ID3D12Resource
         _In_opt_  const D3D12_RANGE* pReadRange,
         _Outptr_opt_result_bytebuffer_(_Inexpressible_("Dependent on resource"))  void** ppData)
     {
-        return redirect2->Map(Subresource, pReadRange, ppData);
+        return redirect->Map(Subresource, pReadRange, ppData);
     }
 
     virtual void STDMETHODCALLTYPE Unmap(
         UINT Subresource,
         _In_opt_  const D3D12_RANGE* pWrittenRange)
     {
-        return redirect2->Unmap(Subresource, pWrittenRange);
+        return redirect->Unmap(Subresource, pWrittenRange);
     }
 
 #if defined(_MSC_VER) || !defined(_WIN32)
     virtual D3D12_RESOURCE_DESC STDMETHODCALLTYPE GetDesc(void)
     {
-        return redirect2->GetDesc();
+        return redirect->GetDesc();
     }
 
 #else
@@ -165,7 +192,7 @@ struct Mock12Resource : public ID3D12Resource
 
     virtual D3D12_GPU_VIRTUAL_ADDRESS STDMETHODCALLTYPE GetGPUVirtualAddress(void)
     {
-        return redirect2->GetGPUVirtualAddress();
+        return redirect->GetGPUVirtualAddress();
     }
 
     virtual HRESULT STDMETHODCALLTYPE WriteToSubresource(
@@ -175,7 +202,7 @@ struct Mock12Resource : public ID3D12Resource
         UINT SrcRowPitch,
         UINT SrcDepthPitch)
     {
-        return redirect2->WriteToSubresource(DstSubresource, pDstBox, pSrcData, SrcRowPitch, SrcDepthPitch);
+        return redirect->WriteToSubresource(DstSubresource, pDstBox, pSrcData, SrcRowPitch, SrcDepthPitch);
     }
 
     virtual HRESULT STDMETHODCALLTYPE ReadFromSubresource(
@@ -185,14 +212,14 @@ struct Mock12Resource : public ID3D12Resource
         UINT SrcSubresource,
         _In_opt_  const D3D12_BOX* pSrcBox)
     {
-        return redirect2->ReadFromSubresource(pDstData, DstRowPitch, DstDepthPitch, SrcSubresource, pSrcBox);
+        return redirect->ReadFromSubresource(pDstData, DstRowPitch, DstDepthPitch, SrcSubresource, pSrcBox);
     }
 
     virtual HRESULT STDMETHODCALLTYPE GetHeapProperties(
         _Out_opt_  D3D12_HEAP_PROPERTIES* pHeapProperties,
         _Out_opt_  D3D12_HEAP_FLAGS* pHeapFlags)
     {
-        return redirect2->GetHeapProperties(pHeapProperties, pHeapFlags);
+        return redirect->GetHeapProperties(pHeapProperties, pHeapFlags);
     }
 };
 
