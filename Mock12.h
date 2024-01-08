@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
@@ -17,10 +18,12 @@ using namespace Microsoft::WRL;
 // TODO ID3D12Pageable
 // TODO ID3D12RootSignature
 // TODO ID3D12Fence
-// WIP ID3D12CommandList
-// WIP ID3D12CommandQueue
+// DONE ID3D12CommandList
+// DONE ID3D12CommandQueue
 
 void Mock12Test();
+
+inline ID3D12CommandList* castDown(ID3D12CommandList* res);
 
 #define IMPLEMENT_IUNKNOWN \
     ULONG m_dwRef = 1; \
@@ -119,7 +122,13 @@ struct Mock12CommandQueue : public ID3D12CommandQueue
         _In_  UINT NumCommandLists,
         _In_reads_(NumCommandLists)  ID3D12CommandList* const* ppCommandLists)
     {
-        redirect->ExecuteCommandLists(NumCommandLists, ppCommandLists);
+        ID3D12CommandList* tmp[128];
+        assert(NumCommandLists <= 128);
+
+        for(UINT i = 0; i < NumCommandLists; ++i)
+            tmp[i] = castDown(ppCommandLists[i]);
+
+        redirect->ExecuteCommandLists(NumCommandLists, tmp);
     }
 
     virtual void STDMETHODCALLTYPE SetMarker(
@@ -188,11 +197,27 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
 {
     IMPLEMENT_IUNKNOWN
 
+    // {1B12B3DC-3387-46A3-9457-8536BE6289B4}
+    static const GUID guid;
+
     ComPtr<ID3D12GraphicsCommandList4> redirect;
 
     Mock12CommandList(ID3D12GraphicsCommandList4* inRedirect)
     {
         redirect = inRedirect;
+    }
+
+    BEGIN_INTERFACE virtual HRESULT STDMETHODCALLTYPE QueryInterface(
+        /* [in] */ REFIID riid,
+        /* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject)
+    {
+        if (riid == guid)
+        {
+            *ppvObject = redirect.Get();
+            return S_OK;
+        }
+
+        return redirect->QueryInterface(riid, ppvObject);
     }
 
     virtual HRESULT STDMETHODCALLTYPE GetPrivateData(
@@ -936,7 +961,20 @@ inline ID3D12Resource* castDown(ID3D12Resource* res)
         {
             return tmp;
         }
-            
+    }
+
+    return res;
+}
+
+inline ID3D12CommandList* castDown(ID3D12CommandList* res)
+{
+    if (res)
+    {
+        ID3D12CommandList* tmp = nullptr;
+        if (res->QueryInterface(Mock12CommandList::guid, (void**)&tmp) == S_OK)
+        {
+            return tmp;
+        }
     }
 
     return res;
@@ -1060,7 +1098,18 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppCommandList)
     {
-        return redirect->CreateCommandList(nodeMask, type, pCommandAllocator, pInitialState, riid, ppCommandList);
+        HRESULT ret = redirect->CreateCommandList(nodeMask, type, pCommandAllocator, pInitialState, riid, ppCommandList);
+
+        IUnknown* unk = *(IUnknown**)ppCommandList;
+        ID3D12GraphicsCommandList4* res = nullptr;
+        unk->QueryInterface(__uuidof(ID3D12GraphicsCommandList4), (void**)&res);
+        if (res)
+        {
+            Mock12CommandList* mock = new Mock12CommandList(res);
+            *ppCommandList = (void*)mock;
+        }
+
+        return ret;
     }
 
     virtual HRESULT STDMETHODCALLTYPE CheckFeatureSupport(
