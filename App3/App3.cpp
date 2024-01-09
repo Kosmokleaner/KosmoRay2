@@ -19,8 +19,6 @@
 
 #include <algorithm> // For std::min and std::max.
 
-using namespace DirectX;
-
 // only on NVidia
 bool g_NVAPI_enabled = false;
 
