@@ -35,6 +35,8 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h> // For HRESULT
+#undef min
+#undef max
 
 #include <d3dx12.h>
 

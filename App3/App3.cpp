@@ -8,25 +8,16 @@
 #include "RelativeMouseInput.h"
 #include "external/nv-api/nvapi.h"
 
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "external/tiny_obj_loader.h"
 
 #include "Mathlib.h"
 #include <Mock12.h>
 
-#include <wrl.h>
-using namespace Microsoft::WRL;
-
 #include <d3dcompiler.h>
 
 #include <algorithm> // For std::min and std::max.
-#if defined(min)
-#undef min
-#endif
-
-#if defined(max)
-#undef max
-#endif
 
 using namespace DirectX;
 

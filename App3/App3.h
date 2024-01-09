@@ -6,6 +6,7 @@
 #include "Camera.h"
 
 #include <DirectXMath.h>
+
 #include <d3dx12.h>
 using namespace DirectX; // XMFLOAT4
 

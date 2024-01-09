@@ -1,5 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#undef min
+#undef max
+
 #include <Shlwapi.h>
 
 #include "DX12Lib/Application.h"

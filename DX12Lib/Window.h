@@ -5,11 +5,15 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#undef min
+#undef max
 
-#include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_5.h>
+
+#include <wrl.h> // ComPtr<>
 using namespace Microsoft::WRL;
+
 
 #include "DX12Lib/Events.h"
 #include "DX12Lib/HighResolutionClock.h"
