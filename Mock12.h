@@ -108,6 +108,7 @@ struct Mock12CommandQueue : public ID3D12CommandQueue
         _In_reads_opt_(NumRanges)  const UINT* pRangeTileCounts,
         D3D12_TILE_MAPPING_FLAGS Flags)
     {
+        pResource = castDown(pResource);
         redirect->UpdateTileMappings(pResource, NumResourceRegions, pResourceRegionStartCoordinates, pResourceRegionSizes, pHeap, NumRanges, pRangeFlags, pHeapRangeStartOffsets, pRangeTileCounts, Flags);
     }
 
@@ -119,6 +120,8 @@ struct Mock12CommandQueue : public ID3D12CommandQueue
         _In_  const D3D12_TILE_REGION_SIZE* pRegionSize,
         D3D12_TILE_MAPPING_FLAGS Flags)
     {
+        pDstResource = castDown(pDstResource);
+        pSrcResource = castDown(pSrcResource);
         redirect->CopyTileMappings(pDstResource, pDstRegionStartCoordinate, pSrcResource, pSrcRegionStartCoordinate, pRegionSize, Flags);
     }
 
@@ -362,6 +365,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         UINT64 BufferStartOffsetInBytes,
         D3D12_TILE_COPY_FLAGS Flags)
     {
+        pTiledResource = castDown(pTiledResource);
+        pBuffer = castDown(pBuffer);
         redirect->CopyTiles(pTiledResource, pTileRegionStartCoordinate, pTileRegionSize, pBuffer, BufferStartOffsetInBytes, Flags);
     }
 
@@ -372,6 +377,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  UINT SrcSubresource,
         _In_  DXGI_FORMAT Format)
     {
+        pDstResource = castDown(pDstResource);
+        pSrcResource = castDown(pSrcResource);
         redirect->ResolveSubresource(pDstResource, DstSubresource, pSrcResource, SrcSubresource, Format);
     }
 
@@ -601,6 +608,7 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  UINT NumRects,
         _In_reads_(NumRects)  const D3D12_RECT* pRects)
     {
+        pResource = castDown(pResource);
         redirect->ClearUnorderedAccessViewUint(ViewGPUHandleInCurrentHeap, ViewCPUHandle, pResource, Values, NumRects, pRects);
     }
 
@@ -612,6 +620,7 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  UINT NumRects,
         _In_reads_(NumRects)  const D3D12_RECT* pRects)
     {
+        pResource = castDown(pResource);
         redirect->ClearUnorderedAccessViewFloat(ViewGPUHandleInCurrentHeap, ViewCPUHandle, pResource, Values, NumRects, pRects);
     }
 
@@ -619,6 +628,7 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  ID3D12Resource* pResource,
         _In_opt_  const D3D12_DISCARD_REGION* pRegion)
     {
+        pResource = castDown(pResource);
         redirect->DiscardResource(pResource, pRegion);
     }
 
@@ -646,6 +656,7 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  ID3D12Resource* pDestinationBuffer,
         _In_  UINT64 AlignedDestinationBufferOffset)
     {
+        pDestinationBuffer = castDown(pDestinationBuffer);
         redirect->ResolveQueryData(pQueryHeap, Type, StartIndex, NumQueries, pDestinationBuffer, AlignedDestinationBufferOffset);
     }
 
@@ -654,6 +665,7 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  UINT64 AlignedBufferOffset,
         _In_  D3D12_PREDICATION_OP Operation)
     {
+        pBuffer = castDown(pBuffer);
         redirect->SetPredication(pBuffer, AlignedBufferOffset, Operation);
     }
 
@@ -686,6 +698,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_opt_  ID3D12Resource* pCountBuffer,
         _In_  UINT64 CountBufferOffset)
     {
+        pArgumentBuffer = castDown(pArgumentBuffer);
+        pCountBuffer = castDown(pCountBuffer);
         redirect->ExecuteIndirect(pCommandSignature, MaxCommandCount, pArgumentBuffer, ArgumentBufferOffset, pCountBuffer, CountBufferOffset);
     }
 
@@ -700,6 +714,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_reads_(Dependencies)  ID3D12Resource* const* ppDependentResources,
         _In_reads_(Dependencies)  const D3D12_SUBRESOURCE_RANGE_UINT64* pDependentSubresourceRanges)
     {
+        pDstBuffer = castDown(pDstBuffer);
+        pSrcBuffer = castDown(pSrcBuffer);
         redirect->AtomicCopyBufferUINT(pDstBuffer, DstOffset, pSrcBuffer, SrcOffset, Dependencies, ppDependentResources, pDependentSubresourceRanges);
     }
 
@@ -712,6 +728,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_reads_(Dependencies)  ID3D12Resource* const* ppDependentResources,
         _In_reads_(Dependencies)  const D3D12_SUBRESOURCE_RANGE_UINT64* pDependentSubresourceRanges)
     {
+        pDstBuffer = castDown(pDstBuffer);
+        pSrcBuffer = castDown(pSrcBuffer);
         redirect->AtomicCopyBufferUINT64(pDstBuffer, DstOffset, pSrcBuffer, SrcOffset, Dependencies, ppDependentResources, pDependentSubresourceRanges);
     }
 
@@ -741,6 +759,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  DXGI_FORMAT Format,
         _In_  D3D12_RESOLVE_MODE ResolveMode)
     {
+        pDstResource = castDown(pDstResource);
+        pSrcResource = castDown(pSrcResource);
         redirect->ResolveSubresourceRegion(pDstResource, DstSubresource, DstX, DstY, pSrcResource, SrcSubresource, pSrcRect, Format, ResolveMode);
     }
 
@@ -1188,6 +1208,7 @@ struct Mock12Device2 : public ID3D12Device2
         _In_  D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
     {
         pResource = castDown(pResource);
+        pCounterResource = castDown(pCounterResource);
         redirect->CreateUnorderedAccessView(pResource, pCounterResource, pDesc, DestDescriptor);
     }
 
@@ -1324,10 +1345,13 @@ struct Mock12Device2 : public ID3D12Device2
         HRESULT ret = redirect->CreatePlacedResource(pHeap, HeapOffset, pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
 
         IUnknown* unk = *(IUnknown**)ppvResource;
-        ID3D12Resource *res = nullptr; 
+        ID3D12Resource* res = nullptr;
         unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
-        if(res)
-            __debugbreak();
+        if (res)
+        {
+            Mock12Resource* mock = new Mock12Resource(res);
+            *ppvResource = (void*)mock;
+        }
 
         return ret;
     }
@@ -1345,7 +1369,10 @@ struct Mock12Device2 : public ID3D12Device2
         ID3D12Resource* res = nullptr;
         unk->QueryInterface(__uuidof(ID3D12Resource), (void**)&res);
         if (res)
-            __debugbreak();
+        {
+            Mock12Resource* mock = new Mock12Resource(res);
+            *ppvResource = (void*)mock;
+        }
 
         return ret;
     }

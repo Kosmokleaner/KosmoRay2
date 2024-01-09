@@ -7,18 +7,16 @@ Multiple experiments in different Apps:
 
 
 todo:
-* Mock12 should be enabled by define
 * remove C++ exception handling
 * implement more classic renderer stuff (Resource management / barriers, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
-* never quit while coding = renderer process
-* plugin concept ?
-* network
+* renderer in it's own process => update code without quit
 * multi draw indirect
 * gaussian splatting ray tracer
 * map all Dx12 features by reimplementing API wrapper
 * implement handle based or shared_ptr resource management
 
 todo low prio:
+* Mock12 should be enabled by define (search for "new Mock12Device2")
 * fix: window resize crash
 * fps should not go to OutputDebugString
 * fix hack, to query m_dxrCommandList each time
