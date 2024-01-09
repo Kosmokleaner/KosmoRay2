@@ -8,6 +8,7 @@ Multiple experiments in different Apps:
 
 todo:
 * App code should be as simple as possible
+* remove "hack"
 * remove C++ exception handling
 * implement more classic renderer stuff (Resource management / barriers, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
 * renderer in it's own process => update code without quit
