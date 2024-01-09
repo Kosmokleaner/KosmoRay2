@@ -4,6 +4,9 @@
 #pragma once
 
 #include <d3d12.h>
+#undef min
+#undef max
+
 #include <dxgi1_6.h>
 
 #include <wrl.h> // ComPtr<>

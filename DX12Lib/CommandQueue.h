@@ -5,6 +5,9 @@
 #pragma once
 
 #include <d3d12.h>  // For ID3D12CommandQueue, ID3D12Device2, and ID3D12Fence
+#undef min
+#undef max
+
 #include <wrl.h>    // For ComPtr
 
 #include <cstdint>  // For uint64_t
