@@ -111,13 +111,6 @@ private:
     
     uint64_t m_FenceValues[Window::BufferCount] = {};
 
-    // cube, todo: remove
-    ComPtr<ID3D12Resource> m_VertexBuffer;
-    // cube, todo: remove
-    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
-    // cube, todo: remove
-    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
-
     // Depth buffer.
     ComPtr<ID3D12Resource> m_DepthBuffer;
     // Descriptor heap for depth buffer.
