@@ -2,9 +2,12 @@
 #include <d3d12.h>
 #include <stdio.h>
 #include <assert.h>
+#include <algorithm>    // std::min
 
 #include <wrl.h>
 using namespace Microsoft::WRL;
+
+#undef min
 
 // not yet wrapped:
 // Mock12Device2 : ID3D12InfoQueue
@@ -24,6 +27,7 @@ using namespace Microsoft::WRL;
 void Mock12Test();
 
 inline ID3D12CommandList* castDown(ID3D12CommandList* res);
+inline ID3D12Resource* castDown(ID3D12Resource* res);
 
 #define IMPLEMENT_IUNKNOWN \
     ULONG m_dwRef = 1; \
@@ -403,7 +407,14 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  UINT NumBarriers,
         _In_reads_(NumBarriers)  const D3D12_RESOURCE_BARRIER* pBarriers)
     {
-        redirect->ResourceBarrier(NumBarriers, pBarriers);
+        D3D12_RESOURCE_BARRIER tmp[256];
+        assert(NumBarriers < 256);
+        memcpy(tmp, pBarriers, std::min(NumBarriers, (UINT)256) * sizeof(D3D12_RESOURCE_BARRIER));
+
+        for(UINT i = 0; i < NumBarriers; ++i)
+            tmp[i].Transition.pResource = castDown(tmp[i].Transition.pResource);
+
+        redirect->ResourceBarrier(NumBarriers, tmp);
     }
 
     virtual void STDMETHODCALLTYPE ExecuteBundle(

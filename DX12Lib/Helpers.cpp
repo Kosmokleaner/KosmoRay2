@@ -25,9 +25,7 @@ void AllocateUAVBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList2* comman
     {
         if(!acceleration)
         {
-            assert(ppResource);
-            ID3D12Resource* res = castDown(*ppResource);
-            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(res, D3D12_RESOURCE_STATE_COMMON, initialResourceState);
+            CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(*ppResource, D3D12_RESOURCE_STATE_COMMON, initialResourceState);
 
             commandList->ResourceBarrier(1, &barrier);
         }
