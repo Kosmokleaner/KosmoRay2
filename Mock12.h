@@ -341,6 +341,9 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  ID3D12Resource* pDstResource,
         _In_  ID3D12Resource* pSrcResource)
     {
+        pDstResource = castDown(pDstResource);
+        pSrcResource = castDown(pSrcResource);
+
         redirect->CopyResource(pDstResource, pSrcResource);
     }
 
