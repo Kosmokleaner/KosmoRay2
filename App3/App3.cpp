@@ -65,16 +65,6 @@ static VertexPosColor g_Vertices[8] = {
     { XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f, 0.0f, 1.0f) }  // 7
 };
 
-static WORD g_Indicies[36] =
-{
-    0, 1, 2, 0, 2, 3,
-    4, 6, 5, 4, 7, 6,
-    4, 5, 1, 4, 1, 0,
-    3, 2, 6, 3, 6, 7,
-    1, 5, 6, 1, 6, 2,
-    4, 0, 3, 4, 3, 7
-};
-
 // Create a SRV for a buffer.
 UINT App3::CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize)
 {
@@ -196,17 +186,6 @@ bool App3::LoadContent()
     m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
     m_VertexBufferView.SizeInBytes = sizeof(g_Vertices);
     m_VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
-
-    // Upload index buffer data.
-    ComPtr<ID3D12Resource> intermediateIndexBuffer;
-    UpdateBufferResource(commandList,
-        &m_IndexBuffer, &intermediateIndexBuffer,
-        _countof(g_Indicies), sizeof(WORD), g_Indicies);
-
-    // Create index buffer view.
-    m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-    m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    m_IndexBufferView.SizeInBytes = sizeof(g_Indicies);
 
     // Create the descriptor heap for the depth-stencil view.
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
@@ -633,8 +612,6 @@ void App3::OnRender(RenderEventArgs& e)
         // Update the MVP matrix
         XMMATRIX mvpMatrix = XMMatrixTranspose(m_ProjectionMatrix * m_ViewMatrix * m_ModelMatrix);
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
-
-        commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 
         // Present
         {

@@ -116,8 +116,6 @@ private:
     // cube, todo: remove
     D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
     // cube, todo: remove
-    ComPtr<ID3D12Resource> m_IndexBuffer;
-    // cube, todo: remove
     D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 
     // Depth buffer.
