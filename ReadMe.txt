@@ -7,6 +7,7 @@ Multiple experiments in different Apps:
 
 
 todo:
+* Mock12 should be enabled by define
 * remove C++ exception handling
 * implement more classic renderer stuff (Resource management / barriers, draw call rendering, GI, AO, TAA, Tonemapper, Bloom, ReSTIR)
 * never quit while coding = renderer process
@@ -20,7 +21,6 @@ todo:
 todo low prio:
 * fix: window resize crash
 * fps should not go to OutputDebugString
-* red disk icon can be improved
 * fix hack, to query m_dxrCommandList each time
 * support uvs and normals from obj load
 * obj load vertex cache optimize
