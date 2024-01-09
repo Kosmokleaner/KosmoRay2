@@ -113,10 +113,8 @@ void App2::UpdateBufferResource(
         subresourceData.RowPitch = bufferSize;
         subresourceData.SlicePitch = subresourceData.RowPitch;
 
-        ID3D12Resource* dst = castDown(*pDestinationResource);
-        ID3D12Resource* inter = castDown(*pIntermediateResource);
         UpdateSubresources(commandList.Get(),
-            dst, inter,
+            *pDestinationResource, *pIntermediateResource,
             0, 0, 1, &subresourceData);
     }
 }

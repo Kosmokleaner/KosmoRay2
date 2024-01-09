@@ -323,6 +323,9 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         UINT64 SrcOffset,
         UINT64 NumBytes)
     {
+        pDstBuffer = castDown(pDstBuffer);
+        pSrcBuffer = castDown(pSrcBuffer);
+
         redirect->CopyBufferRegion(pDstBuffer, DstOffset, pSrcBuffer, SrcOffset, NumBytes);
     }
 
@@ -334,7 +337,11 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  const D3D12_TEXTURE_COPY_LOCATION* pSrc,
         _In_opt_  const D3D12_BOX* pSrcBox)
     {
-        redirect->CopyTextureRegion(pDst, DstX, DstY, DstZ, pSrc, pSrcBox);
+        D3D12_TEXTURE_COPY_LOCATION dst = *pDst;
+        D3D12_TEXTURE_COPY_LOCATION src = *pSrc;
+        dst.pResource = castDown(dst.pResource);
+        src.pResource = castDown(src.pResource);
+        redirect->CopyTextureRegion(&dst, DstX, DstY, DstZ, &src, pSrcBox);
     }
 
     virtual void STDMETHODCALLTYPE CopyResource(

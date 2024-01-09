@@ -157,8 +157,6 @@ void App3::UpdateBufferResource(
         nullptr,
         IID_PPV_ARGS(pDestinationResource)));
 
-    ID3D12Resource* dst = castDown(*pDestinationResource);
-
     // Create an committed resource for the upload.
     if (bufferData)
     {
@@ -173,8 +171,6 @@ void App3::UpdateBufferResource(
             nullptr,
             IID_PPV_ARGS(pIntermediateResource)));
 
-        ID3D12Resource* inter = castDown(*pIntermediateResource);
-
         {
             CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(*pDestinationResource, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -187,7 +183,7 @@ void App3::UpdateBufferResource(
         subresourceData.SlicePitch = subresourceData.RowPitch;
 
         UpdateSubresources(commandList.Get(),
-            dst, inter,
+            *pDestinationResource, *pIntermediateResource,
             0, 0, 1, &subresourceData);
     }
 }
