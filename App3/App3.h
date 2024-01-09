@@ -158,7 +158,6 @@ private:
     void SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig);
     void ReleaseDeviceDependentResources();
     UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse = UINT_MAX);
-//    ID3D12GraphicsCommandList4* GetCommandList() const { return m_dxrCommandList.Get(); }
     void DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT currentBackBufferIndex);
     void CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
     void CreateWindowSizeDependentResources();
@@ -167,7 +166,6 @@ private:
 
     // DirectX Raytracing (DXR) attributes
     ComPtr<ID3D12Device5> m_dxrDevice;
-//    ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
     ComPtr<ID3D12StateObject> m_dxrStateObject;
 
     // Descriptors
@@ -180,9 +178,8 @@ private:
 
     // Geometry
     typedef UINT16 Index;
-//    struct Vertex { float x, y, z; };
     // mesh
-    D3DBuffer m_indexBuffer;
+//    D3DBuffer m_indexBuffer;
     // mesh
     D3DBuffer m_vertexBuffer;
 

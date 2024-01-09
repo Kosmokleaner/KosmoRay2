@@ -467,24 +467,6 @@ void App3::ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList,
 
 void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT currentBackBufferIndex)
 {
-    auto DispatchRays = [&](auto* commandList, auto* stateObject, auto* dispatchDesc)
-    {
-        // Since each shader table has only one shader record, the stride is same as the size.
-        dispatchDesc->HitGroupTable.StartAddress = m_hitGroupShaderTable->GetGPUVirtualAddress();
-        dispatchDesc->HitGroupTable.SizeInBytes = m_hitGroupShaderTable->GetDesc().Width;
-        dispatchDesc->HitGroupTable.StrideInBytes = dispatchDesc->HitGroupTable.SizeInBytes;
-        dispatchDesc->MissShaderTable.StartAddress = m_missShaderTable->GetGPUVirtualAddress();
-        dispatchDesc->MissShaderTable.SizeInBytes = m_missShaderTable->GetDesc().Width;
-        dispatchDesc->MissShaderTable.StrideInBytes = dispatchDesc->MissShaderTable.SizeInBytes;
-        dispatchDesc->RayGenerationShaderRecord.StartAddress = m_rayGenShaderTable->GetGPUVirtualAddress();
-        dispatchDesc->RayGenerationShaderRecord.SizeInBytes = m_rayGenShaderTable->GetDesc().Width;
-        dispatchDesc->Width = GetClientWidth();
-        dispatchDesc->Height = GetClientHeight();
-        dispatchDesc->Depth = 1;
-        commandList->SetPipelineState1(stateObject);
-        commandList->DispatchRays(dispatchDesc);
-    };
-
     commandList->SetComputeRootSignature(m_raytracingGlobalRootSignature.Get());
 
 
@@ -506,7 +488,27 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
     ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
-    DispatchRays(m_dxrCommandList.Get(), m_dxrStateObject.Get(), &dispatchDesc);
+
+    // DispatchRays
+    {
+        auto* commandList = m_dxrCommandList.Get();
+        auto* stateObject = m_dxrStateObject.Get();
+
+        // Since each shader table has only one shader record, the stride is same as the size.
+        dispatchDesc.HitGroupTable.StartAddress = m_hitGroupShaderTable->GetGPUVirtualAddress();
+        dispatchDesc.HitGroupTable.SizeInBytes = m_hitGroupShaderTable->GetDesc().Width;
+        dispatchDesc.HitGroupTable.StrideInBytes = dispatchDesc.HitGroupTable.SizeInBytes;
+        dispatchDesc.MissShaderTable.StartAddress = m_missShaderTable->GetGPUVirtualAddress();
+        dispatchDesc.MissShaderTable.SizeInBytes = m_missShaderTable->GetDesc().Width;
+        dispatchDesc.MissShaderTable.StrideInBytes = dispatchDesc.MissShaderTable.SizeInBytes;
+        dispatchDesc.RayGenerationShaderRecord.StartAddress = m_rayGenShaderTable->GetGPUVirtualAddress();
+        dispatchDesc.RayGenerationShaderRecord.SizeInBytes = m_rayGenShaderTable->GetDesc().Width;
+        dispatchDesc.Width = GetClientWidth();
+        dispatchDesc.Height = GetClientHeight();
+        dispatchDesc.Depth = 1;
+        commandList->SetPipelineState1(stateObject);
+        commandList->DispatchRays(&dispatchDesc);
+    }
 }
 
 void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList)
@@ -538,64 +540,13 @@ void App3::OnRender(RenderEventArgs& e)
     UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
     auto backBuffer = m_pWindow->GetCurrentBackBuffer();
 
-    // hack
-//    static int t = 0; ++t; if(t>4000)t=0;
-    static int t = 2001;
-
-    if(t > 2000) {
-//        TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COMMON);
-
+    {
         DoRaytracing(commandList, currentBackBufferIndex);
         CopyRaytracingOutputToBackbuffer(commandList);
-//        TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_COMMON);
-
-//        char buffer[512];
-//        sprintf_s(buffer, "ExecuteCommandList: %p %p\n", commandList.Get(), &*commandQueue);
-//        OutputDebugStringA(buffer);
-
 
         m_FenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
         currentBackBufferIndex = m_pWindow->Present();
         commandQueue->WaitForFenceValue(m_FenceValues[currentBackBufferIndex]);
-
-    } else {
-
-        auto rtv = m_pWindow->GetCurrentRenderTargetView();
-        auto dsv = m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
-
-        // Clear the render targets.
-        {
-            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-            FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-
-            ClearRTV(commandList, rtv, clearColor);
-            ClearDepth(commandList, dsv);
-        }
-
-        commandList->SetPipelineState(m_PipelineState.Get());
-        commandList->SetGraphicsRootSignature(m_RootSignature.Get());
-
-        commandList->RSSetViewports(1, &m_Viewport);
-        commandList->RSSetScissorRects(1, &m_ScissorRect);
-
-        commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-
-        // Update the MVP matrix
-        XMMATRIX mvpMatrix = XMMatrixTranspose(m_ProjectionMatrix * m_ViewMatrix * m_ModelMatrix);
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
-
-        // Present
-        {
-            TransitionResource(commandList, backBuffer,
-                D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-            m_FenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
-
-            currentBackBufferIndex = m_pWindow->Present();
-
-            commandQueue->WaitForFenceValue(m_FenceValues[currentBackBufferIndex]);
-        }
     }
 }
 
@@ -654,18 +605,10 @@ void App3::CreateRaytracingInterfaces()
 // todo:
 // 
 
-//
-//    auto commandList = GetCommandList();
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto commandList = commandQueue->GetCommandList();
 
     ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
-
-//    char buffer[512];
-//    sprintf_s(buffer, "CreateRaytracingInterfaces: %p %p\n", commandList.Get(), &*commandQueue);
-//    OutputDebugStringA(buffer);
-
-//    ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
 }
 
 
@@ -1136,7 +1079,6 @@ UINT App3::AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT d
     return descriptorIndexToUse;
 }
 
-// Create 2D output texture for raytracing
 void App3::CreateRaytracingOutputResource()
 {
     auto device = Application::Get().GetDevice();
@@ -1165,11 +1107,6 @@ void App3::ReleaseDeviceDependentResources()
 
     m_dxrDevice.Reset();
 
-    // hack
-//    ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
-//    ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
-//    m_dxrCommandList.Reset();
-
     m_dxrStateObject.Reset();
 
     m_descriptorHeap.Reset();
@@ -1185,8 +1122,6 @@ void App3::ReleaseDeviceDependentResources()
 
 void App3::CreateDeviceDependentResources()
 {
-    // Initialize raytracing pipeline.
-
     // Create raytracing interfaces: raytracing device and commandlist.
     CreateRaytracingInterfaces();
 
@@ -1199,15 +1134,12 @@ void App3::CreateDeviceDependentResources()
     // Create a heap for descriptors.
     CreateDescriptorHeap();
 
-    // Build geometry to be used in the sample.
     BuildGeometry();
 
-    // Build raytracing acceleration structures from the generated geometry.
     BuildAccelerationStructures();
 
     // Build shader tables, which define shaders and their local root arguments.
     BuildShaderTables();
 
-    // Create an output 2D texture to store the raytracing result to.
     CreateRaytracingOutputResource();
 }
