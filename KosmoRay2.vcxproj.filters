@@ -73,6 +73,9 @@
       <Filter>Hidden</Filter>
     </ClCompile>
     <ClCompile Include="Mock12.cpp" />
+    <ClCompile Include="DX12Lib\AppBase.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -127,6 +130,9 @@
       <Filter>Hidden</Filter>
     </ClInclude>
     <ClInclude Include="Mock12.h" />
+    <ClInclude Include="DX12Lib\AppBase.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="DX12Lib\CMakeLists.txt">

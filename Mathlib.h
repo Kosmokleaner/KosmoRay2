@@ -3,9 +3,11 @@
 #include <math.h>
 #include <cmath>
 #include <assert.h>
+
 #include <directxmath.h>
-#include <algorithm>			// std::swap
 using namespace DirectX;
+
+#include <algorithm>			// std::swap
 #include <stdlib.h> // rand()
 
 typedef unsigned char uint8;
