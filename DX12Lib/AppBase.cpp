@@ -1,6 +1,7 @@
 #include "AppBase.h"
 #include "Application.h"
 #include "Helpers.h"
+#include "../RelativeMouseInput.h"
 
 
 
@@ -164,4 +165,108 @@ void AppBase::ClearDepth(ComPtr<ID3D12GraphicsCommandList2> commandList,
     D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth)
 {
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
+}
+
+void AppBase::OnUpdate(UpdateEventArgs& e)
+{
+    static uint64_t frameCount = 0;
+    static double totalTime = 0.0;
+
+    super::OnUpdate(e);
+
+    totalTime += e.ElapsedTime;
+    frameCount++;
+
+    if (totalTime > 1.0)
+    {
+        double fps = frameCount / totalTime;
+
+        char buffer[512];
+        sprintf_s(buffer, "FPS: %f\n", fps);
+        OutputDebugStringA(buffer);
+
+        frameCount = 0;
+        totalTime = 0.0;
+    }
+
+    // Update the model matrix.
+//    float angle = static_cast<float>(e.TotalTime * 90.0);
+    float angle = 0.0f;
+    const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
+    m_ModelMatrix = XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle)));
+
+    // Update the view matrix.
+    const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
+    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
+    const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
+    m_ViewMatrix = XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection));
+
+    extern CRelativeMouseInput g_MouseInput;
+    CRelativeMouseInput::MouseInputButtons Buttons = g_MouseInput.GetMouseButtons();
+
+    // right mouse button
+    if (Buttons & 2)
+    {
+        g_MouseInput.SetUserCapture("RightMouseButton");
+    }
+    else
+    {
+        g_MouseInput.ResetUserCapture("RightMouseButton");
+    }
+
+    CRelativeMouseInput::MouseInputData data = g_MouseInput.ClaimMouseInputData("RightMouseButton");
+
+    static bool first = true;
+    if (first) {
+        camera.SetPos(float3(0, 0, -10));
+        camera.Rotate(3.1415f, 0.0f);
+        first = false;
+    }
+
+    //				const float rotateSpeed = 2 * InCamera.GetVerticalFov() / g_Renderer.GetHeight();
+    const float rotateSpeed = 2 * 0.002f;		// todo
+    const float movementSpeed = 150.0f / 10.0f;
+
+    if (data.IsValid())
+    {
+        float fInvMouse = 1.0;
+        camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
+    }
+
+    float3 forward = camera.GetForward();
+    float3 left = normalize(cross(forward, camera.GetUp()));
+
+    float dt = (float)e.ElapsedTime;
+    forward *= movementSpeed * dt;
+    left *= movementSpeed * dt;
+
+    float3 move(0, 0, 0);
+
+    if (GetAsyncKeyState('A'))
+    {
+        move += left;
+    }
+    else if (GetAsyncKeyState('D'))
+    {
+        move -= left;
+    }
+
+    if (GetAsyncKeyState('W'))
+    {
+        move += forward;
+    }
+    else if (GetAsyncKeyState('S'))
+    {
+        move -= forward;
+    }
+    camera.Move(move);
+
+    // world->eye aka eyeFromWorld
+    //camera.GetDirX();
+    //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
+    m_ViewMatrix = XMMatrixTranspose(camera.GetViewMatrix());
+
+    // Update the projection matrix.
+    float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
+    m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f));
 }

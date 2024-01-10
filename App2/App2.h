@@ -15,7 +15,6 @@ public:
 
 protected:
 
-    virtual void OnUpdate(UpdateEventArgs& e) override;
     virtual void OnRender(RenderEventArgs& e) override;
     virtual void OnKeyPressed(KeyEventArgs& e) override;
     virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
