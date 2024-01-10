@@ -270,3 +270,39 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
     m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f));
 }
+
+
+
+void AppBase::OnKeyPressed(KeyEventArgs& e)
+{
+    super::OnKeyPressed(e);
+
+    switch (e.Key)
+    {
+    case KeyCode::Escape:
+        Application::Get().Quit(0);
+        break;
+
+    case KeyCode::Enter:
+        break;
+
+    case KeyCode::F11:
+        if (e.Alt)
+            m_pWindow->ToggleFullscreen();
+        break;
+
+    case KeyCode::V:
+        m_pWindow->ToggleVSync();
+        break;
+    }
+}
+
+void AppBase::OnMouseWheel(MouseWheelEventArgs& e)
+{
+    m_FoV -= e.WheelDelta;
+    m_FoV = clamp(m_FoV, 12.0f, 90.0f);
+
+    char buffer[256];
+    sprintf_s(buffer, "FoV: %f\n", m_FoV);
+    OutputDebugStringA(buffer);
+}

@@ -305,13 +305,6 @@ void App3::OnKeyPressed(KeyEventArgs& e)
 
     switch (e.Key)
     {
-        case KeyCode::Escape:
-            Application::Get().Quit(0);
-            break;
-
-        case KeyCode::Enter:
-            break;
-
         case KeyCode::PageUp:
             --raytraceFlags;
             break;
@@ -319,30 +312,10 @@ void App3::OnKeyPressed(KeyEventArgs& e)
         case KeyCode::PageDown:
             ++raytraceFlags;
             break;
-
-        case KeyCode::F11:
-            if (e.Alt)
-                m_pWindow->ToggleFullscreen();
-            break;
-
-        case KeyCode::V:
-            m_pWindow->ToggleVSync();
-            break;
     }
 
     char buffer[512];
     sprintf_s(buffer, "raytraceFlags: 0x%x\n", raytraceFlags);
-    OutputDebugStringA(buffer);
-
-}
-
-void App3::OnMouseWheel(MouseWheelEventArgs& e)
-{
-    m_FoV -= e.WheelDelta;
-    m_FoV = clamp(m_FoV, 12.0f, 90.0f);
-
-    char buffer[256];
-    sprintf_s(buffer, "FoV: %f\n", m_FoV);
     OutputDebugStringA(buffer);
 }
 

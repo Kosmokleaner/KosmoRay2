@@ -16,8 +16,6 @@ public:
 protected:
 
     virtual void OnRender(RenderEventArgs& e) override;
-    virtual void OnKeyPressed(KeyEventArgs& e) override;
-    virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
     virtual void OnResize(ResizeEventArgs& e) override; 
 
     // Vertex buffer for the cube.

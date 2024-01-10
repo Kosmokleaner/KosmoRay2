@@ -250,37 +250,3 @@ void App2::OnRender(RenderEventArgs& e)
         commandQueue->WaitForFenceValue(m_FenceValues[currentBackBufferIndex]);
     }
 }
-
-void App2::OnKeyPressed(KeyEventArgs& e)
-{
-    super::OnKeyPressed(e);
-
-    switch (e.Key)
-    {
-        case KeyCode::Escape:
-            Application::Get().Quit(0);
-            break;
-
-        case KeyCode::Enter:
-            break;
-
-        case KeyCode::F11:
-            if (e.Alt)
-                m_pWindow->ToggleFullscreen();
-            break;
-
-        case KeyCode::V:
-            m_pWindow->ToggleVSync();
-            break;
-    }
-}
-
-void App2::OnMouseWheel(MouseWheelEventArgs& e)
-{
-    m_FoV -= e.WheelDelta;
-    m_FoV = clamp(m_FoV, 12.0f, 90.0f);
-
-    char buffer[256];
-    sprintf_s(buffer, "FoV: %f\n", m_FoV);
-    OutputDebugStringA(buffer);
-}
