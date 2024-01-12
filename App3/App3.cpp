@@ -192,14 +192,6 @@ void App3::OnUpdate(UpdateEventArgs& e)
 {
     super::OnUpdate(e);
 
-    static bool first = true;
-    if (first) {
-        camera.SetPos(float3(0, 0, -10));
-        camera.Rotate(3.1415f, 0.0f);
-        first = false;
-    }
-
-
     m_sceneCB->sceneParam0.x = frac(m_sceneCB->sceneParam0.x + (float)e.ElapsedTime);
     m_sceneCB->sceneParam0.y = frac(m_sceneCB->sceneParam0.y + (float)e.ElapsedTime * 0.1f);
     m_sceneCB->raytraceFlags = raytraceFlags;
@@ -207,7 +199,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     {
         // clipFromWorld = clipFromEye * eyeFromWorld
         XMMATRIX clipFromWorld = m_ProjectionMatrix * m_ViewMatrix;
-        m_sceneCB->cameraPosition = XMFLOAT4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
+        m_sceneCB->cameraPosition = XMFLOAT4(m_camera.GetPos().x, m_camera.GetPos().y, m_camera.GetPos().z, 0.0f);
         m_sceneCB->clipFromWorld = XMMatrixTranspose(clipFromWorld);
         m_sceneCB->worldFromClip = XMMatrixTranspose(XMMatrixInverse(nullptr, clipFromWorld));
     }
@@ -217,7 +209,6 @@ void App3::OnUpdate(UpdateEventArgs& e)
 void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT currentBackBufferIndex)
 {
     commandList->SetComputeRootSignature(m_raytracingGlobalRootSignature.Get());
-
 
     // Copy dynamic buffers to GPU.
     {

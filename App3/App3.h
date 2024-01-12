@@ -33,8 +33,6 @@ class App3 : public AppBase
 public:
     using super = AppBase;
 
-    CTransform camera;
-
     App3(const std::wstring& name, int width, int height, bool vSync = false);
     ~App3();
 

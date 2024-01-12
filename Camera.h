@@ -114,16 +114,23 @@ public:
 		return float2(atan2f(forward.x, forward.z) + (float)PI, asinf(forward.y));
 	}
 
+	// relative
 	// @param dx: positive rotates to the right, in radiants (0..2*PI is 360)
 	// @param dy: positive rotates upwards, in radiants (0..2*PI is 360)
 	void Rotate(float dx, float dy)
 	{
-		const float yborder = 0.00001f;
-
 		float2 w = GetAbsRotation();
 
 		w.x += dx;
 		w.y += dy;
+
+		SetRotation(w);
+	}
+
+	// absolute
+	void SetRotation(float2 w)
+	{
+		const float yborder = 0.00001f;
 
 		// clamp top
 		w.y = Max(w.y, -PI * 0.5f + yborder);

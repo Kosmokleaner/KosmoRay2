@@ -98,7 +98,7 @@ protected:
     // eye->clip aka clipFromEye
     DirectX::XMMATRIX m_ProjectionMatrix;
 
-    CTransform camera;
+    CTransform m_camera;
 
     bool m_ContentLoaded = false;
 

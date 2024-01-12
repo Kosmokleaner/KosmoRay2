@@ -218,8 +218,8 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     static bool first = true;
     if (first) {
-        camera.SetPos(float3(0, 0, -10));
-        camera.Rotate(3.1415f, 0.0f);
+        m_camera.SetPos(float3(0, 0, -10));
+        m_camera.SetRotation(float2(3.1415f, 0.0f));
         first = false;
     }
 
@@ -230,11 +230,11 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     if (data.IsValid())
     {
         float fInvMouse = 1.0;
-        camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
+        m_camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
     }
 
-    float3 forward = camera.GetForward();
-    float3 left = normalize(cross(forward, camera.GetUp()));
+    float3 forward = m_camera.GetForward();
+    float3 left = normalize(cross(forward, m_camera.GetUp()));
 
     float dt = (float)e.ElapsedTime;
     forward *= movementSpeed * dt;
@@ -259,12 +259,12 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     {
         move -= forward;
     }
-    camera.Move(move);
+    m_camera.Move(move);
 
     // world->eye aka eyeFromWorld
     //camera.GetDirX();
     //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
-    m_ViewMatrix = XMMatrixTranspose(camera.GetViewMatrix());
+    m_ViewMatrix = XMMatrixTranspose(m_camera.GetViewMatrix());
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
