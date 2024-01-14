@@ -118,9 +118,6 @@ private:
 
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;
 
-    std::shared_ptr<CommandQueue> m_DirectCommandQueue;
-    std::shared_ptr<CommandQueue> m_ComputeCommandQueue;
-
     bool m_TearingSupported;
 
 };

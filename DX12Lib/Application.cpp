@@ -75,8 +75,8 @@ Application::Application(HINSTANCE hInst)
     }
     if (renderer.device)
     {
-        m_DirectCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-        m_ComputeCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        renderer.directCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+        renderer.computeCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
         renderer.copyCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_COPY);
 
         renderer.device = GetDevice();
@@ -383,10 +383,10 @@ std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TY
     switch (type)
     {
     case D3D12_COMMAND_LIST_TYPE_DIRECT:
-        commandQueue = m_DirectCommandQueue;
+        commandQueue = renderer.directCommandQueue;
         break;
     case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-        commandQueue = m_ComputeCommandQueue;
+        commandQueue = renderer.computeCommandQueue;
         break;
     case D3D12_COMMAND_LIST_TYPE_COPY:
         commandQueue = renderer.copyCommandQueue;
@@ -400,8 +400,8 @@ std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TY
 
 void Application::Flush()
 {
-    m_DirectCommandQueue->Flush();
-    m_ComputeCommandQueue->Flush();
+    renderer.directCommandQueue->Flush();
+    renderer.computeCommandQueue->Flush();
     renderer.copyCommandQueue->Flush();
 }
 

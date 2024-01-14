@@ -29,8 +29,13 @@ public:
 
     //
     ComPtr<ID3D12Device2> device;
-    //
+
+    std::shared_ptr<CommandQueue> directCommandQueue;
+    std::shared_ptr<CommandQueue> computeCommandQueue;
     std::shared_ptr<CommandQueue> copyCommandQueue;
+
+    // todo
+
     // copyCommandQueue->GetCommandList()
     ID3D12GraphicsCommandList2* copyCommandList = {};
 };
