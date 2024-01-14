@@ -1,6 +1,10 @@
 #include "Renderer.h"
 #include "Helpers.h"
 
+void Renderer::init()
+{
+}
+
 void Renderer::UpdateBufferResource(
     ID3D12GraphicsCommandList2* commandList,
     ID3D12Resource** pDestinationResource,

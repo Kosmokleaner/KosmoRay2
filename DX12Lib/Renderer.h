@@ -14,11 +14,15 @@
 #include <wrl.h> // ComPtr<>
 using namespace Microsoft::WRL;
 
+#include <dxgi1_6.h> // IDXGIAdapter4
+
 #include "CommandQueue.h"
 
 class Renderer
 {
 public:
+
+    void init();
 
     // Create a GPU buffer.
     void UpdateBufferResource(ID3D12GraphicsCommandList2* commandList,
@@ -33,6 +37,11 @@ public:
     std::shared_ptr<CommandQueue> directCommandQueue;
     std::shared_ptr<CommandQueue> computeCommandQueue;
     std::shared_ptr<CommandQueue> copyCommandQueue;
+
+
+    ComPtr<IDXGIAdapter4> dxgiAdapter;
+
+    bool tearingSupported = false;
 
     // todo
 

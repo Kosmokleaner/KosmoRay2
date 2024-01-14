@@ -5,8 +5,6 @@
 
 #include "Renderer.h"
 
-#include <dxgi1_6.h>
-
 #include <memory>
 #include <string>
 
@@ -31,11 +29,6 @@ public:
     * Get the application singleton.
     */
     static Application& Get();
-
-    /**
-     * Check to see if VSync-off is supported.
-     */
-    bool IsTearingSupported() const;
 
     bool IsRayTracingSupported() const;
 
@@ -115,9 +108,4 @@ private:
 
     // The application instance handle that this application was created with.
     HINSTANCE m_hInstance;
-
-    ComPtr<IDXGIAdapter4> m_dxgiAdapter;
-
-    bool m_TearingSupported;
-
 };

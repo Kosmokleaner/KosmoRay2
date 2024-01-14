@@ -33,7 +33,6 @@ struct MakeWindow : public Window
 
 Application::Application(HINSTANCE hInst)
     : m_hInstance(hInst)
-    , m_TearingSupported(false)
 {
     // Windows 10 Creators update adds Per Monitor V2 DPI awareness context.
     // Using this awareness context allows the client area of the window 
@@ -68,10 +67,12 @@ Application::Application(HINSTANCE hInst)
         MessageBoxA(NULL, "Unable to register the window class.", "Error", MB_OK | MB_ICONERROR);
     }
 
-    m_dxgiAdapter = GetAdapter(false);
-    if ( m_dxgiAdapter )
+    renderer.init();
+
+    renderer.dxgiAdapter = GetAdapter(false);
+    if (renderer.dxgiAdapter)
     {
-        renderer.device = CreateDevice(m_dxgiAdapter);
+        renderer.device = CreateDevice(renderer.dxgiAdapter);
     }
     if (renderer.device)
     {
@@ -83,7 +84,7 @@ Application::Application(HINSTANCE hInst)
         renderer.copyCommandList = renderer.copyCommandQueue->GetCommandList().Get();
 
 
-        m_TearingSupported = CheckTearingSupport();
+        renderer.tearingSupported = CheckTearingSupport();
 
         char buffer[512];
         sprintf_s(buffer, "D3D12 Init: RayTracing: %d\n", (int)IsRayTracingSupported());
@@ -264,11 +265,6 @@ bool Application::CheckTearingSupport()
     }
 
     return allowTearing == TRUE;
-}
-
-bool Application::IsTearingSupported() const
-{
-    return m_TearingSupported;
 }
 
 bool Application::IsRayTracingSupported() const

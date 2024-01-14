@@ -15,7 +15,7 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
 {
     Application& app = Application::Get();
 
-    m_IsTearingSupported = app.IsTearingSupported();
+    m_IsTearingSupported = app.renderer.tearingSupported;
 
     m_dxgiSwapChain = CreateSwapChain();
     m_d3d12RTVDescriptorHeap = app.CreateDescriptorHeap(BufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
