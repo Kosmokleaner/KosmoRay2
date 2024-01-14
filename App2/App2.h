@@ -19,10 +19,5 @@ protected:
     virtual void OnRender(RenderEventArgs& e) override;
     virtual void OnResize(ResizeEventArgs& e) override; 
 
-    // Vertex buffer for the cube.
-    ComPtr<ID3D12Resource> m_VertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
-    // Index buffer for the cube.
-    ComPtr<ID3D12Resource> m_IndexBuffer;
-    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
+    Mesh mesh;
 };

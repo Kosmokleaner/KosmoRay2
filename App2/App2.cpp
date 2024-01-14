@@ -15,12 +15,6 @@
 
 
 
-// Vertex data for a colored cube.
-struct VertexPosColor
-{
-    XMFLOAT3 Position;
-    XMFLOAT3 Color;
-};
 
 static VertexPosColor g_Vertices[8] = {
     { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) }, // 0
@@ -58,24 +52,24 @@ bool App2::LoadContent()
     // Upload vertex buffer data.
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
     UpdateBufferResource(commandList,
-        &m_VertexBuffer, &intermediateVertexBuffer,
+        &mesh.m_VertexBuffer, &intermediateVertexBuffer,
         _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
 
     // Create the vertex buffer view.
-    m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-    m_VertexBufferView.SizeInBytes = sizeof(g_Vertices);
-    m_VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
+    mesh.m_VertexBufferView.BufferLocation = mesh.m_VertexBuffer->GetGPUVirtualAddress();
+    mesh.m_VertexBufferView.SizeInBytes = sizeof(g_Vertices);
+    mesh.m_VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
 
     // Upload index buffer data.
     ComPtr<ID3D12Resource> intermediateIndexBuffer;
     UpdateBufferResource(commandList,
-        &m_IndexBuffer, &intermediateIndexBuffer,
+        &mesh.m_IndexBuffer, &intermediateIndexBuffer,
         _countof(g_Indicies), sizeof(WORD), g_Indicies);
 
     // Create index buffer view.
-    m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-    m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    m_IndexBufferView.SizeInBytes = sizeof(g_Indicies);
+    mesh.m_IndexBufferView.BufferLocation = mesh.m_IndexBuffer->GetGPUVirtualAddress();
+    mesh.m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
+    mesh.m_IndexBufferView.SizeInBytes = sizeof(g_Indicies);
 
     // Create the descriptor heap for the depth-stencil view.
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
@@ -215,8 +209,8 @@ void App2::OnRender(RenderEventArgs& e)
     commandList->SetGraphicsRootSignature(m_RootSignature.Get());
 
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-    commandList->IASetIndexBuffer(&m_IndexBufferView);
+    commandList->IASetVertexBuffers(0, 1, &mesh.m_VertexBufferView);
+    commandList->IASetIndexBuffer(&mesh.m_IndexBufferView);
 
     commandList->RSSetViewports(1, &m_Viewport);
     commandList->RSSetScissorRects(1, &m_ScissorRect);
