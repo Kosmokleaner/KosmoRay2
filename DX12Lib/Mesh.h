@@ -1,6 +1,9 @@
 #pragma once
 #include "Renderer.h"
 
+// 0:UpdateBufferResource / 1:AllocateUploadBuffer(less code complexity, no commandlist need)
+#define MESH_UPLOAD_METHOD 1
+
 struct D3DBuffer
 {
     ComPtr<ID3D12Resource> resource;
@@ -27,23 +30,26 @@ public:
 
     void end();
 
-    void freeData();
+    // like FreeData / ReleaseDeviceDependentResources
+    void Reset();
 
     UINT vertexCount = 0;
     UINT indexCount = 0;
 
     D3DBuffer vertexBuffer;
-//    ComPtr<ID3D12Resource> vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 
     D3DBuffer indexBuffer;
-//    ComPtr<ID3D12Resource> indexBuffer;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
+
+    ComPtr<ID3D12Resource> bottomLevelAccelerationStructure;
 
 private:
     void init();
 
+#if MESH_UPLOAD_METHOD == 0
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
     ComPtr<ID3D12Resource> intermediateIndexBuffer;
+#endif
 };
 

@@ -86,7 +86,6 @@ private:
 
     // Acceleration structure
     ComPtr<ID3D12Resource> m_accelerationStructure;
-    ComPtr<ID3D12Resource> m_bottomLevelAccelerationStructure;
     ComPtr<ID3D12Resource> m_topLevelAccelerationStructure;
 
     // Raytracing output
