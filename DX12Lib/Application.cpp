@@ -219,25 +219,6 @@ void Application::Flush()
     renderer.copyCommandQueue->Flush();
 }
 
-ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
-{
-    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = type;
-    desc.NumDescriptors = numDescriptors;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-    ThrowIfFailed(renderer.device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
-
-    return descriptorHeap;
-}
-
-UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
-{
-    return renderer.device->GetDescriptorHandleIncrementSize(type);
-}
-
 
 // Remove a window from our window lists.
 static void RemoveWindow(HWND hWnd)

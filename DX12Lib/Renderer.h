@@ -45,6 +45,9 @@ public:
 
     bool IsRayTracingSupported() const;
 
+    ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
+
     // todo
 
     // copyCommandQueue->GetCommandList()
