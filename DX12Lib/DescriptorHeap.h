@@ -23,7 +23,7 @@ public:
     void Reset();
 
     // @param type e.g. D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV / D3D12_DESCRIPTOR_HEAP_TYPE_RTV
-    void CreateDescriptorHeap(Renderer& renderer, UINT inSize, D3D12_DESCRIPTOR_HEAP_TYPE type);
+    void CreateDescriptorHeap(Renderer& renderer, UINT inSize, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
     // Allocate a single descriptor and return its index. 
     // If the passed descriptorIndexToUse is valid, it will be used instead of allocating a new one.

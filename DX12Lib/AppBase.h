@@ -68,7 +68,6 @@ protected:
     // Depth buffer.
     ComPtr<ID3D12Resource> m_DepthBuffer;
     // Descriptor heap for depth buffer.
-//    ComPtr<ID3D12DescriptorHeap> m_DSVHeap;
     DescriptorHeap DSVHeap;
 
     // Root signatures

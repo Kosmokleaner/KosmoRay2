@@ -18,7 +18,7 @@ void DescriptorHeap::Reset()
     currentSize = 0;
 }
 
-void DescriptorHeap::CreateDescriptorHeap(Renderer& renderer, UINT inMaxSize, D3D12_DESCRIPTOR_HEAP_TYPE type)
+void DescriptorHeap::CreateDescriptorHeap(Renderer& renderer, UINT inMaxSize, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 {
     maxSize = inMaxSize;
 
@@ -27,7 +27,7 @@ void DescriptorHeap::CreateDescriptorHeap(Renderer& renderer, UINT inMaxSize, D3
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.Type = type;
     desc.NumDescriptors = inMaxSize;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    desc.Flags = flags;
     desc.NodeMask = 0;
 
     device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap));
