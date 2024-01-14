@@ -77,9 +77,6 @@ public:
      */
     std::shared_ptr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
 
-    // Flush all command queues.
-    void Flush();
-
     Renderer renderer;
 
 protected:

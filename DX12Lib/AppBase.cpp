@@ -51,7 +51,7 @@ void AppBase::ResizeDepthBuffer(int width, int height)
     if (m_ContentLoaded)
     {
         // Flush any GPU commands that might be referencing the depth buffer.
-        Application::Get().Flush();
+        Application::Get().renderer.Flush();
 
         width = std::max(1, width);
         height = std::max(1, height);

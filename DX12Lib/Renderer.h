@@ -48,6 +48,9 @@ public:
     ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
     UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
 
+    // Flush all command queues.
+    void Flush();
+
     // todo
 
     // copyCommandQueue->GetCommandList()

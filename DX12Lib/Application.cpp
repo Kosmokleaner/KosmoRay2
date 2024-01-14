@@ -98,7 +98,7 @@ void Application::Destroy()
 
 Application::~Application()
 {
-    Flush();
+    renderer.Flush();
 }
 
 std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync )
@@ -178,7 +178,7 @@ int Application::Run(std::shared_ptr<Game> pGame)
     }
 
     // Flush any commands in the commands queues before quiting.
-    Flush();
+    renderer.Flush();
 
     pGame->UnloadContent();
     pGame->Destroy();
@@ -210,13 +210,6 @@ std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TY
     }
 
     return commandQueue;
-}
-
-void Application::Flush()
-{
-    renderer.directCommandQueue->Flush();
-    renderer.computeCommandQueue->Flush();
-    renderer.copyCommandQueue->Flush();
 }
 
 

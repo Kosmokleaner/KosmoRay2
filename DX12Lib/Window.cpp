@@ -248,7 +248,7 @@ void Window::OnResize(ResizeEventArgs& e)
         m_ClientWidth = std::max(1, e.Width);
         m_ClientHeight = std::max(1, e.Height);
 
-        Application::Get().Flush();
+        Application::Get().renderer.Flush();
 
         for (int i = 0; i < BufferCount; ++i)
         {
