@@ -7,6 +7,7 @@ Multiple experiments in different Apps:
 
 
 todo:
+* with Mock enabled RenderDoc crashes
 * move TransitionResource, ClearRTV, ClearDepth, UpdateBufferResource, ResizeDepthBuffer out of App
 * move NVAPI out of App
 * App code should be as simple as possible
