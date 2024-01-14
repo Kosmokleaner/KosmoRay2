@@ -2,6 +2,7 @@
 #include "Game.h"
 #include "Window.h"
 #include "Camera.h"
+#include "Mesh.h"
 
 #include "Mathlib.h"
 
@@ -14,12 +15,6 @@
 #include <wrl.h> // ComPtr<>
 using namespace Microsoft::WRL;
 
-struct D3DBuffer
-{
-    ComPtr<ID3D12Resource> resource;
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
-};
 
 class AppBase : public Game
 {

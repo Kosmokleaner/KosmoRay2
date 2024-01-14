@@ -45,12 +45,6 @@ namespace LocalRootSignatureParams {
     };
 }
 
-// Vertex data for a colored cube.
-struct VertexPosColor
-{
-    XMFLOAT3 Position;
-    XMFLOAT3 Color;
-};
 
 
 App3::App3(const std::wstring& name, int width, int height, bool vSync)

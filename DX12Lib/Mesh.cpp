@@ -60,12 +60,12 @@ void Mesh::startUpload(Renderer& renderer, VertexPosColor* vertices, UINT inVert
     indexCount = inIndexCount;
 
     // Upload vertex buffer data
-    renderer.UpdateBufferResource(renderer.copyCommandList, &vertexBuffer, &intermediateVertexBuffer, inVertexCount, sizeof(VertexPosColor), vertices);
-    NAME_D3D12_OBJECT(vertexBuffer);
+    renderer.UpdateBufferResource(renderer.copyCommandList, &vertexBuffer.resource, &intermediateVertexBuffer, inVertexCount, sizeof(VertexPosColor), vertices);
+    NAME_D3D12_OBJECT(vertexBuffer.resource);
 
     // Upload index buffer data
-    renderer.UpdateBufferResource(renderer.copyCommandList, &indexBuffer, &intermediateIndexBuffer, indexCount, sizeof(IndexType), indices);
-    NAME_D3D12_OBJECT(indexBuffer);
+    renderer.UpdateBufferResource(renderer.copyCommandList, &indexBuffer.resource, &intermediateIndexBuffer, indexCount, sizeof(IndexType), indices);
+    NAME_D3D12_OBJECT(indexBuffer.resource);
 
     init();
 }
@@ -76,12 +76,12 @@ void Mesh::init()
     assert(indexCount);
 
     // vertex buffer view
-    vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
+    vertexBufferView.BufferLocation = vertexBuffer.resource->GetGPUVirtualAddress();
     vertexBufferView.StrideInBytes = sizeof(VertexPosColor);
     vertexBufferView.SizeInBytes = vertexCount * vertexBufferView.StrideInBytes;
 
     // index buffer view
-    indexBufferView.BufferLocation = indexBuffer->GetGPUVirtualAddress();
+    indexBufferView.BufferLocation = indexBuffer.resource->GetGPUVirtualAddress();
     indexBufferView.Format = DXGI_FORMAT_R16_UINT;
     assert(sizeof(IndexType) == 2);
     indexBufferView.SizeInBytes = indexCount * sizeof(IndexType);

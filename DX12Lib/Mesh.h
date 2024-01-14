@@ -14,12 +14,20 @@
 #include <wrl.h> // ComPtr<>
 using namespace Microsoft::WRL;
 
+struct D3DBuffer
+{
+    ComPtr<ID3D12Resource> resource;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
+};
+
 // for now we only have one vertex format
 struct VertexPosColor
 {
     XMFLOAT3 Position;
     XMFLOAT3 Color;
 };
+
 
 // todo: move
 #include "CommandQueue.h"
@@ -55,9 +63,12 @@ public:
     UINT vertexCount = 0;
     UINT indexCount = 0;
 
-    ComPtr<ID3D12Resource> vertexBuffer;
+    D3DBuffer vertexBuffer;
+//    ComPtr<ID3D12Resource> vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-    ComPtr<ID3D12Resource> indexBuffer;
+
+    D3DBuffer indexBuffer;
+//    ComPtr<ID3D12Resource> indexBuffer;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
 private:
