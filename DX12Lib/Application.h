@@ -69,14 +69,6 @@ public:
     */
     void Quit(int exitCode = 0);
 
-    /**
-     * Get a command queue. Valid types are:
-     * - D3D12_COMMAND_LIST_TYPE_DIRECT : Can be used for draw, dispatch, or copy commands.
-     * - D3D12_COMMAND_LIST_TYPE_COMPUTE: Can be used for dispatch or copy commands.
-     * - D3D12_COMMAND_LIST_TYPE_COPY   : Can be used for copy commands.
-     */
-    std::shared_ptr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) const;
-
     Renderer renderer;
 
 protected:

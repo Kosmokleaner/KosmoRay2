@@ -46,7 +46,7 @@ App2::App2(const std::wstring& name, int width, int height, bool vSync)
 bool App2::LoadContent()
 {
     auto device = Application::Get().renderer.device;
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandQueue = Application::Get().renderer.copyCommandQueue;
     auto commandList = commandQueue->GetCommandList();
 
 //    Renderer renderer = Application::Get().renderer;
@@ -171,7 +171,7 @@ void App2::OnRender(RenderEventArgs& e)
 {
     super::OnRender(e);
 
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto commandQueue = Application::Get().renderer.directCommandQueue;
     auto commandList = commandQueue->GetCommandList();
 
     UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();

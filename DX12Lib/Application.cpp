@@ -191,28 +191,6 @@ void Application::Quit(int exitCode)
     PostQuitMessage(exitCode);
 }
 
-std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
-{
-    std::shared_ptr<CommandQueue> commandQueue;
-    switch (type)
-    {
-    case D3D12_COMMAND_LIST_TYPE_DIRECT:
-        commandQueue = renderer.directCommandQueue;
-        break;
-    case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-        commandQueue = renderer.computeCommandQueue;
-        break;
-    case D3D12_COMMAND_LIST_TYPE_COPY:
-        commandQueue = renderer.copyCommandQueue;
-        break;
-    default:
-        assert(false && "Invalid command queue type.");
-    }
-
-    return commandQueue;
-}
-
-
 // Remove a window from our window lists.
 static void RemoveWindow(HWND hWnd)
 {

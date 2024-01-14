@@ -69,7 +69,7 @@ App3::~App3()
 bool App3::LoadContent()
 {
     auto device = Application::Get().renderer.device;
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandQueue = Application::Get().renderer.copyCommandQueue;
     auto commandList = commandQueue->GetCommandList();
 
     // Create the descriptor heap for the depth-stencil view.
@@ -268,7 +268,7 @@ void App3::OnRender(RenderEventArgs& e)
 {
     super::OnRender(e);
 
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto commandQueue = Application::Get().renderer.directCommandQueue;
     auto commandList = commandQueue->GetCommandList();
 
     UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
@@ -312,7 +312,7 @@ void App3::CreateRaytracingInterfaces()
 // todo:
 // 
 
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto commandQueue = Application::Get().renderer.directCommandQueue;
     auto commandList = commandQueue->GetCommandList();
 
     ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
@@ -606,7 +606,7 @@ void App3::BuildAccelerationStructures()
 {
     auto device = Application::Get().renderer.device;
 
-    auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    auto commandQueue = Application::Get().renderer.directCommandQueue;
     assert(commandQueue);
     auto commandList = commandQueue->GetCommandList();
 
