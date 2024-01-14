@@ -3,6 +3,7 @@
 #include "Window.h"
 #include "Camera.h"
 #include "Mesh.h"
+#include "DescriptorHeap.h"
 
 #include "Mathlib.h"
 
@@ -91,6 +92,7 @@ protected:
 
     bool m_ContentLoaded = false;
 
+    DescriptorHeap descriptorHeap;
 
     // Descriptors
     ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;

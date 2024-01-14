@@ -18,7 +18,16 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
     m_IsTearingSupported = app.renderer.tearingSupported;
 
     m_dxgiSwapChain = CreateSwapChain();
-    m_d3d12RTVDescriptorHeap = app.renderer.CreateDescriptorHeap(BufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+
+    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    desc.NumDescriptors = BufferCount;
+    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    desc.NodeMask = 0;
+
+    ThrowIfFailed(app.renderer.device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_d3d12RTVDescriptorHeap)));
+
     m_RTVDescriptorSize = app.renderer.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     UpdateRenderTargetViews();

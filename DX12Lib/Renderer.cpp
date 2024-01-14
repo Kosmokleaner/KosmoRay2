@@ -238,20 +238,6 @@ bool Renderer::IsRayTracingSupported() const
         && featureSupportData.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 }
 
-ComPtr<ID3D12DescriptorHeap> Renderer::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
-{
-    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = type;
-    desc.NumDescriptors = numDescriptors;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-    ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
-
-    return descriptorHeap;
-}
-
 UINT Renderer::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
 {
     return device->GetDescriptorHandleIncrementSize(type);
