@@ -45,7 +45,7 @@ App2::App2(const std::wstring& name, int width, int height, bool vSync)
 
 bool App2::LoadContent()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto commandList = commandQueue->GetCommandList();
 

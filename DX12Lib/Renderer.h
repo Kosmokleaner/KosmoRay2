@@ -43,8 +43,15 @@ public:
 
     bool tearingSupported = false;
 
+    bool IsRayTracingSupported() const;
+
     // todo
 
     // copyCommandQueue->GetCommandList()
     ID3D12GraphicsCommandList2* copyCommandList = {};
+
+private:
+    ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
+    ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter);
+    bool CheckTearingSupport();
 };

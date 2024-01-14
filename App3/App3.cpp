@@ -56,7 +56,7 @@ App3::App3(const std::wstring& name, int width, int height, bool vSync)
     CreateDeviceDependentResources();
     CreateWindowSizeDependentResources();
 
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
     m_sceneCB.Create(device.Get(), Window::BufferCount, L"Scene Constant Buffer");
 }
 
@@ -68,7 +68,7 @@ App3::~App3()
 
 bool App3::LoadContent()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto commandList = commandQueue->GetCommandList();
 
@@ -307,7 +307,7 @@ void App3::OnKeyPressed(KeyEventArgs& e)
 // Create raytracing device and command list.
 void App3::CreateRaytracingInterfaces()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
 
 // todo:
 // 
@@ -321,7 +321,7 @@ void App3::CreateRaytracingInterfaces()
 
 void App3::SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig)
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
     ComPtr<ID3DBlob> blob;
     ComPtr<ID3DBlob> error;
 
@@ -509,7 +509,7 @@ void App3::CreateRaytracingPipelineStateObject()
 
 void App3::CreateDescriptorHeap()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
 
     D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
     // Allocate a heap for 3 descriptors:
@@ -528,7 +528,7 @@ void App3::CreateDescriptorHeap()
 // Build geometry used in the sample.
 void App3::BuildGeometry()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
     std::string inputfile = "../../data/monkey.obj";        // 1 shape
 //    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
 //    std::string inputfile = "../../data/LShape.obj";    // no clipping errors
@@ -604,7 +604,7 @@ void App3::BuildGeometry()
 // Build acceleration structures needed for raytracing.
 void App3::BuildAccelerationStructures()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
 
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     assert(commandQueue);
@@ -729,7 +729,7 @@ void App3::CreateWindowSizeDependentResources()
 // This encapsulates all shader records - shaders and the arguments for their local root signatures.
 void App3::BuildShaderTables()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
 
     // Get shader identifiers.    
     ComPtr<ID3D12StateObjectProperties> stateObjectProperties;
@@ -774,7 +774,7 @@ void App3::BuildShaderTables()
 
 void App3::CreateRaytracingOutputResource()
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
     auto backbufferFormat = m_pWindow->GetBackBufferFormat();
 
     // Create the output resource. The dimensions and format should match the swap-chain.

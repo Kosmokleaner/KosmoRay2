@@ -7,7 +7,7 @@
 
 UINT AppBase::CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize)
 {
-    auto device = Application::Get().GetDevice();
+    auto device = Application::Get().renderer.device;
 
     // SRV
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -56,7 +56,7 @@ void AppBase::ResizeDepthBuffer(int width, int height)
         width = std::max(1, width);
         height = std::max(1, height);
 
-        auto device = Application::Get().GetDevice();
+        auto device = Application::Get().renderer.device;
 
         // Resize screen dependent resources.
         // Create a depth buffer.

@@ -59,8 +59,8 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 
     Application::Create(hInstance);
     {
-        std::shared_ptr<App2> demo = std::make_shared<App2>(L"KosmoRay2 App2 DX12 Rasterization", 1280, 720);
-//        std::shared_ptr<App3> demo = std::make_shared<App3>(L"KosmoRay2 App3 DX12 Ray-Tracing", 1280, 720);
+//        std::shared_ptr<App2> demo = std::make_shared<App2>(L"KosmoRay2 App2 DX12 Rasterization", 1280, 720);
+        std::shared_ptr<App3> demo = std::make_shared<App3>(L"KosmoRay2 App3 DX12 Ray-Tracing", 1280, 720);
 
         retCode = Application::Get().Run(demo);
     }

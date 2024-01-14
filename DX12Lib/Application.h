@@ -30,8 +30,6 @@ public:
     */
     static Application& Get();
 
-    bool IsRayTracingSupported() const;
-
     /**
     * Create a new DirectX11 render window instance.
     * @param windowName The name of the window. This name will appear in the title bar of the window. This name should be unique.
@@ -72,10 +70,6 @@ public:
     void Quit(int exitCode = 0);
 
     /**
-     * Get the Direct3D 12 device
-     */
-    ComPtr<ID3D12Device2> GetDevice() const;
-    /**
      * Get a command queue. Valid types are:
      * - D3D12_COMMAND_LIST_TYPE_DIRECT : Can be used for draw, dispatch, or copy commands.
      * - D3D12_COMMAND_LIST_TYPE_COMPUTE: Can be used for dispatch or copy commands.
@@ -97,10 +91,6 @@ protected:
     Application(HINSTANCE hInst);
     // Destroy the application instance and all windows associated with this application.
     virtual ~Application();
-
-    ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
-    ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter);
-    bool CheckTearingSupport();
 
 private:
     Application(const Application& copy) = delete;
