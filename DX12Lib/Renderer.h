@@ -22,6 +22,8 @@ class Renderer
 {
 public:
 
+    ~Renderer();
+
     void init();
 
     // Create a GPU buffer.
@@ -57,7 +59,12 @@ public:
     ID3D12GraphicsCommandList2* copyCommandList = {};
 
 private:
+    //
+    void Reset();
+    //
     ComPtr<IDXGIAdapter4> GetAdapter(bool bUseWarp);
+    //
     ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter);
+    //
     bool CheckTearingSupport();
 };

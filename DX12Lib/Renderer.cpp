@@ -1,6 +1,11 @@
 #include "Renderer.h"
 #include "Helpers.h"
 
+Renderer::~Renderer()
+{
+    Reset();
+}
+
 void Renderer::init()
 {
     dxgiAdapter = GetAdapter(false);
@@ -259,3 +264,6 @@ void Renderer::Flush()
     copyCommandQueue->Flush();
 }
 
+void Renderer::Reset()
+{
+}
