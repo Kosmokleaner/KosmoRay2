@@ -19,14 +19,7 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
 
     m_dxgiSwapChain = CreateSwapChain();
 
-
-    D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-    desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    desc.NumDescriptors = BufferCount;
-    desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    ThrowIfFailed(app.renderer.device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_d3d12RTVDescriptorHeap)));
+    RTVDescriptorHeap.CreateDescriptorHeap(app.renderer, BufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     m_RTVDescriptorSize = app.renderer.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -333,7 +326,7 @@ void Window::UpdateRenderTargetViews()
 {
     auto device = Application::Get().renderer.device;
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(RTVDescriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
     for (int i = 0; i < BufferCount; ++i)
     {
@@ -351,7 +344,7 @@ void Window::UpdateRenderTargetViews()
 
 D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const
 {
-    return CD3DX12_CPU_DESCRIPTOR_HANDLE(m_d3d12RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(RTVDescriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart(),
         m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 }
 

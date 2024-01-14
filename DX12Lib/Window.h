@@ -20,6 +20,7 @@ using namespace Microsoft::WRL;
 
 #include "DX12Lib/Events.h"
 #include "DX12Lib/HighResolutionClock.h"
+#include "DX12Lib/DescriptorHeap.h"
 
 // Forward-declare the DirectXTemplate class.
 class Game;
@@ -160,7 +161,7 @@ private:
     std::weak_ptr<Game> m_pGame;
 
     ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
-    ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
+    DescriptorHeap RTVDescriptorHeap;
     ComPtr<ID3D12Resource> m_d3d12BackBuffers[BufferCount];
 
     UINT m_RTVDescriptorSize;
