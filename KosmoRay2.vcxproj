@@ -63,6 +63,7 @@
     <ClCompile Include="App3\App3.cpp" />
     <ClCompile Include="DX12Lib\AppBase.cpp" />
     <ClCompile Include="DX12Lib\Mesh.cpp" />
+    <ClCompile Include="DX12Lib\Renderer.cpp" />
     <ClCompile Include="Mock12.cpp" />
     <ClCompile Include="DX12Lib\Application.cpp" />
     <ClCompile Include="DX12Lib\CommandQueue.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="App3\shaders\RaytracingHlslCompat.h" />
     <ClInclude Include="DX12Lib\AppBase.h" />
     <ClInclude Include="DX12Lib\Mesh.h" />
+    <ClInclude Include="DX12Lib\Renderer.h" />
     <ClInclude Include="Mock12.h" />
     <ClInclude Include="DX12Lib\Application.h" />
     <ClInclude Include="DX12Lib\CommandQueue.h" />

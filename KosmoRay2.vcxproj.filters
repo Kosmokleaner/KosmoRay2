@@ -79,6 +79,9 @@
     <ClCompile Include="DX12Lib\Mesh.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
+    <ClCompile Include="DX12Lib\Renderer.cpp">
+      <Filter>DX12Lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -137,6 +140,9 @@
       <Filter>DX12Lib</Filter>
     </ClInclude>
     <ClInclude Include="DX12Lib\Mesh.h">
+      <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12Lib\Renderer.h">
       <Filter>DX12Lib</Filter>
     </ClInclude>
   </ItemGroup>
