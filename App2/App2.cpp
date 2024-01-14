@@ -49,27 +49,12 @@ bool App2::LoadContent()
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto commandList = commandQueue->GetCommandList();
 
-    // Upload vertex buffer data.
-    ComPtr<ID3D12Resource> intermediateVertexBuffer;
-    UpdateBufferResource(commandList,
-        &mesh.m_VertexBuffer, &intermediateVertexBuffer,
-        _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
+    Renderer renderer;
+    renderer.device = device.Get();
+    renderer.m_CopyCommandQueue = commandQueue.get();
+    renderer.copyCommandList = commandList.Get();
 
-    // Create the vertex buffer view.
-    mesh.m_VertexBufferView.BufferLocation = mesh.m_VertexBuffer->GetGPUVirtualAddress();
-    mesh.m_VertexBufferView.SizeInBytes = sizeof(g_Vertices);
-    mesh.m_VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
-
-    // Upload index buffer data.
-    ComPtr<ID3D12Resource> intermediateIndexBuffer;
-    UpdateBufferResource(commandList,
-        &mesh.m_IndexBuffer, &intermediateIndexBuffer,
-        _countof(g_Indicies), sizeof(WORD), g_Indicies);
-
-    // Create index buffer view.
-    mesh.m_IndexBufferView.BufferLocation = mesh.m_IndexBuffer->GetGPUVirtualAddress();
-    mesh.m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    mesh.m_IndexBufferView.SizeInBytes = sizeof(g_Indicies);
+    mesh.startUpload(renderer, g_Vertices, _countof(g_Vertices), g_Indicies, _countof(g_Indicies));
 
     // Create the descriptor heap for the depth-stencil view.
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
@@ -155,6 +140,8 @@ bool App2::LoadContent()
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
     commandQueue->WaitForFenceValue(fenceValue);
 
+    mesh.end();
+
     m_ContentLoaded = true;
 
     // Resize/Create the depth buffer.
@@ -209,8 +196,8 @@ void App2::OnRender(RenderEventArgs& e)
     commandList->SetGraphicsRootSignature(m_RootSignature.Get());
 
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    commandList->IASetVertexBuffers(0, 1, &mesh.m_VertexBufferView);
-    commandList->IASetIndexBuffer(&mesh.m_IndexBufferView);
+    commandList->IASetVertexBuffers(0, 1, &mesh.vertexBufferView);
+    commandList->IASetIndexBuffer(&mesh.indexBufferView);
 
     commandList->RSSetViewports(1, &m_Viewport);
     commandList->RSSetScissorRects(1, &m_ScissorRect);

@@ -21,15 +21,49 @@ struct VertexPosColor
     XMFLOAT3 Color;
 };
 
+// todo: move
+#include "CommandQueue.h"
+class Renderer
+{
+public:
+
+    // Create a GPU buffer.
+    void UpdateBufferResource(ID3D12GraphicsCommandList2* commandList,
+        ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
+        size_t numElements, size_t elementSize, const void* bufferData,
+        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+
+
+    //
+    ID3D12Device2* device;
+    //
+    CommandQueue* m_CopyCommandQueue;
+    // m_CopyCommandQueue->GetCommandList()
+    ID3D12GraphicsCommandList2* copyCommandList = {};
+};
+
 // a triangle mesh with index and vertex buffer
 class Mesh
 {
 public:
+    typedef WORD IndexType;
 
-    ComPtr<ID3D12Resource> m_VertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
-    ComPtr<ID3D12Resource> m_IndexBuffer;
-    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
+    void startUpload(Renderer& renderer, VertexPosColor* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount);
 
+    void end();
+
+    UINT vertexCount = 0;
+    UINT indexCount = 0;
+
+    ComPtr<ID3D12Resource> vertexBuffer;
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+    ComPtr<ID3D12Resource> indexBuffer;
+    D3D12_INDEX_BUFFER_VIEW indexBufferView;
+
+private:
+    void init();
+
+    ComPtr<ID3D12Resource> intermediateVertexBuffer;
+    ComPtr<ID3D12Resource> intermediateIndexBuffer;
 };
 
