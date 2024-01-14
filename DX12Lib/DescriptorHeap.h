@@ -17,7 +17,9 @@ class DescriptorHeap
 {
 public:
     ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+    // aka m_descriptorsAllocated
     UINT currentSize = 0;
+    // m_descriptorHeap->GetDesc().NumDescriptors, aka m_descriptorSize
     UINT maxSize = 0;
 
     void Reset();

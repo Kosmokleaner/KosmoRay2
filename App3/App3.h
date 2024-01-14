@@ -62,7 +62,6 @@ private:
     void CreateRaytracingInterfaces();
     void CreateRootSignatures();
     void CreateRaytracingPipelineStateObject();
-    void CreateDescriptorHeap();
     void BuildGeometry();
     void BuildAccelerationStructures();
     void BuildShaderTables();

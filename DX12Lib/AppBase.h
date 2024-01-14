@@ -92,11 +92,7 @@ protected:
 
     bool m_ContentLoaded = false;
 
+    // move? rename
     DescriptorHeap descriptorHeap;
-
-    // Descriptors
-    ComPtr<ID3D12DescriptorHeap> m_descriptorHeap;
-    UINT m_descriptorsAllocated = 0;
-    UINT m_descriptorSize = 0;
 };
 

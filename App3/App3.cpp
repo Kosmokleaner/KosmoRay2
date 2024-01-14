@@ -208,7 +208,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 
     // Bind the heaps, acceleration structure and dispatch rays
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
-    commandList->SetDescriptorHeaps(1, m_descriptorHeap.GetAddressOf());
+    commandList->SetDescriptorHeaps(1, descriptorHeap.descriptorHeap.GetAddressOf());
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutputResourceUAVGpuDescriptor);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, m_topLevelAccelerationStructure->GetGPUVirtualAddress());
 
@@ -503,24 +503,6 @@ void App3::CreateRaytracingPipelineStateObject()
     }
 }
 
-void App3::CreateDescriptorHeap()
-{
-    auto device = Application::Get().renderer.device;
-
-    D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-    // Allocate a heap for 3 descriptors:
-    // 2 - vertex and index buffer SRVs
-    // 1 - raytracing output texture SRV
-    descriptorHeapDesc.NumDescriptors = 3;
-    descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    descriptorHeapDesc.NodeMask = 0;
-    device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_descriptorHeap));
-    NAME_D3D12_OBJECT(m_descriptorHeap);
-
-    m_descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-}
-
 // Build geometry used in the sample.
 void App3::BuildGeometry()
 {
@@ -785,7 +767,7 @@ void App3::CreateRaytracingOutputResource()
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
     UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
     device->CreateUnorderedAccessView(m_raytracingOutput.Get(), nullptr, &UAVDesc, uavDescriptorHandle);
-    m_raytracingOutputResourceUAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_raytracingOutputResourceUAVDescriptorHeapIndex, m_descriptorSize);
+    m_raytracingOutputResourceUAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), m_raytracingOutputResourceUAVDescriptorHeapIndex, descriptorHeap.maxSize);
 }
 
 void App3::ReleaseDeviceDependentResources()
@@ -797,8 +779,7 @@ void App3::ReleaseDeviceDependentResources()
 
     m_dxrStateObject.Reset();
 
-    m_descriptorHeap.Reset();
-    m_descriptorsAllocated = 0;
+    descriptorHeap.Reset();
     m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
 
     mesh.Reset();
@@ -818,8 +799,11 @@ void App3::CreateDeviceDependentResources()
     // Create a raytracing pipeline state object which defines the binding of shaders, state and resources to be used during raytracing.
     CreateRaytracingPipelineStateObject();
 
-    // Create a heap for descriptors.
-    CreateDescriptorHeap();
+    // Allocate a heap for 3 descriptors:
+    // 2 - vertex and index buffer SRVs
+    // 1 - raytracing output texture SRV
+    descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     BuildGeometry();
 

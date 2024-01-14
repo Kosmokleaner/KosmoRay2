@@ -28,19 +28,19 @@ UINT AppBase::CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementS
     }
     UINT descriptorIndex = AllocateDescriptor(&buffer->cpuDescriptorHandle);
     device->CreateShaderResourceView(buffer->resource.Get(), &srvDesc, buffer->cpuDescriptorHandle);
-    buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, m_descriptorSize);
+    buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, descriptorHeap.maxSize);
     return descriptorIndex;
 }
 
 
 UINT AppBase::AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse)
 {
-    auto descriptorHeapCpuBase = m_descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-    if (descriptorIndexToUse >= m_descriptorHeap->GetDesc().NumDescriptors)
+    auto descriptorHeapCpuBase = descriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    if (descriptorIndexToUse >= descriptorHeap.maxSize)
     {
-        descriptorIndexToUse = m_descriptorsAllocated++;
+        descriptorIndexToUse = descriptorHeap.currentSize++;
     }
-    *cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeapCpuBase, descriptorIndexToUse, m_descriptorSize);
+    *cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeapCpuBase, descriptorIndexToUse, descriptorHeap.maxSize);
     return descriptorIndexToUse;
 }
 
