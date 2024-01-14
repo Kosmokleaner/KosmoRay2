@@ -60,6 +60,8 @@ public:
 
     void end();
 
+    void freeData();
+
     UINT vertexCount = 0;
     UINT indexCount = 0;
 

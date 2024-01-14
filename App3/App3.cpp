@@ -217,7 +217,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, m_topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, m_indexBuffer.gpuDescriptorHandle);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, mesh.indexBuffer.gpuDescriptorHandle);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -555,7 +555,7 @@ void App3::BuildGeometry()
     auto& materials = reader.GetMaterials();
 
     // for now unoptimized, see https://vulkan-tutorial.com/Loading_models
-    std::vector<Index> indexBuffer;
+    std::vector<Mesh::IndexType> indexBuffer;
     std::vector<VertexPosColor> vertexBuffer;
 
     // if reader_config.triangulate we can use the indexbuffer more or less directly
@@ -591,12 +591,12 @@ void App3::BuildGeometry()
             vertexBuffer[i].Position.z = vz * 0.5f;
         }
     }
-    AllocateUploadBuffer(device.Get(), indexBuffer.data(), indexBuffer.size() * sizeof(indexBuffer[0]), &m_indexBuffer.resource);
-    AllocateUploadBuffer(device.Get(), vertexBuffer.data(), vertexBuffer.size() * sizeof(vertexBuffer[0]), &m_vertexBuffer.resource);
+    AllocateUploadBuffer(device.Get(), indexBuffer.data(), indexBuffer.size() * sizeof(indexBuffer[0]), &mesh.indexBuffer.resource);
+    AllocateUploadBuffer(device.Get(), vertexBuffer.data(), vertexBuffer.size() * sizeof(vertexBuffer[0]), &mesh.vertexBuffer.resource);
 
     // Vertex buffer is passed to the shader along with index buffer as a descriptor range.
-    UINT descriptorIndexIB = CreateBufferSRV(&m_indexBuffer, (UINT)indexBuffer.size(), 2);
-    UINT descriptorIndexVB = CreateBufferSRV(&m_vertexBuffer, (UINT)vertexBuffer.size(), sizeof(vertexBuffer[0]));
+    UINT descriptorIndexIB = CreateBufferSRV(&mesh.indexBuffer, (UINT)indexBuffer.size(), 2);
+    UINT descriptorIndexVB = CreateBufferSRV(&mesh.vertexBuffer, (UINT)vertexBuffer.size(), sizeof(vertexBuffer[0]));
     ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index");
 }
 
@@ -620,13 +620,13 @@ void App3::BuildAccelerationStructures()
 
     D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
     geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    geometryDesc.Triangles.IndexBuffer = m_indexBuffer.resource->GetGPUVirtualAddress();
-    geometryDesc.Triangles.IndexCount = static_cast<UINT>(m_indexBuffer.resource->GetDesc().Width) / sizeof(Index);
+    geometryDesc.Triangles.IndexBuffer = mesh.indexBuffer.resource->GetGPUVirtualAddress();
+    geometryDesc.Triangles.IndexCount = static_cast<UINT>(mesh.indexBuffer.resource->GetDesc().Width) / sizeof(Mesh::IndexType);
     geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
     geometryDesc.Triangles.Transform3x4 = 0;
     geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-    geometryDesc.Triangles.VertexCount = static_cast<UINT>(m_vertexBuffer.resource->GetDesc().Width) / sizeof(VertexPosColor);
-    geometryDesc.Triangles.VertexBuffer.StartAddress = m_vertexBuffer.resource->GetGPUVirtualAddress();
+    geometryDesc.Triangles.VertexCount = static_cast<UINT>(mesh.vertexBuffer.resource->GetDesc().Width) / sizeof(VertexPosColor);
+    geometryDesc.Triangles.VertexBuffer.StartAddress = mesh.vertexBuffer.resource->GetGPUVirtualAddress();
     geometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(VertexPosColor);
 
     // Mark the geometry as opaque. 
@@ -805,8 +805,8 @@ void App3::ReleaseDeviceDependentResources()
     m_descriptorHeap.Reset();
     m_descriptorsAllocated = 0;
     m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
-    m_indexBuffer.resource.Reset();
-    m_vertexBuffer.resource.Reset();
+
+    mesh.freeData();
 
     m_accelerationStructure.Reset();
     m_bottomLevelAccelerationStructure.Reset();

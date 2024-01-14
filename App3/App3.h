@@ -82,11 +82,7 @@ private:
     // Raytracing scene
     RayGenConstantBuffer m_rayGenCB;
 
-    // Geometry
-    typedef UINT16 Index;
-
-    D3DBuffer m_indexBuffer;
-    D3DBuffer m_vertexBuffer;
+    Mesh mesh;
 
     // Acceleration structure
     ComPtr<ID3D12Resource> m_accelerationStructure;

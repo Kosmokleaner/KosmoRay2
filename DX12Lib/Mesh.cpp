@@ -92,3 +92,9 @@ void Mesh::end()
     intermediateVertexBuffer.Detach();
     intermediateIndexBuffer.Detach();
 }
+
+void Mesh::freeData()
+{
+    indexBuffer.resource.Reset();
+    vertexBuffer.resource.Reset();
+}
