@@ -71,13 +71,17 @@ Application::Application(HINSTANCE hInst)
     m_dxgiAdapter = GetAdapter(false);
     if ( m_dxgiAdapter )
     {
-        m_d3d12Device = CreateDevice(m_dxgiAdapter);
+        renderer.device = CreateDevice(m_dxgiAdapter);
     }
-    if (m_d3d12Device)
+    if (renderer.device)
     {
-        m_DirectCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-        m_ComputeCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-        m_CopyCommandQueue = std::make_shared<CommandQueue>(m_d3d12Device, D3D12_COMMAND_LIST_TYPE_COPY);
+        m_DirectCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+        m_ComputeCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        renderer.copyCommandQueue = std::make_shared<CommandQueue>(renderer.device, D3D12_COMMAND_LIST_TYPE_COPY);
+
+        renderer.device = GetDevice();
+        renderer.copyCommandList = renderer.copyCommandQueue->GetCommandList().Get();
+
 
         m_TearingSupported = CheckTearingSupport();
 
@@ -269,12 +273,12 @@ bool Application::IsTearingSupported() const
 
 bool Application::IsRayTracingSupported() const
 {
-    if(!m_d3d12Device)
+    if(!renderer.device)
         return false;
 
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 featureSupportData = {};
 
-    return SUCCEEDED(m_d3d12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &featureSupportData, sizeof(featureSupportData)))
+    return SUCCEEDED(renderer.device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &featureSupportData, sizeof(featureSupportData)))
         && featureSupportData.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 }
 
@@ -370,7 +374,7 @@ void Application::Quit(int exitCode)
 
 ComPtr<ID3D12Device2> Application::GetDevice() const
 {
-    return m_d3d12Device;
+    return renderer.device;
 }
 
 std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
@@ -385,7 +389,7 @@ std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TY
         commandQueue = m_ComputeCommandQueue;
         break;
     case D3D12_COMMAND_LIST_TYPE_COPY:
-        commandQueue = m_CopyCommandQueue;
+        commandQueue = renderer.copyCommandQueue;
         break;
     default:
         assert(false && "Invalid command queue type.");
@@ -398,7 +402,7 @@ void Application::Flush()
 {
     m_DirectCommandQueue->Flush();
     m_ComputeCommandQueue->Flush();
-    m_CopyCommandQueue->Flush();
+    renderer.copyCommandQueue->Flush();
 }
 
 ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
@@ -410,14 +414,14 @@ ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescripto
     desc.NodeMask = 0;
 
     ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-    ThrowIfFailed(m_d3d12Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
+    ThrowIfFailed(renderer.device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
 
     return descriptorHeap;
 }
 
 UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
 {
-    return m_d3d12Device->GetDescriptorHandleIncrementSize(type);
+    return renderer.device->GetDescriptorHandleIncrementSize(type);
 }
 
 

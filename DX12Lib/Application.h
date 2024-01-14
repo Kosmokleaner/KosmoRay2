@@ -3,14 +3,9 @@
 */
 #pragma once
 
-#include <d3d12.h>
-#undef min
-#undef max
+#include "Renderer.h"
 
 #include <dxgi1_6.h>
-
-#include <wrl.h> // ComPtr<>
-using namespace Microsoft::WRL;
 
 #include <memory>
 #include <string>
@@ -101,6 +96,8 @@ public:
     ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
     UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
 
+    Renderer renderer;
+
 protected:
 
     // Create an application instance.
@@ -120,11 +117,9 @@ private:
     HINSTANCE m_hInstance;
 
     ComPtr<IDXGIAdapter4> m_dxgiAdapter;
-    ComPtr<ID3D12Device2> m_d3d12Device;
 
     std::shared_ptr<CommandQueue> m_DirectCommandQueue;
     std::shared_ptr<CommandQueue> m_ComputeCommandQueue;
-    std::shared_ptr<CommandQueue> m_CopyCommandQueue;
 
     bool m_TearingSupported;
 

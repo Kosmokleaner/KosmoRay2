@@ -1,3 +1,4 @@
+#pragma once
 #include "Game.h"
 #include "Window.h"
 #include "Camera.h"
@@ -13,7 +14,6 @@
 #include <wrl.h> // ComPtr<>
 using namespace Microsoft::WRL;
 
-// todo: move
 #include "CommandQueue.h"
 
 class Renderer
@@ -28,9 +28,9 @@ public:
 
 
     //
-    ID3D12Device2* device;
+    ComPtr<ID3D12Device2> device;
     //
-    CommandQueue* m_CopyCommandQueue;
-    // m_CopyCommandQueue->GetCommandList()
+    std::shared_ptr<CommandQueue> copyCommandQueue;
+    // copyCommandQueue->GetCommandList()
     ID3D12GraphicsCommandList2* copyCommandList = {};
 };

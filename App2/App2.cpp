@@ -49,12 +49,10 @@ bool App2::LoadContent()
     auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
     auto commandList = commandQueue->GetCommandList();
 
-    Renderer renderer;
-    renderer.device = device.Get();
-    renderer.m_CopyCommandQueue = commandQueue.get();
-    renderer.copyCommandList = commandList.Get();
+//    Renderer renderer = Application::Get().renderer;
+    Application::Get().renderer.copyCommandList = commandList.Get();
 
-    mesh.startUpload(renderer, g_Vertices, _countof(g_Vertices), g_Indicies, _countof(g_Indicies));
+    mesh.startUpload(Application::Get().renderer, g_Vertices, _countof(g_Vertices), g_Indicies, _countof(g_Indicies));
 
     // Create the descriptor heap for the depth-stencil view.
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
