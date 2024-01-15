@@ -606,19 +606,18 @@ void App3::BuildAccelerationStructures()
         topLevelBuildDesc.ScratchAccelerationStructureData = scratchResource->GetGPUVirtualAddress();
     }
 
-    auto BuildAccelerationStructure = [&](auto* raytracingCommandList)
-    {
-        raytracingCommandList->BuildRaytracingAccelerationStructure(&bottomLevelBuildDesc, 0, nullptr);
-        CD3DX12_RESOURCE_BARRIER a = CD3DX12_RESOURCE_BARRIER::UAV(meshA.bottomLevelAccelerationStructure.Get());
-        commandList->ResourceBarrier(1, &a);
-        raytracingCommandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
-    };
-
     // Build acceleration structure.
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
     ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
-    BuildAccelerationStructure(m_dxrCommandList.Get());
+    // BuildAccelerationStructure
+    {
+        auto* raytracingCommandList = m_dxrCommandList.Get();
+        raytracingCommandList->BuildRaytracingAccelerationStructure(&bottomLevelBuildDesc, 0, nullptr);
+        CD3DX12_RESOURCE_BARRIER a = CD3DX12_RESOURCE_BARRIER::UAV(meshA.bottomLevelAccelerationStructure.Get());
+        commandList->ResourceBarrier(1, &a);
+        raytracingCommandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
+    }
 
     // Kick off acceleration structure construction.
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
