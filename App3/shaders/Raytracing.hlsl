@@ -9,6 +9,9 @@
 //
 //*********************************************************
 
+// 0:normal, 1:CSG boolean mesh operation
+#define RAY_TRACING_EXPERIMENT 0
+
 #ifndef RAYTRACING_HLSL
 #define RAYTRACING_HLSL
 
@@ -223,7 +226,12 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
     // not animated, 0.9f to clip suzanne
 //    const float radius = 0.9f;
     // animated
-    const float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
+    float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
+
+#if RAY_TRACING_EXPERIMENT == 0
+    radius = 1000.0f;
+#endif
+
 
     // (tEnter, tExit)
     const float3 sphereCenter = float3(-0.5f, 0, 0);
