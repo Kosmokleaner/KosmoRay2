@@ -4,13 +4,6 @@
 // 0:UpdateBufferResource / 1:AllocateUploadBuffer(less code complexity, no commandlist need)
 #define MESH_UPLOAD_METHOD 1
 
-struct D3DBuffer
-{
-    ComPtr<ID3D12Resource> resource;
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
-};
-
 // for now we only have one vertex format
 struct VertexPosColor
 {
@@ -26,6 +19,8 @@ class Mesh
 public:
     typedef WORD IndexType;
 
+    // @param filename e.g. "../../data/monkey.obj", must not be 0
+    void load(Renderer& renderer, const char* fileName);
     void startUpload(Renderer& renderer, VertexPosColor* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount);
 
     void end();

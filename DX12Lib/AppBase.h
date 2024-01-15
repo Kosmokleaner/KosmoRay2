@@ -54,10 +54,6 @@ protected:
     // Resize the depth buffer to match the size of the client area.
     void ResizeDepthBuffer(int width, int height);
 
-    // @param elementSize 0 for R32 typless raw buffer
-    // @return descriptor index
-    UINT CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize);
-
     // ---------------------------------
 
     uint64_t m_FenceValues[Window::BufferCount] = {};
@@ -88,8 +84,5 @@ protected:
     CTransform m_camera;
 
     bool m_ContentLoaded = false;
-
-    // used by CreateBufferSRV() and CreateRaytracingOutputResource()
-    DescriptorHeap descriptorHeap;
 };
 

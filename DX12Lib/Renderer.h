@@ -18,12 +18,23 @@ using namespace Microsoft::WRL;
 
 #include "CommandQueue.h"
 
+struct D3DBuffer
+{
+    ComPtr<ID3D12Resource> resource;
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
+};
 
 class Renderer
 {
 public:
 
     ~Renderer();
+
+    // prevent copy constructor
+//    Renderer(const Renderer&) = delete;
+    //
+    Renderer& operator=(Renderer const&) = delete;
 
     void init();
 
@@ -46,9 +57,15 @@ public:
 
     bool tearingSupported = false;
 
+    // --------------------------------------------
+// 
+    //
     bool IsRayTracingSupported() const;
-
+    //
     UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
+    // @param elementSize 0 for R32 typless raw buffer
+    // @return descriptor index
+    UINT CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize);
 
     // Flush all command queues.
     void Flush();
@@ -57,6 +74,8 @@ public:
 
     // copyCommandQueue->GetCommandList()
     ID3D12GraphicsCommandList2* copyCommandList = {};
+    // used by CreateBufferSRV() and CreateRaytracingOutputResource()
+    DescriptorHeap descriptorHeap;
 
 private:
     //
