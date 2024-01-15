@@ -25,7 +25,6 @@ public:
     AppBase(const std::wstring& name, int width, int height, bool vSync)
         : Game(name, width, height, vSync), m_ScissorRect(CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX))
         , m_Viewport(CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)))
-        , m_FoV(45.0)
         , m_ContentLoaded(false)
     {
     }
@@ -56,23 +55,24 @@ protected:
 
     // ---------------------------------
 
-    uint64_t m_FenceValues[Window::BufferCount] = {};
+    uint64_t fenceValues[Window::BufferCount] = {};
 
     // Depth buffer
-    ComPtr<ID3D12Resource> m_DepthBuffer;
+    ComPtr<ID3D12Resource> depthBuffer;
     // Descriptor heap for depth buffer
     DescriptorHeap depthStencilDescriptorHeap;
 
     // Root signatures
-    ComPtr<ID3D12RootSignature> m_RootSignature;
+    ComPtr<ID3D12RootSignature> rootSignature;
 
     // Pipeline state object.
-    ComPtr<ID3D12PipelineState> m_PipelineState;
+    ComPtr<ID3D12PipelineState> pipelineState;
 
     D3D12_VIEWPORT m_Viewport;
     D3D12_RECT m_ScissorRect;
 
-    float m_FoV = 0.0f;
+    // in degree, fovAngleY for XMMatrixPerspectiveFovLH
+    float fieldOfView = 45.0f;
 
     // local->world aka worldFromLocal
     DirectX::XMMATRIX m_ModelMatrix;
@@ -81,7 +81,7 @@ protected:
     // eye->clip aka clipFromEye
     DirectX::XMMATRIX m_ProjectionMatrix;
 
-    CTransform m_camera;
+    CTransform camera;
 
     bool m_ContentLoaded = false;
 };

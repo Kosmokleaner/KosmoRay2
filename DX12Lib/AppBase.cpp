@@ -34,7 +34,7 @@ void AppBase::ResizeDepthBuffer(int width, int height)
             &b,
             D3D12_RESOURCE_STATE_DEPTH_WRITE,
             &optimizedClearValue,
-            IID_PPV_ARGS(&m_DepthBuffer)
+            IID_PPV_ARGS(&depthBuffer)
         ));
 
         // Update the depth-stencil view.
@@ -44,7 +44,7 @@ void AppBase::ResizeDepthBuffer(int width, int height)
         dsv.Texture2D.MipSlice = 0;
         dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-        device->CreateDepthStencilView(m_DepthBuffer.Get(), &dsv,
+        device->CreateDepthStencilView(depthBuffer.Get(), &dsv,
             depthStencilDescriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
     }
 }
@@ -124,8 +124,8 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     static bool first = true;
     if (first) {
-        m_camera.SetPos(float3(0, 0, -10));
-        m_camera.SetRotation(float2(3.1415f, 0.0f));
+        camera.SetPos(float3(0, 0, -10));
+        camera.SetRotation(float2(3.1415f, 0.0f));
         first = false;
     }
 
@@ -136,11 +136,11 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     if (data.IsValid())
     {
         float fInvMouse = 1.0;
-        m_camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
+        camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
     }
 
-    float3 forward = m_camera.GetForward();
-    float3 left = normalize(cross(forward, m_camera.GetUp()));
+    float3 forward = camera.GetForward();
+    float3 left = normalize(cross(forward, camera.GetUp()));
 
     float dt = (float)e.ElapsedTime;
     forward *= movementSpeed * dt;
@@ -165,16 +165,16 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     {
         move -= forward;
     }
-    m_camera.Move(move);
+    camera.Move(move);
 
     // world->eye aka eyeFromWorld
     //camera.GetDirX();
     //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
-    m_ViewMatrix = XMMatrixTranspose(m_camera.GetViewMatrix());
+    m_ViewMatrix = XMMatrixTranspose(camera.GetViewMatrix());
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
-    m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f));
+    m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), aspectRatio, 0.1f, 100.0f));
 }
 
 
@@ -205,10 +205,10 @@ void AppBase::OnKeyPressed(KeyEventArgs& e)
 
 void AppBase::OnMouseWheel(MouseWheelEventArgs& e)
 {
-    m_FoV -= e.WheelDelta;
-    m_FoV = clamp(m_FoV, 12.0f, 90.0f);
+    fieldOfView -= e.WheelDelta;
+    fieldOfView = clamp(fieldOfView, 12.0f, 90.0f);
 
     char buffer[256];
-    sprintf_s(buffer, "FoV: %f\n", m_FoV);
+    sprintf_s(buffer, "FoV: %f\n", fieldOfView);
     OutputDebugStringA(buffer);
 }

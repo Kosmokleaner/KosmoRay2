@@ -74,24 +74,24 @@ private:
     void UpdateForSizeChange(UINT width, UINT height);
 
     // DirectX Raytracing (DXR) attributes
-    ComPtr<ID3D12StateObject> m_dxrStateObject;
+    ComPtr<ID3D12StateObject> dxrStateObject;
 
     // Raytracing scene
-    RayGenConstantBuffer m_rayGenCB;
+    RayGenConstantBuffer rayGenCB;
 
     Mesh meshA;
     Mesh meshB;
 
     // Acceleration structure
-    ComPtr<ID3D12Resource> m_topLevelAccelerationStructure;
+    ComPtr<ID3D12Resource> topLevelAccelerationStructure;
 
     // Raytracing output
-    ComPtr<ID3D12Resource> m_raytracingOutput;
-    D3D12_GPU_DESCRIPTOR_HANDLE m_raytracingOutputResourceUAVGpuDescriptor;
-    UINT m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
+    ComPtr<ID3D12Resource> raytracingOutput;
+    D3D12_GPU_DESCRIPTOR_HANDLE raytracingOutputResourceUAVGpuDescriptor;
+    UINT raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
 
     // Shader tables
-    ComPtr<ID3D12Resource> m_missShaderTable;
-    ComPtr<ID3D12Resource> m_hitGroupShaderTable;
-    ComPtr<ID3D12Resource> m_rayGenShaderTable;
+    ComPtr<ID3D12Resource> missShaderTable;
+    ComPtr<ID3D12Resource> hitGroupShaderTable;
+    ComPtr<ID3D12Resource> rayGenShaderTable;
 };

@@ -101,7 +101,7 @@ bool App2::LoadContent()
         featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
     // Create the root signature.
     ThrowIfFailed(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
-        rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+        rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature)));
 
     struct PipelineStateStream
     {
@@ -118,7 +118,7 @@ bool App2::LoadContent()
     rtvFormats.NumRenderTargets = 1;
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    pipelineStateStream.pRootSignature = m_RootSignature.Get();
+    pipelineStateStream.pRootSignature = rootSignature.Get();
     pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
     pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
@@ -129,7 +129,7 @@ bool App2::LoadContent()
     D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
         sizeof(PipelineStateStream), &pipelineStateStream
     };
-    ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_PipelineState)));
+    ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&pipelineState)));
 
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
     commandQueue->WaitForFenceValue(fenceValue);
@@ -186,8 +186,8 @@ void App2::OnRender(RenderEventArgs& e)
         ClearDepth(commandList, dsv);
     }
 
-    commandList->SetPipelineState(m_PipelineState.Get());
-    commandList->SetGraphicsRootSignature(m_RootSignature.Get());
+    commandList->SetPipelineState(pipelineState.Get());
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
 
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, &mesh.vertexBufferView);
@@ -218,10 +218,10 @@ void App2::OnRender(RenderEventArgs& e)
         TransitionResource(commandList, backBuffer,
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-        m_FenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
+        fenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
 
         currentBackBufferIndex = m_pWindow->Present();
 
-        commandQueue->WaitForFenceValue(m_FenceValues[currentBackBufferIndex]);
+        commandQueue->WaitForFenceValue(fenceValues[currentBackBufferIndex]);
     }
 }
