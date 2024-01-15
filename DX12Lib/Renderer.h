@@ -31,9 +31,7 @@ public:
 
     ~Renderer();
 
-    // prevent copy constructor
-//    Renderer(const Renderer&) = delete;
-    //
+    // prevent assignment
     Renderer& operator=(Renderer const&) = delete;
 
     void init();

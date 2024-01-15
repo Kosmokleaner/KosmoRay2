@@ -504,79 +504,6 @@ void App3::CreateRaytracingPipelineStateObject()
 // Build geometry used in the sample.
 void App3::BuildGeometry()
 {
-    mesh.load(Application::Get().renderer, "../../data/monkey.obj");
-/*
-    auto device = Application::Get().renderer.device;
-    std::string inputfile = "../../data/monkey.obj";        // 1 shape
-//    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
-//    std::string inputfile = "../../data/LShape.obj";    // no clipping errors
-//    std::string inputfile = "../../data/saucer.obj";
-    //    std::string inputfile = "../../data/GroundPlane.obj";
-    tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "./"; // Path to material files
-
-    tinyobj::ObjReader reader;
-
-    if (!reader.ParseFromFile(inputfile, reader_config)) {
-        if (!reader.Error().empty()) {
-//            std::cerr << "TinyObjReader: " << reader.Error();
-        }
-        exit(1);
-    }
-
-    if (!reader.Warning().empty()) {
-//        std::cout << "TinyObjReader: " << reader.Warning();
-    }
-
-    auto& attrib = reader.GetAttrib();
-    auto& shapes = reader.GetShapes();
-    auto& materials = reader.GetMaterials();
-
-    // for now unoptimized, see https://vulkan-tutorial.com/Loading_models
-    std::vector<Mesh::IndexType> indexBuffer;
-    std::vector<VertexPosColor> vertexBuffer;
-
-    // if reader_config.triangulate we can use the indexbuffer more or less directly
-
-    // build indexBuffer
-    {
-        size_t indexCount = 0;
-        for (size_t s = 0; s < shapes.size(); s++) {
-            indexCount += shapes[s].mesh.indices.size();
-        }
-        indexBuffer.resize(indexCount);
-        indexCount = 0;
-        for (size_t s = 0; s < shapes.size(); s++) {
-            size_t size = shapes[s].mesh.indices.size();
-            for (size_t i = 0; i < size; i++) {
-                // for now no per vertex data e.g. normal, UVs
-                indexBuffer[indexCount++] = shapes[s].mesh.indices[i].vertex_index;
-            }
-        }
-    }
-
-    // build vertexBuffer
-    {
-        size_t vertexCount = attrib.vertices.size() / 3;
-        vertexBuffer.resize(vertexCount);
-        for(size_t i = 0; i < vertexCount; ++i) {
-            tinyobj::real_t vx = attrib.vertices[3 * i + 0];
-            tinyobj::real_t vy = attrib.vertices[3 * i + 1];
-            tinyobj::real_t vz = attrib.vertices[3 * i + 2];
-
-            vertexBuffer[i].Position.x = vx * 0.5f;
-            vertexBuffer[i].Position.y = vy * 0.5f;
-            vertexBuffer[i].Position.z = vz * 0.5f;
-        }
-    }
-    AllocateUploadBuffer(device.Get(), indexBuffer.data(), indexBuffer.size() * sizeof(indexBuffer[0]), &mesh.indexBuffer.resource);
-    AllocateUploadBuffer(device.Get(), vertexBuffer.data(), vertexBuffer.size() * sizeof(vertexBuffer[0]), &mesh.vertexBuffer.resource);
-
-    // Vertex buffer is passed to the shader along with index buffer as a descriptor range.
-    UINT descriptorIndexIB = CreateBufferSRV(&mesh.indexBuffer, (UINT)indexBuffer.size(), 2);
-    UINT descriptorIndexVB = CreateBufferSRV(&mesh.vertexBuffer, (UINT)vertexBuffer.size(), sizeof(vertexBuffer[0]));
-    ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index");
-*/
 }
 
 void App3::BuildAccelerationStructures()
@@ -807,8 +734,8 @@ void App3::CreateDeviceDependentResources()
     Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     Application::Get().renderer.descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    BuildGeometry();
-
+    mesh.load(Application::Get().renderer, "../../data/monkey.obj");
+    
     BuildAccelerationStructures();
 
     BuildShaderTables();

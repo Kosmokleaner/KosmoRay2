@@ -62,7 +62,6 @@ private:
     void CreateRaytracingInterfaces();
     void CreateRootSignatures();
     void CreateRaytracingPipelineStateObject();
-    void BuildGeometry();
     void BuildAccelerationStructures();
     // Build shader tables, which define shaders and their local root arguments
     void BuildShaderTables();
