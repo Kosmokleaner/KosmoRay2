@@ -28,6 +28,9 @@ void Renderer::init()
         sprintf_s(buffer, "D3D12 Init: RayTracing: %d\n", (int)IsRayTracingSupported());
         OutputDebugStringA(buffer);
     }
+
+    // ray tracing
+//    ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
 }
 
 void Renderer::UpdateBufferResource(

@@ -29,22 +29,28 @@ class Renderer
 {
 public:
 
+    // constructor
+    Renderer() {}
+    // destructor
     ~Renderer();
 
+    // prevent copy constructor
+    Renderer(Renderer const&) = delete;
     // prevent assignment
     Renderer& operator=(Renderer const&) = delete;
 
+    //
     void init();
 
-    // Create a GPU buffer.
+    // Create a GPU buffer
     void UpdateBufferResource(ID3D12GraphicsCommandList2* commandList,
         ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
         size_t numElements, size_t elementSize, const void* bufferData,
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
-
     //
     ComPtr<ID3D12Device2> device;
+    ComPtr<ID3D12Device5> dxrDevice;
 
     std::shared_ptr<CommandQueue> directCommandQueue;
     std::shared_ptr<CommandQueue> computeCommandQueue;
@@ -56,7 +62,7 @@ public:
     bool tearingSupported = false;
 
     // --------------------------------------------
-// 
+
     //
     bool IsRayTracingSupported() const;
     //
@@ -64,7 +70,6 @@ public:
     // @param elementSize 0 for R32 typless raw buffer
     // @return descriptor index
     UINT CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize);
-
     // Flush all command queues.
     void Flush();
 
