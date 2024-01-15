@@ -40,6 +40,9 @@ public:
     // for ray tracing
     ComPtr<ID3D12Resource> bottomLevelAccelerationStructure;
 
+    // build bottomLevelAccelerationStructure
+    void BuildAccelerationStructures(Renderer& renderer);
+
 private:
     void init();
 
