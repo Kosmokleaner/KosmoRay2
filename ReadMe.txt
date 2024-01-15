@@ -13,6 +13,10 @@ Code style (not yet fully executed):
 
 
 todo:
+* fix window resize in App3 
+* two raytracable objects in scene
+* raytrace scene object
+* shader class
 * with Mock enabled RenderDoc crashes
 * move TransitionResource, ClearRTV, ClearDepth, UpdateBufferResource, ResizeDepthBuffer out of App
 * move NVAPI out of App

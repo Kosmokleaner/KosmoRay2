@@ -298,13 +298,6 @@ void App3::OnKeyPressed(KeyEventArgs& e)
     OutputDebugStringA(buffer);
 }
 
-void App3::CreateRaytracingInterfaces()
-{
-    auto device = Application::Get().renderer.device;
-
-    ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
-}
-
 void App3::SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig)
 {
     auto device = Application::Get().renderer.device;
@@ -398,7 +391,7 @@ void App3::CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* raytrac
 // with all configuration options resolved, such as local signatures and other state.
 void App3::CreateRaytracingPipelineStateObject()
 {
-    assert(dxrDevice);
+    assert(Application::Get().renderer.dxrDevice);
 
     // Create 7 subobjects that combine into a RTPSO:
     // Subobjects need to be associated with DXIL exports (i.e. shaders) either by way of default or explicit associations.
@@ -472,7 +465,7 @@ void App3::CreateRaytracingPipelineStateObject()
 
     if(g_NVAPI_enabled)
     {
-        NvAPI_Status NvapiStatus = NvAPI_D3D12_SetNvShaderExtnSlotSpace(dxrDevice.Get(), 1, 1);
+        NvAPI_Status NvapiStatus = NvAPI_D3D12_SetNvShaderExtnSlotSpace(Application::Get().renderer.dxrDevice.Get(), 1, 1);
         if (NvapiStatus != NVAPI_OK)
         {
             assert(0);
@@ -480,12 +473,12 @@ void App3::CreateRaytracingPipelineStateObject()
     }
 
     // Create the state object.
-    ThrowIfFailed(dxrDevice->CreateStateObject(raytracingPipeline, IID_PPV_ARGS(&m_dxrStateObject)), L"Couldn't create DirectX Raytracing state object.\n");
+    ThrowIfFailed(Application::Get().renderer.dxrDevice->CreateStateObject(raytracingPipeline, IID_PPV_ARGS(&m_dxrStateObject)), L"Couldn't create DirectX Raytracing state object.\n");
 
     if (g_NVAPI_enabled)
     {
         // Disable the NVAPI extension slot again after state object creation.
-        NvAPI_Status NvapiStatus = NvAPI_D3D12_SetNvShaderExtnSlotSpace(dxrDevice.Get(), ~0u, 1);
+        NvAPI_Status NvapiStatus = NvAPI_D3D12_SetNvShaderExtnSlotSpace(Application::Get().renderer.dxrDevice.Get(), ~0u, 1);
         if (NvapiStatus != NVAPI_OK)
         {
             assert(0);
@@ -536,14 +529,14 @@ void App3::BuildAccelerationStructures()
     topLevelInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO topLevelPrebuildInfo = {};
-    dxrDevice->GetRaytracingAccelerationStructurePrebuildInfo(&topLevelInputs, &topLevelPrebuildInfo);
+    Application::Get().renderer.dxrDevice->GetRaytracingAccelerationStructurePrebuildInfo(&topLevelInputs, &topLevelPrebuildInfo);
     ThrowIfFalse(topLevelPrebuildInfo.ResultDataMaxSizeInBytes > 0);
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO bottomLevelPrebuildInfo = {};
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS bottomLevelInputs = topLevelInputs;
     bottomLevelInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
     bottomLevelInputs.pGeometryDescs = &geometryDesc;
-    dxrDevice->GetRaytracingAccelerationStructurePrebuildInfo(&bottomLevelInputs, &bottomLevelPrebuildInfo);
+    Application::Get().renderer.dxrDevice->GetRaytracingAccelerationStructurePrebuildInfo(&bottomLevelInputs, &bottomLevelPrebuildInfo);
     ThrowIfFalse(bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes > 0);
 
     ComPtr<ID3D12Resource> scratchResource;
@@ -692,7 +685,7 @@ void App3::ReleaseDeviceDependentResources()
     m_raytracingGlobalRootSignature.Reset();
     m_raytracingLocalRootSignature.Reset();
 
-    dxrDevice.Reset();
+    Application::Get().renderer.dxrDevice.Reset();
 
     m_dxrStateObject.Reset();
 
@@ -707,9 +700,6 @@ void App3::ReleaseDeviceDependentResources()
 
 void App3::CreateDeviceDependentResources()
 {
-    // Create raytracing interfaces: raytracing device and commandlist.
-    CreateRaytracingInterfaces();
-
     // Create root signatures for the shaders.
     CreateRootSignatures();
 

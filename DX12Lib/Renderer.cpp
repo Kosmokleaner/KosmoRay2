@@ -30,7 +30,7 @@ void Renderer::init()
     }
 
     // ray tracing
-//    ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
+    ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
 }
 
 void Renderer::UpdateBufferResource(

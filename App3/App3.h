@@ -59,7 +59,6 @@ private:
     // ray tracing ----------------------------------
 
     void CreateDeviceDependentResources();
-    void CreateRaytracingInterfaces();
     void CreateRootSignatures();
     void CreateRaytracingPipelineStateObject();
     void BuildAccelerationStructures();
@@ -75,7 +74,6 @@ private:
     void UpdateForSizeChange(UINT width, UINT height);
 
     // DirectX Raytracing (DXR) attributes
-    ComPtr<ID3D12Device5> dxrDevice;
     ComPtr<ID3D12StateObject> m_dxrStateObject;
 
     // Raytracing scene
