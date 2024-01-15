@@ -80,7 +80,7 @@ private:
     RayGenConstantBuffer m_rayGenCB;
 
     Mesh meshA;
- //   Mesh meshB;
+    Mesh meshB;
 
     // Acceleration structure
     ComPtr<ID3D12Resource> m_topLevelAccelerationStructure;

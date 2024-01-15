@@ -210,6 +210,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 
     // Set index and successive vertex buffer decriptor tables
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshA.indexBuffer.gpuDescriptorHandle);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshB.indexBuffer.gpuDescriptorHandle);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -487,6 +488,7 @@ void App3::CreateRaytracingPipelineStateObject()
 void App3::BuildAccelerationStructures()
 {
     meshA.BuildAccelerationStructures(Application::Get().renderer);
+    meshB.BuildAccelerationStructures(Application::Get().renderer);
 
     auto device = Application::Get().renderer.device;
 
@@ -555,7 +557,10 @@ void App3::BuildAccelerationStructures()
 
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
             dst->InstanceMask = 1;
-            dst->AccelerationStructure = meshA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+
+            Mesh& ref = (i == 0) ? meshA : meshB;
+
+            dst->AccelerationStructure = ref.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
 
             ++dst;
         }
@@ -680,7 +685,7 @@ void App3::ReleaseDeviceDependentResources()
     m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
 
     meshA.Reset();
-//    meshB.Reset();
+    meshB.Reset();
 
     m_topLevelAccelerationStructure.Reset();
 }
@@ -696,11 +701,20 @@ void App3::CreateDeviceDependentResources()
     // Allocate a heap for 3 descriptors:
     // 2 - vertex and index buffer SRVs
     // 1 - raytracing output texture SRV
-    Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+//    Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    // +2 for two meshes
+    Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 5, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     Application::Get().renderer.descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    meshA.load(Application::Get().renderer, "../../data/monkey.obj");
-//    meshB.load(Application::Get().renderer, "../../data/monkey.obj");
+    //meshA.load(Application::Get().renderer, "../../data/monkey.obj");
+    meshA.load(Application::Get().renderer, "../../data/NewXYZ.obj");
+    meshB.load(Application::Get().renderer, "../../data/monkey.obj");
+//meshB.load(Application::Get().renderer, "../../data/saucer.obj");
+//    std::string inputfile = "../../data/monkey.obj";        // 1 shape
+//    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
+//    std::string inputfile = "../../data/LShape.obj";    // no clipping errors
+//    std::string inputfile = "../../data/saucer.obj";
+    //    std::string inputfile = "../../data/GroundPlane.obj";
 
     BuildAccelerationStructures();
 

@@ -61,18 +61,14 @@ void Mesh::Reset()
 void Mesh::load(Renderer& renderer, const char* fileName)
 {
     assert(fileName);
+
     auto device = renderer.device;
-    std::string inputfile = "../../data/monkey.obj";        // 1 shape
-//    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
-//    std::string inputfile = "../../data/LShape.obj";    // no clipping errors
-//    std::string inputfile = "../../data/saucer.obj";
-    //    std::string inputfile = "../../data/GroundPlane.obj";
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./"; // Path to material files
 
     tinyobj::ObjReader reader;
 
-    if (!reader.ParseFromFile(inputfile, reader_config)) {
+    if (!reader.ParseFromFile(std::string(fileName), reader_config)) {
         if (!reader.Error().empty()) {
             //            std::cerr << "TinyObjReader: " << reader.Error();
         }
