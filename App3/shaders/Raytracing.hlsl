@@ -9,7 +9,8 @@
 //
 //*********************************************************
 
-// 0:normal, 1:CSG boolean mesh operation
+// 0:MyClosestHitShader barycentric triangle color
+// 1:MyAnyHitShader CSG boolean mesh operation
 #define RAY_TRACING_EXPERIMENT 0
 
 #ifndef RAYTRACING_HLSL
@@ -127,8 +128,11 @@ void MyRaygenShader()
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
     RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, rayDesc.TMax, rayDesc.TMax };
+
+#if RAY_TRACING_EXPERIMENT == 0
     // closesthit
-//        TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, ray, payload);
+    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+#endif
     // closesthit
 //        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, ~0, 0, 1, 0, ray, payload);
     // anyhit
@@ -136,7 +140,9 @@ void MyRaygenShader()
 //        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
 
         
-        TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, rayDesc, payload);
+#if RAY_TRACING_EXPERIMENT == 1
+    TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, rayDesc, payload);
+#endif
 
 //        TraceRay(Scene, section, ~0, 0, 1, 0, ray, payload);
 
@@ -186,9 +192,7 @@ void MyRaygenShader()
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-//    payload.color = float4(barycentrics, 1);
-//    payload.color.r = barycentrics.x; // red
-//    ++payload.count;
+    payload.normal = barycentrics;
 }
 
 // from https://gist.github.com/wwwtyro/beecc31d65d1004f5a9d
@@ -227,11 +231,6 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 //    const float radius = 0.9f;
     // animated
     float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
-
-#if RAY_TRACING_EXPERIMENT == 0
-    radius = 1000.0f;
-#endif
-
 
     // (tEnter, tExit)
     const float3 sphereCenter = float3(-0.5f, 0, 0);

@@ -13,8 +13,6 @@
 
 #include <d3dcompiler.h>
 
-#include <algorithm> // For std::min and std::max.
-
 // only on NVidia
 bool g_NVAPI_enabled = false;
 
