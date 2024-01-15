@@ -73,7 +73,7 @@ bool App3::LoadContent()
     auto commandList = commandQueue->GetCommandList();
 
     // Create the descriptor heap for the depth-stencil view.
-    DSVHeap.CreateDescriptorHeap(Application::Get().renderer, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    depthStencilDescriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     // Load the vertex shader.
     ComPtr<ID3DBlob> vertexShaderBlob;

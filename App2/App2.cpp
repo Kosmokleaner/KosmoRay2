@@ -55,7 +55,7 @@ bool App2::LoadContent()
     mesh.startUpload(Application::Get().renderer, g_Vertices, _countof(g_Vertices), g_Indicies, _countof(g_Indicies));
 
     // Create the descriptor heap for the depth-stencil view.
-    DSVHeap.CreateDescriptorHeap(Application::Get().renderer, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    depthStencilDescriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     // Load the vertex shader.
     ComPtr<ID3DBlob> vertexShaderBlob;
@@ -173,7 +173,7 @@ void App2::OnRender(RenderEventArgs& e)
     UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
     auto backBuffer = m_pWindow->GetCurrentBackBuffer();
     auto rtv = m_pWindow->GetCurrentRenderTargetView();
-    auto dsv = DSVHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    auto dsv = depthStencilDescriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
     // Clear the render targets.
     {

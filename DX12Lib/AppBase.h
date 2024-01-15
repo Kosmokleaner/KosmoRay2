@@ -65,10 +65,10 @@ protected:
 
     uint64_t m_FenceValues[Window::BufferCount] = {};
 
-    // Depth buffer.
+    // Depth buffer
     ComPtr<ID3D12Resource> m_DepthBuffer;
-    // Descriptor heap for depth buffer.
-    DescriptorHeap DSVHeap;
+    // Descriptor heap for depth buffer
+    DescriptorHeap depthStencilDescriptorHeap;
 
     // Root signatures
     ComPtr<ID3D12RootSignature> m_RootSignature;
@@ -92,7 +92,7 @@ protected:
 
     bool m_ContentLoaded = false;
 
-    // move? rename
+    // used by CreateBufferSRV() and CreateRaytracingOutputResource()
     DescriptorHeap descriptorHeap;
 };
 

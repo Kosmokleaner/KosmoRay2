@@ -85,7 +85,7 @@ void AppBase::ResizeDepthBuffer(int width, int height)
         dsv.Flags = D3D12_DSV_FLAG_NONE;
 
         device->CreateDepthStencilView(m_DepthBuffer.Get(), &dsv,
-            DSVHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
+            depthStencilDescriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
     }
 }
 

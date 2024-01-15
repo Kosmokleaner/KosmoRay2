@@ -5,6 +5,12 @@ Multiple experiments in different Apps:
   "App2": rasterization
   "App3": ray tracing, Constructive Solid Geometry (CSG) Intersection of sphere and 3d mesh object
 
+Code style (not yet fully executed):
+* no hungarian notation, todo: remove m_
+* Camel case for functions/methods/member variables
+* No . in end of comments that are not sentences
+* 
+
 
 todo:
 * with Mock enabled RenderDoc crashes
