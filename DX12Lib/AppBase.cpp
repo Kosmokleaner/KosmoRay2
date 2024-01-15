@@ -26,25 +26,11 @@ UINT AppBase::CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementS
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         srvDesc.Buffer.StructureByteStride = elementSize;
     }
-    UINT descriptorIndex = AllocateDescriptor(&buffer->cpuDescriptorHandle);
+    UINT descriptorIndex = descriptorHeap.AllocateDescriptor(&buffer->cpuDescriptorHandle);
     device->CreateShaderResourceView(buffer->resource.Get(), &srvDesc, buffer->cpuDescriptorHandle);
     buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, descriptorHeap.maxSize);
     return descriptorIndex;
 }
-
-
-UINT AppBase::AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse)
-{
-    auto descriptorHeapCpuBase = descriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-    if (descriptorIndexToUse >= descriptorHeap.maxSize)
-    {
-        descriptorIndexToUse = descriptorHeap.currentSize++;
-    }
-    *cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeapCpuBase, descriptorIndexToUse, descriptorHeap.maxSize);
-    return descriptorIndexToUse;
-}
-
-
 
 void AppBase::ResizeDepthBuffer(int width, int height)
 {

@@ -9,7 +9,7 @@ UINT DescriptorHeap::AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescript
     {
         descriptorIndexToUse = currentSize++;
     }
-    *cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeapCpuBase, descriptorIndexToUse, currentSize);
+    *cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeapCpuBase, descriptorIndexToUse, maxSize);
     return descriptorIndexToUse;
 }
 

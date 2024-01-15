@@ -578,8 +578,6 @@ void App3::BuildGeometry()
     ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index");
 }
 
-
-// Build acceleration structures needed for raytracing.
 void App3::BuildAccelerationStructures()
 {
     auto device = Application::Get().renderer.device;
@@ -763,7 +761,7 @@ void App3::CreateRaytracingOutputResource()
     NAME_D3D12_OBJECT(m_raytracingOutput);
 
     D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
-    m_raytracingOutputResourceUAVDescriptorHeapIndex = AllocateDescriptor(&uavDescriptorHandle, m_raytracingOutputResourceUAVDescriptorHeapIndex);
+    m_raytracingOutputResourceUAVDescriptorHeapIndex = descriptorHeap.AllocateDescriptor(&uavDescriptorHandle, m_raytracingOutputResourceUAVDescriptorHeapIndex);
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
     UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
     device->CreateUnorderedAccessView(m_raytracingOutput.Get(), nullptr, &UAVDesc, uavDescriptorHandle);
@@ -809,7 +807,6 @@ void App3::CreateDeviceDependentResources()
 
     BuildAccelerationStructures();
 
-    // Build shader tables, which define shaders and their local root arguments.
     BuildShaderTables();
 
     CreateRaytracingOutputResource();

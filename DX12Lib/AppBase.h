@@ -58,10 +58,7 @@ protected:
     // @return descriptor index
     UINT CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT elementSize);
 
-    // Allocate a descriptor and return its index. 
-    // If the passed descriptorIndexToUse is valid, it will be used instead of allocating a new one.
-    UINT AllocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE* cpuDescriptor, UINT descriptorIndexToUse = UINT_MAX);
-
+    // ---------------------------------
 
     uint64_t m_FenceValues[Window::BufferCount] = {};
 
