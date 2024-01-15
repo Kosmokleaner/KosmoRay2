@@ -556,11 +556,37 @@ void App3::BuildAccelerationStructures()
 
     // Create an instance desc for the bottom-level acceleration structure.
     ComPtr<ID3D12Resource> instanceDescs;
-    D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {};
-    instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = 1;
-    instanceDesc.InstanceMask = 1;
-    instanceDesc.AccelerationStructure = meshA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
-    AllocateUploadBuffer(device.Get(), &instanceDesc, sizeof(instanceDesc), &instanceDescs, L"InstanceDescs");
+
+    uint32 instanceCount;
+    {
+        D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[4] = {};
+
+        instanceCount = _countof(instanceDesc);
+
+        D3D12_RAYTRACING_INSTANCE_DESC *dst = instanceDesc;
+
+        for(UINT i = 0; i < 4; ++i)
+        {
+            *dst = {};
+
+            float size = 2.0f;
+
+            // x: right, y:up (closer), z:behind
+            if (i)
+            {
+                size = 1.0f;
+                dst->Transform[i - 1][3] = (i == 2) ? 1.0f : 5.0f; 
+            }
+
+            dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
+            dst->InstanceMask = 1;
+            dst->AccelerationStructure = meshA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+
+            ++dst;
+        }
+
+        AllocateUploadBuffer(device.Get(), instanceDesc, sizeof(instanceDesc), &instanceDescs, L"InstanceDescs");
+    }
 
     // Bottom Level Acceleration Structure desc
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC bottomLevelBuildDesc = {};
@@ -574,6 +600,7 @@ void App3::BuildAccelerationStructures()
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
     {
         topLevelInputs.InstanceDescs = instanceDescs->GetGPUVirtualAddress();
+        topLevelInputs.NumDescs = instanceCount;
         topLevelBuildDesc.Inputs = topLevelInputs;
         topLevelBuildDesc.DestAccelerationStructureData = m_topLevelAccelerationStructure->GetGPUVirtualAddress();
         topLevelBuildDesc.ScratchAccelerationStructureData = scratchResource->GetGPUVirtualAddress();

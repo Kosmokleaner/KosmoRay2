@@ -130,8 +130,8 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     }
 
     //				const float rotateSpeed = 2 * InCamera.GetVerticalFov() / g_Renderer.GetHeight();
-    const float rotateSpeed = 2 * 0.002f;		// todo
-    const float movementSpeed = 150.0f / 10.0f;
+    const float rotateSpeed = 1 * 0.002f;		// todo
+    const float movementSpeed = 50.0f / 10.0f;
 
     if (data.IsValid())
     {
