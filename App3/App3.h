@@ -81,7 +81,8 @@ private:
     // Raytracing scene
     RayGenConstantBuffer m_rayGenCB;
 
-    Mesh mesh;
+    Mesh meshA;
+ //   Mesh meshB;
 
     // Acceleration structure
     ComPtr<ID3D12Resource> m_accelerationStructure;

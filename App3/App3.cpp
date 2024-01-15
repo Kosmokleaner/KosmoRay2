@@ -211,7 +211,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, m_topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, mesh.indexBuffer.gpuDescriptorHandle);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshA.indexBuffer.gpuDescriptorHandle);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -302,12 +302,6 @@ void App3::OnKeyPressed(KeyEventArgs& e)
 void App3::CreateRaytracingInterfaces()
 {
     auto device = Application::Get().renderer.device;
-
-// todo:
-// 
-
-    auto commandQueue = Application::Get().renderer.directCommandQueue;
-    auto commandList = commandQueue->GetCommandList();
 
     ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&m_dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
 }
@@ -501,11 +495,6 @@ void App3::CreateRaytracingPipelineStateObject()
     }
 }
 
-// Build geometry used in the sample.
-void App3::BuildGeometry()
-{
-}
-
 void App3::BuildAccelerationStructures()
 {
     auto device = Application::Get().renderer.device;
@@ -523,13 +512,13 @@ void App3::BuildAccelerationStructures()
 
     D3D12_RAYTRACING_GEOMETRY_DESC geometryDesc = {};
     geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    geometryDesc.Triangles.IndexBuffer = mesh.indexBuffer.resource->GetGPUVirtualAddress();
-    geometryDesc.Triangles.IndexCount = static_cast<UINT>(mesh.indexBuffer.resource->GetDesc().Width) / sizeof(Mesh::IndexType);
+    geometryDesc.Triangles.IndexBuffer = meshA.indexBuffer.resource->GetGPUVirtualAddress();
+    geometryDesc.Triangles.IndexCount = static_cast<UINT>(meshA.indexBuffer.resource->GetDesc().Width) / sizeof(Mesh::IndexType);
     geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
     geometryDesc.Triangles.Transform3x4 = 0;
     geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-    geometryDesc.Triangles.VertexCount = static_cast<UINT>(mesh.vertexBuffer.resource->GetDesc().Width) / sizeof(VertexPosColor);
-    geometryDesc.Triangles.VertexBuffer.StartAddress = mesh.vertexBuffer.resource->GetGPUVirtualAddress();
+    geometryDesc.Triangles.VertexCount = static_cast<UINT>(meshA.vertexBuffer.resource->GetDesc().Width) / sizeof(VertexPosColor);
+    geometryDesc.Triangles.VertexBuffer.StartAddress = meshA.vertexBuffer.resource->GetGPUVirtualAddress();
     geometryDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(VertexPosColor);
 
     // Mark the geometry as opaque. 
@@ -572,7 +561,7 @@ void App3::BuildAccelerationStructures()
     {
         D3D12_RESOURCE_STATES initialResourceState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
 
-        AllocateUAVBuffer(device.Get(), commandList.Get(), bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes, &mesh.bottomLevelAccelerationStructure, initialResourceState, L"BLAS");
+        AllocateUAVBuffer(device.Get(), commandList.Get(), bottomLevelPrebuildInfo.ResultDataMaxSizeInBytes, &meshA.bottomLevelAccelerationStructure, initialResourceState, L"BLAS");
         AllocateUAVBuffer(device.Get(), commandList.Get(), topLevelPrebuildInfo.ResultDataMaxSizeInBytes, &m_topLevelAccelerationStructure, initialResourceState, L"TLAS");
     }
 
@@ -581,7 +570,7 @@ void App3::BuildAccelerationStructures()
     D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {};
     instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = 1;
     instanceDesc.InstanceMask = 1;
-    instanceDesc.AccelerationStructure = mesh.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+    instanceDesc.AccelerationStructure = meshA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
     AllocateUploadBuffer(device.Get(), &instanceDesc, sizeof(instanceDesc), &instanceDescs, L"InstanceDescs");
 
     // Bottom Level Acceleration Structure desc
@@ -589,7 +578,7 @@ void App3::BuildAccelerationStructures()
     {
         bottomLevelBuildDesc.Inputs = bottomLevelInputs;
         bottomLevelBuildDesc.ScratchAccelerationStructureData = scratchResource->GetGPUVirtualAddress();
-        bottomLevelBuildDesc.DestAccelerationStructureData = mesh.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+        bottomLevelBuildDesc.DestAccelerationStructureData = meshA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
     }
 
     // Top Level Acceleration Structure desc
@@ -604,7 +593,7 @@ void App3::BuildAccelerationStructures()
     auto BuildAccelerationStructure = [&](auto* raytracingCommandList)
     {
         raytracingCommandList->BuildRaytracingAccelerationStructure(&bottomLevelBuildDesc, 0, nullptr);
-        CD3DX12_RESOURCE_BARRIER a = CD3DX12_RESOURCE_BARRIER::UAV(mesh.bottomLevelAccelerationStructure.Get());
+        CD3DX12_RESOURCE_BARRIER a = CD3DX12_RESOURCE_BARRIER::UAV(meshA.bottomLevelAccelerationStructure.Get());
         commandList->ResourceBarrier(1, &a);
         raytracingCommandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
     };
@@ -711,7 +700,8 @@ void App3::ReleaseDeviceDependentResources()
 
     m_raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
 
-    mesh.Reset();
+    meshA.Reset();
+//    meshB.Reset();
 
     m_accelerationStructure.Reset();
     m_topLevelAccelerationStructure.Reset();
@@ -734,8 +724,9 @@ void App3::CreateDeviceDependentResources()
     Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     Application::Get().renderer.descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    mesh.load(Application::Get().renderer, "../../data/monkey.obj");
-    
+    meshA.load(Application::Get().renderer, "../../data/monkey.obj");
+//    meshB.load(Application::Get().renderer, "../../data/monkey.obj");
+
     BuildAccelerationStructures();
 
     BuildShaderTables();
