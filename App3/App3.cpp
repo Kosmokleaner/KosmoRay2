@@ -692,7 +692,6 @@ void App3::ReleaseDeviceDependentResources()
     meshA.Reset();
 //    meshB.Reset();
 
-    m_accelerationStructure.Reset();
     m_topLevelAccelerationStructure.Reset();
 }
 
