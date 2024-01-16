@@ -11,6 +11,7 @@
 
 // 0:MyClosestHitShader barycentric triangle color
 // 1:MyAnyHitShader CSG boolean mesh operation
+// 2:AO
 #define RAY_TRACING_EXPERIMENT 0
 
 #ifndef RAYTRACING_HLSL
@@ -39,7 +40,7 @@ typedef BuiltInTriangleIntersectionAttributes MyAttributes;
 struct RayPayload
 {
     float4 color;
-    // in world space
+    // in world space, normalized
     float3 normal;
     // to count intersections after sphere start, to test if inside the object
     int count;
@@ -132,19 +133,42 @@ void MyRaygenShader()
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
+//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // barycentrics
+
+#elif RAY_TRACING_EXPERIMENT == 1
+    TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, rayDesc, payload);
+    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // normal
+
+#elif RAY_TRACING_EXPERIMENT == 2
+    float AO = 0.0f;
+    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+    if (all(payload.normal != float3(0, 0, 0)))
+    {
+        uint rnd = initRand(DispatchRaysIndex(), 0x12345678);
+
+        uint sampleCountAO = 20;
+        AO = 1;
+        for(int i = 0; i < sampleCountAO; ++i)
+        {
+//            float2  = nextRand2
+//            float3 worldDir = getCosHemisphereSample(randSeed, worldNorm);
+
+//            TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+          //  if(all(payload.normal != float3(0, 0, 0)))
+          //      AO += 1.0f / sampleCountAO;
+        }
+    }
+    RenderTarget[DispatchRaysIndex().xy] = float4(AO, AO, AO, 1.0f);
+
 #endif
+
     // closesthit
-//        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, ~0, 0, 1, 0, ray, payload);
+    //  TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, ~0, 0, 1, 0, ray, payload);
     // anyhit
-//        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
-//        TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
+    //  TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
 
         
-#if RAY_TRACING_EXPERIMENT == 1
-    TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, rayDesc, payload);
-#endif
-
-//        TraceRay(Scene, section, ~0, 0, 1, 0, ray, payload);
 
     // Write the raytraced color to the output texture.
 
@@ -159,7 +183,7 @@ void MyRaygenShader()
        uint endTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
 //       float f = endTime * 0.1f;
 //      RenderTarget[DispatchRaysIndex().xy] = float4(f,f,f, 1.0f);
-       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
+//       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
  //   else
 //        RenderTarget[DispatchRaysIndex().xy] = payload.color;
 
@@ -192,7 +216,35 @@ void MyRaygenShader()
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-    payload.normal = barycentrics;
+    payload.color = float4(barycentrics, 1); // color from barycentrics
+
+    const uint indexOffsetBytes = 0;    // for now
+    const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * 3 * 2);
+
+//    payload.color = float4(IndexToColor(ii.x + ii.y * 1234 + ii.z * 79), 1); // unique color for each triangle
+
+    float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
+
+    // position in object space
+    const float3 p0 = g_vertices[ii.x].position;
+    const float3 p1 = g_vertices[ii.y].position;
+    const float3 p2 = g_vertices[ii.z].position;
+    // visualize position id as color, gourand shading
+//                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
+
+                // visualize indexbuffer id as color, gourand shading
+//                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
+//                const float4 vCol1 = float4(IndexToColor(ii.y), 1);
+//                const float4 vCol2 = float4(IndexToColor(ii.z), 1);
+//                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
+
+    float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
+
+    float3 worldPosition = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+    //                float3 worldNormal = mul(attr.normal, (float3x3)ObjectToWorld3x4());
+    float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+
+    payload.normal = normalize(worldNormal);
 }
 
 // from https://gist.github.com/wwwtyro/beecc31d65d1004f5a9d
