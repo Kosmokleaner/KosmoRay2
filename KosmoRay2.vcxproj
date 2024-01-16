@@ -66,6 +66,8 @@
     <ClCompile Include="DX12Lib\Mesh.cpp" />
     <ClCompile Include="DX12Lib\Renderer.cpp" />
     <ClCompile Include="external\DearGPU\CommonFileSystem.cpp" />
+    <ClCompile Include="external\DearGPU\FBVHTree.cpp" />
+    <ClCompile Include="external\DearGPU\forsyth.cpp" />
     <ClCompile Include="external\DearGPU\LineReader.cpp" />
     <ClCompile Include="external\DearGPU\OBJMeshLoader.cpp" />
     <ClCompile Include="Mock12.cpp" />
@@ -88,11 +90,15 @@
     <ClInclude Include="DX12Lib\DescriptorHeap.h" />
     <ClInclude Include="DX12Lib\Mesh.h" />
     <ClInclude Include="DX12Lib\Renderer.h" />
+    <ClInclude Include="external\DearGPU\BBox3F.h" />
     <ClInclude Include="external\DearGPU\CommonFileSystem.h" />
     <ClInclude Include="external\DearGPU\deargpu.h" />
+    <ClInclude Include="external\DearGPU\FBVHTree.h" />
+    <ClInclude Include="external\DearGPU\forsyth.h" />
     <ClInclude Include="external\DearGPU\LineReader.h" />
     <ClInclude Include="external\DearGPU\OBJMeshLoader.h" />
-    <ClInclude Include="external\tiny_obj_loader.h" />
+    <ClInclude Include="external\DearGPU\SimpleIndexedMesh.h" />
+    <ClInclude Include="external\DearGPU\TangentSpaceCalculation.h" />
     <ClInclude Include="Mock12.h" />
     <ClInclude Include="DX12Lib\Application.h" />
     <ClInclude Include="DX12Lib\CommandQueue.h" />

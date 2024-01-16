@@ -39,9 +39,10 @@ todo low prio:
 
 ThirdParty / Copyright:
 * LearningDirectX12 https://github.com/jpvanoosten/LearningDirectX12, MIT license
-* DearGPU, various helper code, e.g. OBJ loader, WTFPL http://www.wtfpl.net
+* DearGPU, various helper code, e.g. OBJ loader, WTFPL http://www.wtfpl.net by MartinMittring / Epic Games
+  * Tom Forsyth vertex cache optimization code
+  * TangentSpaceMeshCalculation by MartinMittring / Crytek
 * Cellular noise ("Worley noise") in 3D in GLSL. Stefan Gustavson MIT license. https://github.com/stegu/webgl-noise
-
 
 
 ==========================================

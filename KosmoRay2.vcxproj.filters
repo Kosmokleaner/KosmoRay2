@@ -97,6 +97,12 @@
     <ClCompile Include="external\DearGPU\CommonFileSystem.cpp">
       <Filter>DearGPU</Filter>
     </ClCompile>
+    <ClCompile Include="external\DearGPU\forsyth.cpp">
+      <Filter>DearGPU</Filter>
+    </ClCompile>
+    <ClCompile Include="external\DearGPU\FBVHTree.cpp">
+      <Filter>DearGPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -166,11 +172,25 @@
     <ClInclude Include="external\DearGPU\LineReader.h">
       <Filter>DearGPU</Filter>
     </ClInclude>
-    <ClInclude Include="external\tiny_obj_loader.h" />
     <ClInclude Include="external\DearGPU\deargpu.h">
       <Filter>DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\CommonFileSystem.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\SimpleIndexedMesh.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\TangentSpaceCalculation.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\forsyth.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\FBVHTree.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\BBox3F.h">
       <Filter>DearGPU</Filter>
     </ClInclude>
   </ItemGroup>

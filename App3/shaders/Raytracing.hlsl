@@ -30,6 +30,8 @@ RWTexture2D<float4> RenderTarget : register(u0);
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
+#define VERTEX_STRIDE_IN_UINT 8
+
 // 16 bit index buffer
 ByteAddressBuffer g_indices : register(t1);
 StructuredBuffer<Vertex> g_vertices : register(t2);
@@ -219,7 +221,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     payload.color = float4(barycentrics, 1); // color from barycentrics
 
     const uint indexOffsetBytes = 0;    // for now
-    const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * 3 * 2);
+    const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * VERTEX_STRIDE_IN_UINT);
 
 //    payload.color = float4(IndexToColor(ii.x + ii.y * 1234 + ii.z * 79), 1); // unique color for each triangle
 
@@ -307,7 +309,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 payload.normal = float3(0, 1, 0);
 
                 const uint indexOffsetBytes = 0;    // for now
-                const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * 3 * 2);
+                const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * VERTEX_STRIDE_IN_UINT);
 
                 float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
 

@@ -15,16 +15,16 @@
 
 
 
-
-static VertexPosColor g_Vertices[8] = {
-    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) }, // 0
-    { XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) }, // 1
-    { XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(1.0f, 1.0f, 0.0f) }, // 2
-    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f) }, // 3
-    { XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) }, // 4
-    { XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f, 1.0f, 1.0f) }, // 5
-    { XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) }, // 6
-    { XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f, 0.0f, 1.0f) }  // 7
+// todo: bad tangent and binormal, normal is smooth which looks bad for box
+static VFormatFull g_Vertices[8] = {
+    VFormatFull(float3(-1.0f, -1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f)), // 0
+    VFormatFull(float3(-1.0f,  1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f,  1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f)), // 1
+    VFormatFull(float3(1.0f,  1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f,  1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f)), // 2
+    VFormatFull(float3(1.0f, -1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f)), // 3
+    VFormatFull(float3(-1.0f, -1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f, -1.0f,  1.0f), XMFLOAT2(0.0f, 0.0f)), // 4
+    VFormatFull(float3(-1.0f,  1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f,  1.0f,  1.0f), XMFLOAT2(0.0f, 1.0f)), // 5
+    VFormatFull(float3(1.0f,  1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f,  1.0f,  1.0f), XMFLOAT2(1.0f, 1.0f)), // 6
+    VFormatFull(float3(1.0f, -1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f, -1.0f,  1.0f), XMFLOAT2(1.0f, 0.0f))  // 7
 };
 
 static WORD g_Indicies[36] =
@@ -64,12 +64,6 @@ bool App2::LoadContent()
     // Load the pixel shader.
     ComPtr<ID3DBlob> pixelShaderBlob;
     ThrowIfFailed(D3DReadFileToBlob(L"PixelShader.cso", &pixelShaderBlob));
-
-    // Create the vertex input layout
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    };
 
     // Create a root signature.
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
@@ -119,7 +113,7 @@ bool App2::LoadContent()
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     pipelineStateStream.pRootSignature = rootSignature.Get();
-    pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
+    pipelineStateStream.InputLayout = { VFormatFull::GetDesc().Pointer, VFormatFull::GetDesc().Count };
     pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
     pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());

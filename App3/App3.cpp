@@ -77,12 +77,6 @@ bool App3::LoadContent()
     ComPtr<ID3DBlob> pixelShaderBlob;
     ThrowIfFailed(D3DReadFileToBlob(L"PixelShader.cso", &pixelShaderBlob));
 
-    // Create the vertex input layout
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    };
-
     // Create a root signature.
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
     featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -131,7 +125,7 @@ bool App3::LoadContent()
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     pipelineStateStream.pRootSignature = rootSignature.Get();
-    pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
+    pipelineStateStream.InputLayout = { VFormatFull::GetDesc().Pointer, VFormatFull::GetDesc().Count };
     pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
     pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
@@ -707,8 +701,8 @@ void App3::CreateDeviceDependentResources()
     Application::Get().renderer.descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     //meshA.load(Application::Get().renderer, "../../data/monkey.obj");
-    meshA.load(Application::Get().renderer, "../../data/NewXYZ.obj");
-    meshB.load(Application::Get().renderer, "../../data/monkey.obj");
+    meshA.load(Application::Get().renderer, L"../../data/NewXYZ.obj");
+    meshB.load(Application::Get().renderer, L"../../data/monkey.obj");
 //meshB.load(Application::Get().renderer, "../../data/saucer.obj");
 //    std::string inputfile = "../../data/monkey.obj";        // 1 shape
 //    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes

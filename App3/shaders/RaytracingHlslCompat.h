@@ -44,11 +44,12 @@ struct SceneConstantBuffer
     uint dummy[3];
 };
 
-// see struct VertexPosColor
+// see struct VFormatFull
 struct Vertex
 {
     XMFLOAT3 position;
-    XMFLOAT3 color;
+    XMFLOAT3 normal;
+    XMFLOAT2 uv;
 };
 
 #endif // RAYTRACINGHLSLCOMPAT_H
