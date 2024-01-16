@@ -1,5 +1,3 @@
-// Copyright Epic Games
-
 #include "RelativeMouseInput.h"
 #include <assert.h>
 

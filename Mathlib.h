@@ -683,19 +683,14 @@ inline float3 normalize(float3 A)
 	return A / length(A);
 }
 
-// don't use macro max(), use this instead
+// don't use macro min() max(), use this instead
 inline int Max(int x, int y) { return (x > y) ? x : y; }
-// don't use macro max(), use this instead
 inline int Min(int x, int y) { return (x < y) ? x : y; }
-
-// don't use macro max(), use this instead
 inline uint32 Max(uint32 x, uint32 y) { return (x > y) ? x : y; }
-// don't use macro max(), use this instead
 inline uint32 Min(uint32 x, uint32 y) { return (x < y) ? x : y; }
-
-// don't use macro max(), use this instead
+inline size_t Max(size_t x, size_t y) { return (x > y) ? x : y; }
+inline size_t Min(size_t x, size_t y) { return (x < y) ? x : y; }
 inline float Max(float x, float y) { return (x > y) ? x : y; }
-// don't use macro max(), use this instead
 inline float Min(float x, float y) { return (x < y) ? x : y; }
 
 

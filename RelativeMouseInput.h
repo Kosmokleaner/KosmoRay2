@@ -1,5 +1,3 @@
-// Copyright Epic Games
-
 #pragma once
 
 #include "Mathlib.h" // int2

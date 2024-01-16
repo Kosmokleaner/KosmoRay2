@@ -2,6 +2,7 @@
 #include "Helpers.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../external/tiny_obj_loader.h"
+#include "../external/DearGPU/OBJMeshLoader.h"
 
 
 void Mesh::startUpload(Renderer& renderer, VertexPosColor* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount)

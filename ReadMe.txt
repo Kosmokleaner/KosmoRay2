@@ -39,8 +39,7 @@ todo low prio:
 
 ThirdParty / Copyright:
 * LearningDirectX12 https://github.com/jpvanoosten/LearningDirectX12, MIT license
-* tiny_obj_loader, to load Alias Wavefront .obj files, MIT license
-* DearGPU, various helper code, WTFPL http://www.wtfpl.net
+* DearGPU, various helper code, e.g. OBJ loader, WTFPL http://www.wtfpl.net
 * Cellular noise ("Worley noise") in 3D in GLSL. Stefan Gustavson MIT license. https://github.com/stegu/webgl-noise
 
 

@@ -19,6 +19,9 @@
     <Filter Include="Hidden">
       <UniqueIdentifier>{518ff92b-f1c6-4461-819e-e4dda5315e65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DearGPU">
+      <UniqueIdentifier>{06705ef1-ba36-4ff0-bf8b-647b9f5db6fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="App2\shaders\VertexShader.hlsl">
@@ -85,6 +88,15 @@
     <ClCompile Include="DX12Lib\DescriptorHeap.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
+    <ClCompile Include="external\DearGPU\LineReader.cpp">
+      <Filter>DearGPU</Filter>
+    </ClCompile>
+    <ClCompile Include="external\DearGPU\OBJMeshLoader.cpp">
+      <Filter>DearGPU</Filter>
+    </ClCompile>
+    <ClCompile Include="external\DearGPU\CommonFileSystem.cpp">
+      <Filter>DearGPU</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -135,9 +147,6 @@
     <ClInclude Include="Mathlib.h">
       <Filter>Hidden</Filter>
     </ClInclude>
-    <ClInclude Include="App3\external\tiny_obj_loader.h">
-      <Filter>Hidden</Filter>
-    </ClInclude>
     <ClInclude Include="Mock12.h" />
     <ClInclude Include="DX12Lib\AppBase.h">
       <Filter>DX12Lib</Filter>
@@ -150,6 +159,19 @@
     </ClInclude>
     <ClInclude Include="DX12Lib\DescriptorHeap.h">
       <Filter>DX12Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\OBJMeshLoader.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\LineReader.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\tiny_obj_loader.h" />
+    <ClInclude Include="external\DearGPU\deargpu.h">
+      <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="external\DearGPU\CommonFileSystem.h">
+      <Filter>DearGPU</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
