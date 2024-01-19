@@ -119,7 +119,8 @@ public:
     typedef WORD IndexType;
 
     // @param filename e.g. L"../../data/monkey.obj", must not be 0
-    void load(Renderer& renderer, const wchar_t* fileName);
+	// @return success
+    bool load(Renderer& renderer, const wchar_t* fileName);
     void startUpload(Renderer& renderer, VFormatFull* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount);
 
     void SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh);

@@ -38,6 +38,7 @@ ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
 // index buffer (element size is INDEX_STRIDE)
 ByteAddressBuffer g_indices : register(t1);
+// vertex buffer
 StructuredBuffer<Vertex> g_vertices : register(t2);
 
 // https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
@@ -150,8 +151,8 @@ void MyRaygenShader()
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
-    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
-//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // barycentrics
+//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
+    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
 
@@ -234,39 +235,44 @@ void MyRaygenShader()
 [shader("closesthit")]
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
-    float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-    payload.color = float4(barycentrics, 1); // color from barycentrics
-
     payload.primitiveIndex = PrimitiveIndex();
 
     // triangle corner vertex indices
     const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
 
-    float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
+    float3 bary = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+
+    payload.color = float4(bary, 1); // color from barycentrics
 
     // position in object space
     const float3 p0 = g_vertices[ii.x].position;
     const float3 p1 = g_vertices[ii.y].position;
     const float3 p2 = g_vertices[ii.z].position;
 
-    const float3 n0 = g_vertices[ii.x].normal;
-    const float3 n1 = g_vertices[ii.y].normal;
-    const float3 n2 = g_vertices[ii.z].normal;
+    const float3 n0 = normalize(g_vertices[ii.x].normal);
+    const float3 n1 = normalize(g_vertices[ii.y].normal);
+    const float3 n2 = normalize(g_vertices[ii.z].normal);
 
-    float3 osNormal = n0 + bary.x * (n1 - n0) + bary.y * (n2 - n0);
+    const float3 c0 = IndexToColor(ii.x);
+    const float3 c1 = IndexToColor(ii.y);
+    const float3 c2 = IndexToColor(ii.z);
 
-    // visualize position id as color, gourand shading
-//                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
+    float3 osNormal = n0 * bary.x + n1 * bary.y + n2 * bary.z;
+    float3 osPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
+    float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+    float3 intepolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
-                // visualize indexbuffer id as color, gourand shading
-//                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
-//                const float4 vCol1 = float4(IndexToColor(ii.y), 1);
-//                const float4 vCol2 = float4(IndexToColor(ii.z), 1);
-//                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
+    // visualize indexbuffer data
+//    payload.color = float4(intepolIndex, 1);
 
-    float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
+    // visualize object space position as color
+    payload.color = float4(frac(osPos), 1);
 
-    float3 worldPosition = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+    // visualize world space position as color
+//    payload.color = float4(frac(wsPos), 1);
+
+//    float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
+
     
     float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());
     //float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());

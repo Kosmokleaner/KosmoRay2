@@ -700,9 +700,16 @@ void App3::CreateDeviceDependentResources()
     Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 5, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     Application::Get().renderer.descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+    bool ok;
+
     //meshA.load(Application::Get().renderer, "../../data/monkey.obj");
-    meshA.load(Application::Get().renderer, L"../../data/NewXYZ.obj");
-    meshB.load(Application::Get().renderer, L"../../data/monkey.obj");
+//    meshA.load(Application::Get().renderer, L"../../data/NewXYZ.obj");
+//    ok = meshA.load(Application::Get().renderer, L"../../data/LShape.obj");
+    ok = meshA.load(Application::Get().renderer, L"../../data/LShapeSmooth.obj");
+    assert(ok);
+
+    ok = meshB.load(Application::Get().renderer, L"../../data/monkey.obj");
+    assert(ok);
 //meshB.load(Application::Get().renderer, "../../data/saucer.obj");
 //    std::string inputfile = "../../data/monkey.obj";        // 1 shape
 //    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
