@@ -75,7 +75,6 @@
     <ClCompile Include="Mathlib.cpp">
       <Filter>Hidden</Filter>
     </ClCompile>
-    <ClCompile Include="Mock12.cpp" />
     <ClCompile Include="DX12Lib\AppBase.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
@@ -102,6 +101,9 @@
     </ClCompile>
     <ClCompile Include="external\DearGPU\FBVHTree.cpp">
       <Filter>DearGPU</Filter>
+    </ClCompile>
+    <ClCompile Include="Mock12.cpp">
+      <Filter>Hidden</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -153,7 +155,6 @@
     <ClInclude Include="Mathlib.h">
       <Filter>Hidden</Filter>
     </ClInclude>
-    <ClInclude Include="Mock12.h" />
     <ClInclude Include="DX12Lib\AppBase.h">
       <Filter>DX12Lib</Filter>
     </ClInclude>
@@ -192,6 +193,9 @@
     </ClInclude>
     <ClInclude Include="external\DearGPU\BBox3F.h">
       <Filter>DearGPU</Filter>
+    </ClInclude>
+    <ClInclude Include="Mock12.h">
+      <Filter>Hidden</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -30,12 +30,18 @@ RWTexture2D<float4> RenderTarget : register(u0);
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
-#define VERTEX_STRIDE_IN_UINT 8
+// sizeof(IndexType) 2:16bit, 4:32bit
+#define INDEX_STRIDE 2
 
-// 16 bit index buffer
+// sizeof(VFormatFull)
+#define VERTEX_STRIDE (8*4)
+
+// index buffer (element size is INDEX_STRIDE)
 ByteAddressBuffer g_indices : register(t1);
 StructuredBuffer<Vertex> g_vertices : register(t2);
 
+// https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
+// { float2 barycentrics }
 typedef BuiltInTriangleIntersectionAttributes MyAttributes;
 
 // update App3.cpp if this gets larger
@@ -44,6 +50,8 @@ struct RayPayload
     float4 color;
     // in world space, normalized
     float3 normal;
+    //
+    uint primitiveIndex;
     // to count intersections after sphere start, to test if inside the object
     int count;
     // used like z buffer, the smallest valus is used
@@ -57,8 +65,15 @@ struct Ray
     float3 direction;
 };
 
-uint3 Load3x16BitIndices( uint offsetBytes)
+// @param primitiveIndex from PrimitiveIndex()
+// @return triangle corner vertex indices
+uint3 LoadIndexBuffer( uint primitiveIndex )
 {
+    const uint indexOffsetBytes = 0;    // for now
+    // triangle corner vertex indices
+    uint offsetBytes = indexOffsetBytes + primitiveIndex * (INDEX_STRIDE * 3);
+
+    // needed?
     const uint dwordAlignedOffset = offsetBytes & ~3;
 
     const uint2 four16BitIndices = g_indices.Load2(dwordAlignedOffset);
@@ -130,13 +145,15 @@ void MyRaygenShader()
     // TMin should be kept small to prevent missing geometry at close contact areas.
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
-    RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, rayDesc.TMax, rayDesc.TMax };
+    RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, 0, rayDesc.TMax, rayDesc.TMax };
 
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
     RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
 //    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // barycentrics
+//    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
+
 
 #elif RAY_TRACING_EXPERIMENT == 1
     TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, rayDesc, payload);
@@ -220,10 +237,10 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
     payload.color = float4(barycentrics, 1); // color from barycentrics
 
-    const uint indexOffsetBytes = 0;    // for now
-    const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * VERTEX_STRIDE_IN_UINT);
+    payload.primitiveIndex = PrimitiveIndex();
 
-//    payload.color = float4(IndexToColor(ii.x + ii.y * 1234 + ii.z * 79), 1); // unique color for each triangle
+    // triangle corner vertex indices
+    const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
 
     float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
 
@@ -231,6 +248,13 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     const float3 p0 = g_vertices[ii.x].position;
     const float3 p1 = g_vertices[ii.y].position;
     const float3 p2 = g_vertices[ii.z].position;
+
+    const float3 n0 = g_vertices[ii.x].normal;
+    const float3 n1 = g_vertices[ii.y].normal;
+    const float3 n2 = g_vertices[ii.z].normal;
+
+    float3 osNormal = n0 + bary.x * (n1 - n0) + bary.y * (n2 - n0);
+
     // visualize position id as color, gourand shading
 //                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
 
@@ -243,8 +267,9 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
 
     float3 worldPosition = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-    //                float3 worldNormal = mul(attr.normal, (float3x3)ObjectToWorld3x4());
-    float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+    
+    float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());
+    //float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
     payload.normal = normalize(worldNormal);
 }
@@ -308,8 +333,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 
                 payload.normal = float3(0, 1, 0);
 
-                const uint indexOffsetBytes = 0;    // for now
-                const uint3 ii = Load3x16BitIndices(indexOffsetBytes + PrimitiveIndex() * VERTEX_STRIDE_IN_UINT);
+                const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
 
                 float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
 
@@ -332,6 +356,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 //                float3 worldNormal = mul(attr.normal, (float3x3)ObjectToWorld3x4());
                 float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
+                payload.primitiveIndex = PrimitiveIndex();
                 payload.normal = worldNormal;
     //            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
     //                payload.color = float4(1,0,0,1);
