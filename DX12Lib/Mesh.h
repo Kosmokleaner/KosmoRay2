@@ -116,12 +116,14 @@ struct MultiIndex
 class Mesh
 {
 public:
-    typedef WORD IndexType;	// 16 bit index buffer
-//	typedef uint32 IndexType;	// 32 bit index buffer
+//    typedef WORD IndexType;	// 16 bit index buffer
+	typedef uint32 IndexType;	// 32 bit index buffer
+	typedef INDEXBUFFER_TYPE IndexType;
 
     // @param filename e.g. L"../../data/monkey.obj", must not be 0
 	// @return success
     bool load(Renderer& renderer, const wchar_t* fileName);
+	//
     void startUpload(Renderer& renderer, VFormatFull* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount);
 
     void SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh);

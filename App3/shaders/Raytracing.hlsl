@@ -31,10 +31,7 @@ ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
 // sizeof(IndexType) 2:16bit, 4:32bit
-#define INDEX_STRIDE 2
-
-// sizeof(VFormatFull)
-#define VERTEX_STRIDE (8*4)
+#define INDEX_STRIDE 4
 
 // index buffer (element size is INDEX_STRIDE)
 ByteAddressBuffer g_indices : register(t1);
@@ -77,22 +74,31 @@ uint3 LoadIndexBuffer( uint primitiveIndex )
     // needed?
     const uint dwordAlignedOffset = offsetBytes & ~3;
 
-    const uint2 four16BitIndices = g_indices.Load2(dwordAlignedOffset);
-
     uint3 indices;
 
-    if (dwordAlignedOffset == offsetBytes)
+    if(INDEX_STRIDE == 2)
     {
-        indices.x = four16BitIndices.x & 0xffff;
-        indices.y = (four16BitIndices.x >> 16) & 0xffff;
-        indices.z = four16BitIndices.y & 0xffff;
+        const uint2 four16BitIndices = g_indices.Load2(dwordAlignedOffset);
+
+
+        if (dwordAlignedOffset == offsetBytes)
+        {
+            indices.x = four16BitIndices.x & 0xffff;
+            indices.y = (four16BitIndices.x >> 16) & 0xffff;
+            indices.z = four16BitIndices.y & 0xffff;
+        }
+        else
+        {
+            indices.x = (four16BitIndices.x >> 16) & 0xffff;
+            indices.y = four16BitIndices.y & 0xffff;
+            indices.z = (four16BitIndices.y >> 16) & 0xffff;
+        }
     }
     else
     {
-        indices.x = (four16BitIndices.x >> 16) & 0xffff;
-        indices.y = four16BitIndices.y & 0xffff;
-        indices.z = (four16BitIndices.y >> 16) & 0xffff;
+        indices = g_indices.Load3(dwordAlignedOffset);
     }
+
 
     return indices;
 }
@@ -262,7 +268,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     float3 intepolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
-    // visualize indexbuffer data
+    // visualize indexbuffer data as color
 //    payload.color = float4(intepolIndex, 1);
 
     // visualize object space position as color
