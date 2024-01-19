@@ -116,7 +116,8 @@ struct MultiIndex
 class Mesh
 {
 public:
-    typedef WORD IndexType;
+    typedef WORD IndexType;	// 16 bit index buffer
+//	typedef uint32 IndexType;	// 32 bit index buffer
 
     // @param filename e.g. L"../../data/monkey.obj", must not be 0
 	// @return success

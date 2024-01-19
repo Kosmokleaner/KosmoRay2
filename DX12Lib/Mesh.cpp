@@ -45,10 +45,11 @@ void Mesh::init()
     vertexBufferView.StrideInBytes = sizeof(VFormatFull);
     vertexBufferView.SizeInBytes = vertexCount * vertexBufferView.StrideInBytes;
 
+    assert(sizeof(IndexType) == 2 || sizeof(IndexType) == 4);
+
     // index buffer view
     indexBufferView.BufferLocation = indexBuffer.resource->GetGPUVirtualAddress();
-    indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    assert(sizeof(IndexType) == 2);
+    indexBufferView.Format = (sizeof(IndexType) == 2) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
     indexBufferView.SizeInBytes = indexCount * sizeof(IndexType);
 }
 
@@ -104,7 +105,7 @@ void Mesh::BuildAccelerationStructures(Renderer& renderer)
     geometryDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
     geometryDesc.Triangles.IndexBuffer = indexBuffer.resource->GetGPUVirtualAddress();
     geometryDesc.Triangles.IndexCount = static_cast<UINT>(indexBuffer.resource->GetDesc().Width) / sizeof(Mesh::IndexType);
-    geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R16_UINT;
+    geometryDesc.Triangles.IndexFormat = (sizeof(Mesh::IndexType) == 2) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
     geometryDesc.Triangles.Transform3x4 = 0;
     geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
     geometryDesc.Triangles.VertexCount = static_cast<UINT>(vertexBuffer.resource->GetDesc().Width) / sizeof(VFormatFull);
@@ -256,10 +257,9 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
                 Index = it->second;
             }
 
-            INDEXBUFFER_TYPE MaxIndex = ~(INDEXBUFFER_TYPE)0;
-
+//            INDEXBUFFER_TYPE MaxIndex = ~(INDEXBUFFER_TYPE)0;
             // we only support 16 bit indexbuffer
-            assert(Index <= MaxIndex);
+//            assert(Index <= MaxIndex);
 
             MeshIndexData.push_back(Index);
         }

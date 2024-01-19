@@ -482,7 +482,7 @@ void App3::CreateRaytracingPipelineStateObject()
 void App3::BuildAccelerationStructures()
 {
     meshA.BuildAccelerationStructures(Application::Get().renderer);
-    meshB.BuildAccelerationStructures(Application::Get().renderer);
+//    meshB.BuildAccelerationStructures(Application::Get().renderer);
 
     auto device = Application::Get().renderer.device;
 
@@ -552,7 +552,8 @@ void App3::BuildAccelerationStructures()
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
             dst->InstanceMask = 1;
 
-            Mesh& ref = (i == 0) ? meshA : meshB;
+//            Mesh& ref = (i == 0) ? meshA : meshB;
+            Mesh& ref = meshA;
 
             dst->AccelerationStructure = ref.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
 

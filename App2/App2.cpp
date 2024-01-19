@@ -27,7 +27,7 @@ static VFormatFull g_Vertices[8] = {
     VFormatFull(float3(1.0f, -1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f, -1.0f,  1.0f), XMFLOAT2(1.0f, 0.0f))  // 7
 };
 
-static WORD g_Indicies[36] =
+static Mesh::IndexType g_Indicies[36] =
 {
     0, 1, 2, 0, 2, 3,
     4, 6, 5, 4, 7, 6,
