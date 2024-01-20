@@ -87,9 +87,9 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     {
         double fps = frameCount / totalTime;
 
-        char buffer[512];
-        sprintf_s(buffer, "FPS: %f\n", fps);
-        OutputDebugStringA(buffer);
+//        char buffer[512];
+//        sprintf_s(buffer, "FPS: %f\n", fps);
+//        OutputDebugStringA(buffer);
 
         frameCount = 0;
         totalTime = 0.0;

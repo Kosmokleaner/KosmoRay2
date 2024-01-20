@@ -275,20 +275,27 @@ void App3::OnKeyPressed(KeyEventArgs& e)
 {
     super::OnKeyPressed(e);
 
+    bool log = false;
+
     switch (e.Key)
     {
         case KeyCode::PageUp:
             --raytraceFlags;
+            log = true;
             break;
 
         case KeyCode::PageDown:
             ++raytraceFlags;
+            log = true;
             break;
     }
 
-    char buffer[512];
-    sprintf_s(buffer, "raytraceFlags: 0x%x\n", raytraceFlags);
-    OutputDebugStringA(buffer);
+    if(log)
+    {
+        char buffer[512];
+        sprintf_s(buffer, "raytraceFlags: 0x%x\n", raytraceFlags);
+        OutputDebugStringA(buffer);
+    }
 }
 
 void App3::SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& desc, ComPtr<ID3D12RootSignature>* rootSig)
