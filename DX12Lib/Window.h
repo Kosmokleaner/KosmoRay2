@@ -31,15 +31,9 @@ public:
     // Number of swapchain back buffers.
     static const UINT BufferCount = 3;
 
-    /**
-    * Get a handle to this window's instance.
-    * @returns The handle to the window instance or nullptr if this is not a valid window.
-    */
+    // @return handle or 0
     HWND GetWindowHandle() const;
 
-    /**
-    * Destroy this window.
-    */
     void Destroy();
 
     const std::wstring& GetWindowName() const;
@@ -47,25 +41,15 @@ public:
     int GetClientWidth() const;
     int GetClientHeight() const;
 
-    /**
-    * Should this window be rendered with vertical refresh synchronization.
-    */
-    bool IsVSync() const;
     bool isActive() const;
+
+    bool IsVSync() const;
     void SetVSync(bool vSync);
-    void ToggleVSync();
 
-    /**
-    * Is this a windowed window or full-screen?
-    */
     bool IsFullScreen() const;
-
-    // Set the fullscreen state of the window.
     void SetFullscreen(bool fullscreen);
-    void ToggleFullscreen();
 
     void Show();
-
     void Hide();
 
     UINT GetCurrentBackBufferIndex() const;
@@ -106,24 +90,17 @@ protected:
     virtual void OnUpdate(UpdateEventArgs& e);
     virtual void OnRender(RenderEventArgs& e);
 
-    // A keyboard key was pressed
     virtual void OnKeyPressed(KeyEventArgs& e);
-    // A keyboard key was released
     virtual void OnKeyReleased(KeyEventArgs& e);
 
-    // The mouse was moved
     virtual void OnMouseMoved(MouseMotionEventArgs& e);
-    // A button on the mouse was pressed
     virtual void OnMouseButtonPressed(MouseButtonEventArgs& e);
-    // A button on the mouse was released
     virtual void OnMouseButtonReleased(MouseButtonEventArgs& e);
-    // The mouse wheel was moved.
     virtual void OnMouseWheel(MouseWheelEventArgs& e);
 
     // The window was resized.
     virtual void OnResize(ResizeEventArgs& e);
 
-    // Create the swapchian.
     ComPtr<IDXGISwapChain4> CreateSwapChain();
 
     // Update the render target views for the swapchain back buffers.

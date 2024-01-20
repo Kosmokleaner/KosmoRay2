@@ -197,11 +197,11 @@ void AppBase::OnKeyPressed(KeyEventArgs& e)
 
     case KeyCode::F11:
         if (e.Alt)
-            m_pWindow->ToggleFullscreen();
+            m_pWindow->SetFullscreen(m_pWindow->IsFullScreen());
         break;
 
     case KeyCode::V:
-        m_pWindow->ToggleVSync();
+        m_pWindow->SetVSync(m_pWindow->IsVSync());
         break;
     }
 }

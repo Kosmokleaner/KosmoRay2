@@ -156,11 +156,6 @@ void Window::SetFullscreen(bool fullscreen)
     }
 }
 
-void Window::ToggleFullscreen()
-{
-    SetFullscreen(!m_Fullscreen);
-}
-
 
 void Window::RegisterCallbacks(std::shared_ptr<Game> pGame)
 {
