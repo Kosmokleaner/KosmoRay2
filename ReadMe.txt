@@ -6,12 +6,13 @@ Multiple experiments in different Apps:
   "App3": ray tracing, Constructive Solid Geometry (CSG) Intersection of sphere and 3d mesh object
 
 Code style (not yet fully executed):
-* no hungarian notation, todo: remove m_
+* no hungarian notation, todo: remove m_ ?
 * Camel case for functions/methods/member variables
 * No "." at end of comments that are not sentences
 * 
 
 todo:
+* support multiple vertex buffer for ray tracing
 * raytrace scene object
 * fix window resize in App3 
 * shader class
@@ -94,4 +95,6 @@ https://www.youtube.com/watch?v=Wbnw87tYqVg&t=0s
 todo: https://www.youtube.com/watch?v=Wbnw87tYqVg&t=0s ~32 min
 
 
+
+Current app resource management explained:     (deconstructing app would be useful)
 

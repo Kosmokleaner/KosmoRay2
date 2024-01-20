@@ -93,11 +93,6 @@ void Window::SetVSync(bool vSync)
     m_VSync = vSync;
 }
 
-void Window::ToggleVSync()
-{
-    SetVSync(!m_VSync);
-}
-
 bool Window::IsFullScreen() const
 {
     return m_Fullscreen;
