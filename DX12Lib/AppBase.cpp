@@ -148,22 +148,25 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     float3 move(0, 0, 0);
 
-    if (GetAsyncKeyState('A'))
+    if (m_pWindow->isActive())
     {
-        move += left;
-    }
-    else if (GetAsyncKeyState('D'))
-    {
-        move -= left;
-    }
+        if (GetAsyncKeyState('A'))
+        {
+            move += left;
+        }
+        else if (GetAsyncKeyState('D'))
+        {
+            move -= left;
+        }
 
-    if (GetAsyncKeyState('W'))
-    {
-        move += forward;
-    }
-    else if (GetAsyncKeyState('S'))
-    {
-        move -= forward;
+        if (GetAsyncKeyState('W'))
+        {
+            move += forward;
+        }
+        else if (GetAsyncKeyState('S'))
+        {
+            move -= forward;
+        }
     }
     camera.Move(move);
 

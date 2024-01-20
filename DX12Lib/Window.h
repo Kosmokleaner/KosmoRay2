@@ -51,6 +51,7 @@ public:
     * Should this window be rendered with vertical refresh synchronization.
     */
     bool IsVSync() const;
+    bool isActive() const;
     void SetVSync(bool vSync);
     void ToggleVSync();
 
@@ -63,19 +64,10 @@ public:
     void SetFullscreen(bool fullscreen);
     void ToggleFullscreen();
 
-    /**
-     * Show this window.
-     */
     void Show();
 
-    /**
-     * Hide the window.
-     */
     void Hide();
 
-    /**
-     * Return the current back buffer index.
-     */
     UINT GetCurrentBackBufferIndex() const;
 
     /**
@@ -89,9 +81,6 @@ public:
      */
     D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
 
-    /**
-     * Get the back buffer resource for the current back buffer.
-     */
     ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
 
     DXGI_FORMAT GetBackBufferFormat() const;
@@ -145,18 +134,18 @@ private:
     Window(const Window& copy) = delete;
     Window& operator=(const Window& other) = delete;
 
-    HWND m_hWnd;
+    HWND m_hWnd = 0;
 
     std::wstring m_WindowName;
     
-    int m_ClientWidth;
-    int m_ClientHeight;
-    bool m_VSync;
-    bool m_Fullscreen;
+    int m_ClientWidth = 0;
+    int m_ClientHeight = 0;
+    bool m_VSync = false;
+    bool m_Fullscreen = false;
 
     HighResolutionClock m_UpdateClock;
     HighResolutionClock m_RenderClock;
-    uint64_t m_FrameCounter;
+    uint64_t m_FrameCounter = 0;
 
     std::weak_ptr<Game> m_pGame;
 
@@ -164,10 +153,10 @@ private:
     DescriptorHeap RTVDescriptorHeap;
     ComPtr<ID3D12Resource> m_d3d12BackBuffers[BufferCount];
 
-    UINT m_RTVDescriptorSize;
-    UINT m_CurrentBackBufferIndex;
+    UINT m_RTVDescriptorSize = 0;
+    UINT m_CurrentBackBufferIndex = 0;
 
     RECT m_WindowRect;
-    bool m_IsTearingSupported;
+    bool m_IsTearingSupported = false;
 
 };

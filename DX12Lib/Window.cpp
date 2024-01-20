@@ -10,8 +10,6 @@ Window::Window(HWND hWnd, const std::wstring& windowName, int clientWidth, int c
     , m_ClientWidth(clientWidth)
     , m_ClientHeight(clientHeight)
     , m_VSync(vSync)
-    , m_Fullscreen(false)
-    , m_FrameCounter(0)
 {
     Application& app = Application::Get();
 
@@ -78,6 +76,11 @@ int Window::GetClientWidth() const
 int Window::GetClientHeight() const
 {
     return m_ClientHeight;
+}
+
+bool Window::isActive() const
+{
+    return GetActiveWindow() == m_hWnd;
 }
 
 bool Window::IsVSync() const

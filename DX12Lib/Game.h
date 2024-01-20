@@ -13,9 +13,6 @@ class Window;
 class Game : public std::enable_shared_from_this<Game>
 {
 public:
-    /**
-     * Create the DirectX demo using the specified window dimensions.
-     */
     Game(const std::wstring& name, int width, int height, bool vSync);
     virtual ~Game();
 
@@ -34,14 +31,8 @@ public:
      */
     virtual bool Initialize();
 
-    /**
-     *  Load content required for the demo.
-     */
     virtual bool LoadContent() = 0;
 
-    /**
-     *  Unload demo specific content that was loaded in LoadContent.
-     */
     virtual void UnloadContent() = 0;
 
     /**
@@ -57,9 +48,6 @@ protected:
      */
     virtual void OnUpdate(UpdateEventArgs& e);
 
-    /**
-     *  Render stuff.
-     */
     virtual void OnRender(RenderEventArgs& e);
 
     /**
@@ -107,8 +95,7 @@ protected:
 
 private:
     std::wstring m_Name;
-    int m_Width;
-    int m_Height;
-    bool m_vSync;
-
+    int m_Width = 0;
+    int m_Height = 0;
+    bool m_vSync = false;
 };

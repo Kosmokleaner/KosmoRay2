@@ -137,16 +137,8 @@ std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& wind
 
 void Application::DestroyWindow(std::shared_ptr<Window> window)
 {
-    if (window) window->Destroy();
-}
-
-void Application::DestroyWindow(const std::wstring& windowName)
-{
-    WindowPtr pWindow = GetWindowByName(windowName);
-    if ( pWindow )
-    {
-        DestroyWindow(pWindow);
-    }
+    if (window) 
+        window->Destroy();
 }
 
 std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowName)

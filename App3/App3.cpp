@@ -595,7 +595,6 @@ void App3::BuildAccelerationStructures()
     commandQueue->WaitForFenceValue(fenceValue);
 }
 
-// Create resources that are dependent on the size of the main window.
 void App3::CreateWindowSizeDependentResources()
 {
     CreateRaytracingOutputResource();
