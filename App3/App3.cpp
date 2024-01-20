@@ -24,10 +24,10 @@ const wchar_t* c_missShaderName = L"MyMissShader";
 
 namespace GlobalRootSignatureParams {
     enum Value {
-        OutputViewSlot = 0,
-        AccelerationStructureSlot,
-        SceneConstant,
-        IndexAndVertexBuffer,
+        OutputViewSlot = 0, // UAV space0:u0 space1: u0, u1
+        AccelerationStructureSlot,  // SRV t0
+        SceneConstant, // CBV b0
+        IndexAndVertexBuffer, // SRV t1, t2 
         Count
     };
 }

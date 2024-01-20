@@ -64,21 +64,34 @@ https://blog.selfshadow.com/publications/s2015-shading-course/hoffman/s2015_pbs_
 
 =============================
 
-What is a root signature ?
 What is D3D12_CPU_DESCRIPTOR_HANDLE
 
 DXR spec https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
 
 
-D3D12 ERROR: ID3D12CommandQueue::ExecuteCommandLists: Using ResourceBarrier on Command List (0x000001BAD2D28F30:'Unnamed ID3D12GraphicsCommandList Object'):
- Before state (0x4: D3D12_RESOURCE_STATE_RENDER_TARGET) of resource (0x000001BAD2D024F0:'Unnamed ID3D12Resource Object') (subresource: 0) specified by
-transition barrier does not match with the state (0x0: D3D12_RESOURCE_STATE_[COMMON|PRESENT]) specified in the previous call to ResourceBarrier [
- RESOURCE_MANIPULATION ERROR #527: RESOURCE_BARRIER_BEFORE_AFTER_MISMATCH]
 
-D3D12: **BREAK** enabled for the previous message, which was: [ ERROR RESOURCE_MANIPULATION #527: RESOURCE_BARRIER_BEFORE_AFTER_MISMATCH ]
-Exception thrown at 0x00007FFDFC3ECD29 (KernelBase.dll) in KosmoRay2.exe: 0x0000087A (parameters: 0x0000000000000001, 0x00000065938FA040, 0x00000065938FBE10).
-Unhandled exception at 0x00007FFDFC3ECD29 (KernelBase.dll) in KosmoRay2.exe: 0xC000041D: An unhandled exception was encountered during a user callback.
+Resource Binding in DirectX 12 (pt.1)
+https://www.youtube.com/watch?v=Uwhhdktaofg
+https://www.youtube.com/watch?v=Wbnw87tYqVg&t=0s
+* DescriptorHeap stores Descriptors, can be shader visible (CPU write, GPU read) or not shader visible (to prepare to upload to shader visible, not needed)
+  need to organize by type, exception: CBV,SRV,UAV can be in one
+  IBV,VBV,SOV,RTV,DSV are CPU / non shader visible, hardware does not use
+  after creation get handle to start, GetCPUHandleForHeapStart(), GetGPUHandleForHeapStart()
+* GetDescriptoHandleIncrementSize() 
+  can use wrapper class: CD3DX12_CPU_DESCRIPTOR_HANDLE .. 
+* Descriptor 32-64 bytes for CBV,SRV,UAV
+* DescriptorHandle device-unique address 64bit but descriptors are 32bit as they are relative to start
+* RootSignature user defined order of types structured, can be defined in HLSL (e.g. define samplers in HLSL)
+  root parameter types: 
+   descriptor table (indirection to descriptors) 1 DWORD (offset into descriptor heap), 2 indirections
+   root descriptor (inline descriptor) 2 DWORD (virtual address), 1 indirection
+   root constants (inline constants) 1 DWORD, 0 indirection
+   static sampler (baked into shader)
+   
+* PlacedResource
+* Root arguments are limited to 64 DWORDs
 
+todo: https://www.youtube.com/watch?v=Wbnw87tYqVg&t=0s ~32 min
 
 
 
