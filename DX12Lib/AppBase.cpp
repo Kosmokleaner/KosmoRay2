@@ -205,10 +205,11 @@ void AppBase::OnKeyPressed(KeyEventArgs& e)
 
 void AppBase::OnMouseWheel(MouseWheelEventArgs& e)
 {
-    fieldOfView -= e.WheelDelta;
+/*    fieldOfView -= e.WheelDelta;
     fieldOfView = clamp(fieldOfView, 12.0f, 90.0f);
 
     char buffer[256];
     sprintf_s(buffer, "FoV: %f\n", fieldOfView);
     OutputDebugStringA(buffer);
+*/
 }
