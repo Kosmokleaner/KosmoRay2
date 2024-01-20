@@ -14,7 +14,6 @@ Code style (not yet fully executed):
 todo:
 * support multiple vertex buffer for ray tracing
 * raytrace scene object
-* fix window resize in App3 
 * shader class
 * with Mock enabled RenderDoc crashes
 * move TransitionResource, ClearRTV, ClearDepth, UpdateBufferResource, ResizeDepthBuffer out of App

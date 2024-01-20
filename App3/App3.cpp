@@ -158,6 +158,7 @@ void App3::OnResize(ResizeEventArgs& e)
             static_cast<float>(e.Width), static_cast<float>(e.Height));
 
         ResizeDepthBuffer(e.Width, e.Height);
+        CreateWindowSizeDependentResources();
     }
 }
 
