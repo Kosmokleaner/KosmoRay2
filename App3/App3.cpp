@@ -60,6 +60,40 @@ App3::~App3()
 }
 
 
+
+void App3::CreateRootSignatures()
+{
+    // Global Root Signature
+    // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
+    {
+        CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2];
+        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);   // space 0: u0
+        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
+
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptor[2];
+        SRVDescriptor[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 101);  // space 100: t0: IndexBuffer
+        SRVDescriptor[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 102);  // space 101: t0: VertexBuffer
+
+        CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
+        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
+        rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
+        rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
+        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptor), SRVDescriptor);
+        CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+        SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
+    }
+
+    // Local Root Signature
+    // This is a root signature that enables a shader to have unique arguments that come from shader tables.
+    {
+        CD3DX12_ROOT_PARAMETER rootParameters[LocalRootSignatureParams::Count];
+        rootParameters[LocalRootSignatureParams::ViewportConstantSlot].InitAsConstants(SizeOfInUint32(rayGenCB), 1, 0);   // 1 -> b1
+        CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+        localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+        SerializeAndCreateRaytracingRootSignature(localRootSignatureDesc, &m_raytracingLocalRootSignature);
+    }
+}
+
 bool App3::LoadContent()
 {
     auto device = Application::Get().renderer.device;
@@ -310,40 +344,6 @@ void App3::SerializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC& 
     ThrowIfFailed(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, &error), error ? static_cast<wchar_t*>(error->GetBufferPointer()) : nullptr);
     ThrowIfFailed(device->CreateRootSignature(1, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&(*rootSig))));
 }
-
-void App3::CreateRootSignatures()
-{
-    // Global Root Signature
-    // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
-    {
-        CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2];
-        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);   // space 0: u0
-        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
-
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptor[2];
-        SRVDescriptor[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 101);  // space 100: t0: IndexBuffer
-        SRVDescriptor[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 102);  // space 101: t0: VertexBuffer
-
-        CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
-        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
-        rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
-        rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
-        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptor), SRVDescriptor);
-        CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
-        SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
-    }
-
-    // Local Root Signature
-    // This is a root signature that enables a shader to have unique arguments that come from shader tables.
-    {
-        CD3DX12_ROOT_PARAMETER rootParameters[LocalRootSignatureParams::Count];
-        rootParameters[LocalRootSignatureParams::ViewportConstantSlot].InitAsConstants(SizeOfInUint32(rayGenCB), 1, 0);   // 1 -> b1
-        CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
-        localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-        SerializeAndCreateRaytracingRootSignature(localRootSignatureDesc, &m_raytracingLocalRootSignature);
-    }
-}
-
 
 // Update the application state with the new resolution.
 void App3::UpdateForSizeChange(UINT width, UINT height)
