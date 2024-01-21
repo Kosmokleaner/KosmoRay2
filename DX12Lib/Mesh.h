@@ -25,8 +25,8 @@ public:
 	{
 	}
 
-	D3D12_INPUT_ELEMENT_DESC* Pointer;
-	uint32						Count;
+	D3D12_INPUT_ELEMENT_DESC* Pointer = 0;
+	uint32 Count = 0;
 };
 
 

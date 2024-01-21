@@ -310,7 +310,7 @@ bool OBJMeshLoader::LoadMeshPass1(const wchar_t*FileName, IIndexedMeshSink &Sink
 			}
 			if(ParseName(p, "mtllib"))
 			{
-				if(*p == '.' && *p == '/')
+				if(*p == '.' && p[1] == '/')
 				{
 					p += 2;
 				}

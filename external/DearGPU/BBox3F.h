@@ -118,7 +118,7 @@ public:
 	UINT TriangleId;
 	// 0 is used as end terminator
 	FTriangleInputLeaf* NextLeaf;
-	UINT SubtreeHeight;
+	UINT SubtreeHeight = 0;
 
 	// count linked list length
 	uint32 Count() const

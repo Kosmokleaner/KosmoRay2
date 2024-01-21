@@ -207,8 +207,8 @@ public:
 // Shader table = {{ ShaderRecord 1}, {ShaderRecord 2}, ...}
 class ShaderTable : public GpuUploadBuffer
 {
-    uint8_t* m_mappedShaderRecords;
-    UINT m_shaderRecordSize;
+    uint8_t* m_mappedShaderRecords = {};
+    UINT m_shaderRecordSize = 0;
 
     // Debug support
     std::wstring m_name;

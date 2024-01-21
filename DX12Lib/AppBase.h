@@ -75,11 +75,11 @@ protected:
     float fieldOfView = 45.0f;
 
     // local->world aka worldFromLocal
-    DirectX::XMMATRIX m_ModelMatrix;
+    DirectX::XMMATRIX m_ModelMatrix = {};
     // world->eye aka eyeFromWorld
-    DirectX::XMMATRIX m_ViewMatrix;
+    DirectX::XMMATRIX m_ViewMatrix = {};
     // eye->clip aka clipFromEye
-    DirectX::XMMATRIX m_ProjectionMatrix;
+    DirectX::XMMATRIX m_ProjectionMatrix = {};
 
     CTransform camera;
 
