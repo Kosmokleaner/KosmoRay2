@@ -130,6 +130,10 @@ public:
         
     void end();
 
+	// IB, VB
+	// @return base descriptor index
+	UINT CreateSRVs(Renderer& renderer);
+
     // like FreeData / ReleaseDeviceDependentResources
     void Reset();
 

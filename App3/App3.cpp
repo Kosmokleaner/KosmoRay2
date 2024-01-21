@@ -27,7 +27,7 @@ namespace GlobalRootSignatureParams {
         OutputViewSlot,             // DescriptorTable      UAV space0: u0 space1: u0,u1
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
-        IndexAndVertexBuffer,       // DescriptorTable      SRV t1, t2 
+        IndexAndVertexBuffer,       // DescriptorTable      SRV space100: t0, space101: t0 
         Count
     };
 }
@@ -204,8 +204,10 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshA.indexBuffer.gpuDescriptorHandle);
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshB.indexBuffer.gpuDescriptorHandle);
+//    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshA.indexBuffer.gpuDescriptorHandle);
+//    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshB.indexBuffer.gpuDescriptorHandle);
+
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, m_allIBandVB);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -319,14 +321,14 @@ void App3::CreateRootSignatures()
         UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
 
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptor[2];
-        SRVDescriptor[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 101);  // t1:IndexBuffer
-        SRVDescriptor[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 102);  // t2:VertexBuffer
+        SRVDescriptor[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 101);  // space 100: t0: IndexBuffer
+        SRVDescriptor[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 102);  // space 101: t0: VertexBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
-        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(2, UAVDescriptors);
+        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
-        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(2, SRVDescriptor);
+        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptor), SRVDescriptor);
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
     }
@@ -549,7 +551,7 @@ void App3::BuildAccelerationStructures()
         {
             *dst = {};
 
-            float size = 2.0f;
+            float size = 1.0f;
 
             // x: right, y:up (closer), z:behind
             if (i)
@@ -561,10 +563,13 @@ void App3::BuildAccelerationStructures()
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
             dst->InstanceMask = 1;
 
-            Mesh& ref = (i == 0) ? meshA : meshB;
-//            Mesh& ref = meshA;
+            const uint32 meshIndex = (i == 0) ? 0 : 1;
+
+            Mesh& ref = meshIndex ? meshB : meshA;
 
             dst->AccelerationStructure = ref.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+            // will go to HLSL InstanceID()
+            dst->InstanceID = meshIndex;
 
             ++dst;
         }
@@ -695,6 +700,8 @@ void App3::ReleaseDeviceDependentResources()
 
 void App3::CreateDeviceDependentResources()
 {
+    auto& renderer = Application::Get().renderer;
+
     // Create root signatures for the shaders.
     CreateRootSignatures();
 
@@ -704,22 +711,36 @@ void App3::CreateDeviceDependentResources()
     // Allocate a heap for 3 descriptors:
     // 2 - vertex and index buffer SRVs
     // 1 - raytracing output texture SRV
-//    Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+//    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     // +2 for two meshes
-    Application::Get().renderer.descriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 5, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    Application::Get().renderer.descriptorHeap.maxSize = Application::Get().renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 5, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    renderer.descriptorHeap.maxSize = renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     bool ok;
 
-    //meshA.load(Application::Get().renderer, "../../data/monkey.obj");
-//    meshA.load(Application::Get().renderer, L"../../data/NewXYZ.obj");
-//    ok = meshA.load(Application::Get().renderer, L"../../data/LShape.obj");
-    ok = meshA.load(Application::Get().renderer, L"../../data/LShapeSmooth.obj");
+    //meshA.load(renderer, "../../data/monkey.obj");
+//    meshA.load(renderer, L"../../data/NewXYZ.obj");
+//    ok = meshA.load(renderer, L"../../data/LShape.obj");
+    ok = meshA.load(renderer, L"../../data/LShapeSmooth.obj");
     assert(ok);
 
-    ok = meshB.load(Application::Get().renderer, L"../../data/monkey.obj");
+    ok = meshB.load(renderer, L"../../data/monkey.obj");
     assert(ok);
-//meshB.load(Application::Get().renderer, "../../data/saucer.obj");
+
+    // set m_allIBandVB
+    {
+        UINT baseDescriptorIndex = 
+            meshA.CreateSRVs(renderer);
+            meshB.CreateSRVs(renderer);
+        
+        m_allIBandVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+            renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+            baseDescriptorIndex,
+            renderer.descriptorHeap.maxSize);
+    }
+
+
+//meshB.load(renderer, "../../data/saucer.obj");
 //    std::string inputfile = "../../data/monkey.obj";        // 1 shape
 //    std::string inputfile = "../../data/NewXYZ.obj";          // many shapes
 //    std::string inputfile = "../../data/LShape.obj";    // no clipping errors

@@ -408,10 +408,14 @@ void Mesh::CreateRenderMesh(Renderer& renderer)
 
     AllocateUploadBuffer(device.Get(), MeshIndexData.data(), MeshIndexData.size() * sizeof(MeshIndexData[0]), &indexBuffer.resource);
     AllocateUploadBuffer(device.Get(), MeshVertexData.data(), MeshVertexData.size() * sizeof(MeshVertexData[0]), &vertexBuffer.resource);
+}
 
-    // Vertex buffer is passed to the shader along with index buffer as a descriptor range.
-    UINT descriptorIndexIB = renderer.CreateBufferSRV(&indexBuffer, (UINT)MeshIndexData.size(), sizeof(Mesh::IndexType));
-    UINT descriptorIndexVB = renderer.CreateBufferSRV(&vertexBuffer, (UINT)MeshVertexData.size(), sizeof(MeshVertexData[0]));
-    ThrowIfFalse(descriptorIndexVB == descriptorIndexIB + 1, L"Vertex Buffer descriptor index must follow that of Index Buffer descriptor index");
+UINT Mesh::CreateSRVs(Renderer& renderer)
+{
+    UINT ret = renderer.CreateBufferSRV(&indexBuffer, (UINT)MeshIndexData.size(), sizeof(Mesh::IndexType));
+    UINT test = renderer.CreateBufferSRV(&vertexBuffer, (UINT)MeshVertexData.size(), sizeof(MeshVertexData[0]));
 
+    ThrowIfFalse(test == ret + 1, L"Index Buffer descriptor index must follow that of Vertex Buffer descriptor index");
+
+    return ret;
 }

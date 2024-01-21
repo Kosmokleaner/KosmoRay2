@@ -82,12 +82,14 @@ private:
     Mesh meshA;
     Mesh meshB;
 
+    D3D12_GPU_DESCRIPTOR_HANDLE m_allIBandVB = {};
+
     // Acceleration structure
     ComPtr<ID3D12Resource> topLevelAccelerationStructure;
 
     // Raytracing output, is copied to backbuffer each frame
     ComPtr<ID3D12Resource> raytracingOutput;
-    D3D12_GPU_DESCRIPTOR_HANDLE raytracingOutputResourceUAVGpuDescriptor;
+    D3D12_GPU_DESCRIPTOR_HANDLE raytracingOutputResourceUAVGpuDescriptor = {};
     UINT raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
 
     // Shader tables
