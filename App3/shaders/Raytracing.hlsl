@@ -34,9 +34,9 @@ ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 #define INDEX_STRIDE 4
 
 // index buffer (element size is INDEX_STRIDE)
-ByteAddressBuffer g_indices : register(t1);
+ByteAddressBuffer g_indices : register(t1, space101);
 // vertex buffer
-StructuredBuffer<Vertex> g_vertices : register(t2);
+StructuredBuffer<Vertex> g_vertices : register(t2, space102);
 
 // https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
 // { float2 barycentrics }

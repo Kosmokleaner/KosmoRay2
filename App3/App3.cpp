@@ -318,14 +318,15 @@ void App3::CreateRootSignatures()
         UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);   // space 0: u0
         UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
 
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptor;
-        SRVDescriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 1);  // t1:IndexBuffer, t2:VertexBuffer
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptor[2];
+        SRVDescriptor[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 101);  // t1:IndexBuffer
+        SRVDescriptor[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2, 102);  // t2:VertexBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(2, UAVDescriptors);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
-        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(1, &SRVDescriptor);
+        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(2, SRVDescriptor);
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
     }
