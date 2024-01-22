@@ -1,4 +1,4 @@
-KosmoRay2     by Martin Mittring    11/17/2022
+KosmoRay2     by Martin Mittring    1/21/2024
 
 Multiple experiments in different Apps:
   comment one of the lines starting with   std::shared_ptr<App2> demo = std::make_shared<App2>(L"KosmoRay2 App2 DX12 Rasterization", 1280, 720);
@@ -35,14 +35,6 @@ todo low prio:
 * fix hack, to query m_dxrCommandList each time
 * support uvs and normals from obj load
 * obj load vertex cache optimize
-
-
-ThirdParty / Copyright:
-* LearningDirectX12 https://github.com/jpvanoosten/LearningDirectX12, MIT license
-* DearGPU, various helper code, e.g. OBJ loader, WTFPL http://www.wtfpl.net by MartinMittring / Epic Games
-  * Tom Forsyth vertex cache optimization code
-  * TangentSpaceMeshCalculation by MartinMittring / Crytek
-* Cellular noise ("Worley noise") in 3D in GLSL. Stefan Gustavson MIT license. https://github.com/stegu/webgl-noise
 
 
 ==========================================
