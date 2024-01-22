@@ -8,11 +8,9 @@ Multiple experiments in different Apps:
 Code style (not yet fully executed):
 * no hungarian notation, todo: remove m_ ?
 * Camel case for functions/methods/member variables
-* No "." at end of comments that are not sentences
-* 
+* No "." at end of comments that are not sentences 
 
 todo:
-* support multiple vertex buffer for ray tracing
 * raytrace scene object
 * shader class
 * with Mock enabled RenderDoc crashes
@@ -27,6 +25,7 @@ todo:
 * gaussian splatting ray tracer
 * map all Dx12 features by reimplementing API wrapper
 * implement handle based or shared_ptr resource management
+* shaders hot reload
 
 todo low prio:
 * Mock12 should be enabled by define (search for "new Mock12Device2")

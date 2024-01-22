@@ -238,7 +238,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     // Bind the heaps, acceleration structure and dispatch rays
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
     commandList->SetDescriptorHeaps(1, renderer.descriptorHeap.descriptorHeap.GetAddressOf());
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, raytracingOutputResourceUAVGpuDescriptor);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutput.m_UAVGpuDescriptor);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
@@ -281,14 +281,14 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
     D3D12_RESOURCE_BARRIER preCopyBarriers[2];
     preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 //    preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
-    preCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(raytracingOutput.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    preCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_raytracingOutput.m_resource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
     commandList->ResourceBarrier(ARRAYSIZE(preCopyBarriers), preCopyBarriers);
 
-    commandList->CopyResource(renderTarget.Get(), raytracingOutput.Get());
+    commandList->CopyResource(renderTarget.Get(), m_raytracingOutput.m_resource.Get());
 
     D3D12_RESOURCE_BARRIER postCopyBarriers[2];
     postCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PRESENT);
-    postCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(raytracingOutput.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    postCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(m_raytracingOutput.m_resource.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     commandList->ResourceBarrier(ARRAYSIZE(postCopyBarriers), postCopyBarriers);
 }
@@ -672,17 +672,17 @@ void App3::CreateRaytracingOutputResource()
 
     auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     ThrowIfFailed(device->CreateCommittedResource(
-        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&raytracingOutput)));
-    NAME_D3D12_OBJECT(raytracingOutput);
+        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_raytracingOutput.m_resource)));
+    NAME_D3D12_OBJECT(m_raytracingOutput.m_resource);
 
     D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
-    raytracingOutputResourceUAVDescriptorHeapIndex = renderer.descriptorHeap.AllocateDescriptor(&uavDescriptorHandle, raytracingOutputResourceUAVDescriptorHeapIndex);
+    m_raytracingOutput.m_UAVDescriptorHeapIndex = renderer.descriptorHeap.AllocateDescriptor(&uavDescriptorHandle, m_raytracingOutput.m_UAVDescriptorHeapIndex);
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
     UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-    device->CreateUnorderedAccessView(raytracingOutput.Get(), nullptr, &UAVDesc, uavDescriptorHandle);
-    raytracingOutputResourceUAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+    device->CreateUnorderedAccessView(m_raytracingOutput.m_resource.Get(), nullptr, &UAVDesc, uavDescriptorHandle);
+    m_raytracingOutput.m_UAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(
         renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 
-        raytracingOutputResourceUAVDescriptorHeapIndex, 
+        m_raytracingOutput.m_UAVDescriptorHeapIndex,
         renderer.descriptorHeap.maxSize);
 }
 
@@ -695,7 +695,7 @@ void App3::ReleaseDeviceDependentResources()
 
     dxrStateObject.Reset();
 
-    raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
+    m_raytracingOutput.m_UAVDescriptorHeapIndex = UINT_MAX;
 
     meshA.Reset();
     meshB.Reset();

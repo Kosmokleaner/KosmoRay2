@@ -19,7 +19,10 @@
     <Filter Include="Hidden">
       <UniqueIdentifier>{518ff92b-f1c6-4461-819e-e4dda5315e65}</UniqueIdentifier>
     </Filter>
-    <Filter Include="DearGPU">
+    <Filter Include="External">
+      <UniqueIdentifier>{e3db7f11-7882-4545-a63e-ad350c34bcbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\DearGPU">
       <UniqueIdentifier>{06705ef1-ba36-4ff0-bf8b-647b9f5db6fe}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -88,19 +91,19 @@
       <Filter>DX12Lib</Filter>
     </ClCompile>
     <ClCompile Include="external\DearGPU\LineReader.cpp">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClCompile>
     <ClCompile Include="external\DearGPU\OBJMeshLoader.cpp">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClCompile>
     <ClCompile Include="external\DearGPU\CommonFileSystem.cpp">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClCompile>
     <ClCompile Include="external\DearGPU\forsyth.cpp">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClCompile>
     <ClCompile Include="external\DearGPU\FBVHTree.cpp">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClCompile>
     <ClCompile Include="Mock12.cpp">
       <Filter>Hidden</Filter>
@@ -168,34 +171,37 @@
       <Filter>DX12Lib</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\OBJMeshLoader.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\LineReader.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\deargpu.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\CommonFileSystem.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\SimpleIndexedMesh.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\TangentSpaceCalculation.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\forsyth.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\FBVHTree.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="external\DearGPU\BBox3F.h">
-      <Filter>DearGPU</Filter>
+      <Filter>External\DearGPU</Filter>
     </ClInclude>
     <ClInclude Include="Mock12.h">
       <Filter>Hidden</Filter>
+    </ClInclude>
+    <ClInclude Include="external\stb_image.h">
+      <Filter>External</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

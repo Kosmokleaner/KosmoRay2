@@ -2,6 +2,7 @@
 
 #include "DX12Lib/AppBase.h"
 #include "DX12Lib/Helpers.h" // ConstantBuffer<>
+#include "../DataBlock.h"
 
 struct Viewport
 {
@@ -89,9 +90,7 @@ private:
     ComPtr<ID3D12Resource> topLevelAccelerationStructure;
 
     // Raytracing output, is copied to backbuffer each frame
-    ComPtr<ID3D12Resource> raytracingOutput;
-    D3D12_GPU_DESCRIPTOR_HANDLE raytracingOutputResourceUAVGpuDescriptor = {};
-    UINT raytracingOutputResourceUAVDescriptorHeapIndex = UINT_MAX;
+    DataBlock m_raytracingOutput;
 
     // Shader tables
     ComPtr<ID3D12Resource> missShaderTable;
