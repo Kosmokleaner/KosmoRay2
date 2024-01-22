@@ -12,7 +12,7 @@
 // 0:MyClosestHitShader barycentric triangle color
 // 1:MyAnyHitShader CSG boolean mesh operation
 // 2:AO
-#define RAY_TRACING_EXPERIMENT 0
+#define RAY_TRACING_EXPERIMENT 2
 
 #define INSTANCE_ID InstanceID()
 // test
@@ -194,21 +194,39 @@ void MyRaygenShader()
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
     if (all(payload.normal != float3(0, 0, 0)))
     {
-        uint rnd = initRand(DispatchRaysIndex(), 0x12345678);
+//        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678);
+        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + (uint)(g_sceneCB.sceneParam0.x * 12347));
+//        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
-        uint sampleCountAO = 20;
+        uint sampleCountAO = 64;
         AO = 1;
+
+        rayDesc.Origin = rayDesc.Origin + rayDesc.Direction * payload.minT;
+        rayDesc.Origin += payload.normal * 0.01f;
+        payload.minT = rayDesc.TMin;
+
+        // visualize position
+//        RenderTarget[DispatchRaysIndex().xy] = float4(frac(rayDesc.Origin * 0.5f), 1.0f);
+
+        float3 unoccludedAreaDirection = 0;
         for(int i = 0; i < sampleCountAO; ++i)
         {
-//            float2  = nextRand2
-//            float3 worldDir = getCosHemisphereSample(randSeed, worldNorm);
+            rayDesc.Direction = getCosHemisphereSample(rnd, payload.normal);
 
-//            TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
-          //  if(all(payload.normal != float3(0, 0, 0)))
-          //      AO += 1.0f / sampleCountAO;
+            RayPayload payload2 = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, 0, rayDesc.TMax, rayDesc.TMax };
+            TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload2);
+            if(all(payload2.normal != float3(0, 0, 0)))
+            {
+                AO -= 1.0f / sampleCountAO;
+                unoccludedAreaDirection += rayDesc.Direction;
+            }
         }
+        // just in case
+        AO = saturate(AO);
+        RenderTarget[DispatchRaysIndex().xy] = float4(AO, AO, AO, 1.0f);
+//        RenderTarget[DispatchRaysIndex().xy] = float4(unoccludedAreaDirection, 1.0f);
     }
-    RenderTarget[DispatchRaysIndex().xy] = float4(AO, AO, AO, 1.0f);
+    else RenderTarget[DispatchRaysIndex().xy] = float4(0, 0, 0.2f, 1.0f);
 
 #endif
 
@@ -293,6 +311,8 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     float3 intepolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
+    payload.minT = RayTCurrent();
+
     // visualize indexbuffer data as color
 //    payload.color = float4(intepolIndex, 1);
 
@@ -348,7 +368,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
     // not animated, 0.9f to clip suzanne
 //    const float radius = 0.9f;
     // animated
-    float radius = 0.6f + 0.4f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
+    float radius = 1.4f + 1.2f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
 
     // (tEnter, tExit)
     const float3 sphereCenter = float3(-0.5f, 0, 0);

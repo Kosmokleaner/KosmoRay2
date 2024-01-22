@@ -34,23 +34,23 @@ uint initRand(uint val0, uint val1, uint backoff = 16)
 }
 
 // Returns a pseudorandom float in [0..1] from seed
-float nextRand(inout uint s)
+float nextRand(inout uint rnd)
 {
-	s = (1664525u * s + 1013904223u);
-	return float(s & 0x00FFFFFF) / float(0x01000000);
+	rnd = (1664525u * rnd + 1013904223u);
+	return float(rnd & 0x00FFFFFF) / float(0x01000000);
 }
 // @return float2(0..1, 0..1)
-float2 nextRand2(inout uint s)
+float2 nextRand2(inout uint rnd)
 {
-	return float2(nextRand(s), nextRand(s));
+	return float2(nextRand(rnd), nextRand(rnd));
 }
 // can be optimized
 // https://www.pbr-book.org/3ed-2018/Monte_Carlo_Integration/2D_Sampling_with_Multidimensional_Transformations#SamplingaUnitDisk
 // @return float2(-1..1, -1..1)
-float2 nextRand2Disc(inout uint s)
+float2 nextRand2Disc(inout uint rnd)
 {
 	// 0..1
-	float2 ret = nextRand2(s);
+	float2 ret = nextRand2(rnd);
 	float2 uOffset = ret * 2 - 1;
 
 	if (uOffset.x == 0 && uOffset.y == 0)
@@ -68,9 +68,43 @@ float2 nextRand2Disc(inout uint s)
 	return r * float2(cos(theta), sin(theta));
 }
 // @return float3(-1..1, -1..1, 0..1), length()=1
-float3 nextRand2CosineWeightedHemisphere(inout uint s)
+float3 nextRand2CosineWeightedHemisphere(inout uint rnd)
 {
-	float2 disc = nextRand2Disc(s);
+	float2 disc = nextRand2Disc(rnd);
 
 	return float3(disc.x, disc.y, sqrt(1.0f - disc.x * disc.x - disc.y * disc.y));
+}
+
+// @return normal must be normalized
+void getOtherBaseVec(out float3 outA, out float3 outB, float3 normal)
+{
+//    float3 v = normalize(normal);
+    float3 v = normal;  // faster
+
+    if (v.z < -0.5f || v.z > 0.5f)
+    {
+        outA.x = v.z;
+        outA.y = v.y;
+        outA.z = -v.x;
+    }
+    else
+    {
+        outA.x = v.y;
+        outA.y = -v.x;
+        outA.z = v.z;
+    }
+
+    outB = normalize(cross(v, outA));
+    outA = normalize(cross(outB, v));
+}
+
+// @return normal must be normalized
+float3 getCosHemisphereSample(inout uint rnd, float3 normal)
+{
+    float3 u, v;
+    getOtherBaseVec(u, v, normal);
+
+    float3 tsNormal = nextRand2CosineWeightedHemisphere(rnd);
+
+    return mul(transpose(float3x3(u,v, normal)), tsNormal);
 }

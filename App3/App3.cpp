@@ -556,7 +556,7 @@ void App3::BuildAccelerationStructures()
         {
             *dst = {};
 
-            float size = 1.0f;
+            float size = 0.5f;
 
             // x: right, y:up (closer), z:behind
             if (i)
