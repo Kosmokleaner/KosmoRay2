@@ -1,21 +1,7 @@
 #pragma once
-//#include "DxGame.h"
+#include "global.h"
 #include "DX12Lib/Window.h"
 #include "Camera.h"
-
-#include "Mathlib.h"
-
-#include <d3d12.h>
-#undef min
-#undef max
-
-#include <d3dx12.h>
-
-#include <wrl.h> // ComPtr<>
-using namespace Microsoft::WRL;
-
-#include <dxgi1_6.h> // IDXGIAdapter4
-
 #include "DX12Lib/CommandQueue.h"
 
 struct D3DBuffer

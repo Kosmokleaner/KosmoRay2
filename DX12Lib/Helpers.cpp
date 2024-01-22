@@ -1,10 +1,7 @@
-#include <wrl.h>
-using namespace Microsoft::WRL;
-
+#include "../global.h"
 #include "Helpers.h"
 #include "Mock12.h"
 
-#include <assert.h>
 #include <iomanip> // std::setfill()
 
 

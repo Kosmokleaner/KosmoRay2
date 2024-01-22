@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DX12Lib/AppBase.h"
-#include "DX12Lib/Mesh.h"
+#include "Mesh.h"
 
 
 class App2 : public AppBase

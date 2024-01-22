@@ -20,12 +20,10 @@ public:
     // Reset the clock.
     void Reset();
 
-    double GetDeltaNanoseconds() const;
     double GetDeltaMicroseconds() const;
     double GetDeltaMilliseconds() const;
     double GetDeltaSeconds() const;
 
-    double GetTotalNanoseconds() const;
     double GetTotalMicroseconds() const;
     double GetTotalMilliSeconds() const;
     double GetTotalSeconds() const;

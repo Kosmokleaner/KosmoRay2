@@ -1,13 +1,5 @@
 #pragma once
-
-#include <d3d12.h>
-#undef min
-#undef max
-
-#include <dxgi1_5.h>
-
-#include <wrl.h> // ComPtr<>
-using namespace Microsoft::WRL;
+#include "global.h"
 
 #include "Helpers.h"
 

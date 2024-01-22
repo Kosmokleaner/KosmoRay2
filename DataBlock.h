@@ -1,13 +1,6 @@
 #pragma once
+#include "global.h"
 
-#include <d3d12.h>
-#undef min
-#undef max
-
-#include <wrl.h> // ComPtr<>
-using namespace Microsoft::WRL;
-
-class Renderer;
 
 // GPU texture or buffer
 class DataBlock

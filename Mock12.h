@@ -1,14 +1,7 @@
 #pragma once
-#include <d3d12.h>
-#undef min
-#undef max
-
+#include "global.h"
 #include <stdio.h>
-#include <assert.h>
 #include <algorithm>    // std::min
-
-#include <wrl.h>
-using namespace Microsoft::WRL;
 
 // not yet wrapped:
 // Mock12Device2 : ID3D12InfoQueue

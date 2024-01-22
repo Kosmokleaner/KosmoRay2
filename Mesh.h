@@ -1,6 +1,6 @@
 #pragma once
 #include "Renderer.h"
-#include "../external/DearGPU/SimpleIndexedMesh.h"
+#include "external/DearGPU/SimpleIndexedMesh.h"
 
 // 0:UpdateBufferResource / 1:AllocateUploadBuffer(less code complexity, no commandlist need)
 #define MESH_UPLOAD_METHOD 1

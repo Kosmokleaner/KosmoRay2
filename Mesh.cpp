@@ -1,8 +1,8 @@
 #include "Mesh.h"
-#include "Helpers.h"
-#include "../external/DearGPU/OBJMeshLoader.h"
-#include "../external/DearGPU/TangentSpaceCalculation.h"
-#include "../external/DearGPU/forsyth.h"
+#include "DX12Lib/Helpers.h"
+#include "external/DearGPU/OBJMeshLoader.h"
+#include "external/DearGPU/TangentSpaceCalculation.h"
+#include "external/DearGPU/forsyth.h"
 
 
 void Mesh::startUpload(Renderer& renderer, VFormatFull* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount)

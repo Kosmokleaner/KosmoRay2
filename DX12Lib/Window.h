@@ -2,22 +2,7 @@
 * @brief A window for our application.
 */
 #pragma once
-
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#undef min
-#undef max
-
-#include <d3d12.h>
-#undef min
-#undef max
-
-#include <dxgi1_5.h>
-
-#include <wrl.h> // ComPtr<>
-using namespace Microsoft::WRL;
-
-
+#include "global.h"
 #include "DX12Lib/Events.h"
 #include "DX12Lib/HighResolutionClock.h"
 #include "DX12Lib/DescriptorHeap.h"

@@ -1,20 +1,10 @@
 #pragma once
+#include "global.h"
 #include "Game.h"
 #include "Window.h"
 #include "Camera.h"
 #include "Mesh.h"
 #include "DescriptorHeap.h"
-
-#include "Mathlib.h"
-
-#include <d3d12.h>
-#undef min
-#undef max
-
-#include <d3dx12.h>
-
-#include <wrl.h> // ComPtr<>
-using namespace Microsoft::WRL;
 
 
 class AppBase : public Game
