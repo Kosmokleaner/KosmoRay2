@@ -118,7 +118,6 @@
     <ClInclude Include="Renderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="DX12Lib\CMakeLists.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
