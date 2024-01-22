@@ -198,7 +198,12 @@ ComPtr<ID3D12Device2> Renderer::CreateDevice(ComPtr<IDXGIAdapter4> adapter)
     HRESULT hr = d3d12Device2->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels));
     if (SUCCEEDED(hr))
     {
-        //        m_d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
+        D3D_FEATURE_LEVEL d3dFeatureLevel = featLevels.MaxSupportedFeatureLevel;
+
+        char buffer[512];
+        sprintf_s(buffer, "D3D12 d3dFeatureLevel = %x\n", (int)d3dFeatureLevel);
+        OutputDebugStringA(buffer);
+        // D3D_FEATURE_LEVEL_12_1 0xc100   Intel Arc
     }
     else
     {

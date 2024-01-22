@@ -80,6 +80,7 @@ void App3::CreateRootSignatures()
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
         rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptor), SRVDescriptor);
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+//        globalRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
     }
 

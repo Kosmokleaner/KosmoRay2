@@ -31,6 +31,9 @@
 //  WorldRayDirection()
 //  WorldToObject3x4()
 //  WorldToObject4x3()
+//
+// ShaderModel 6.6 https://microsoft.github.io/DirectX-Specs/d3d/HLSL_SM_6_6_DynamicResources.html
+// ResourceDescriptorHeap[] 
 
 #ifndef RAYTRACING_HLSL
 #define RAYTRACING_HLSL
