@@ -410,12 +410,10 @@ void Mesh::CreateRenderMesh(Renderer& renderer)
     AllocateUploadBuffer(device.Get(), MeshVertexData.data(), MeshVertexData.size() * sizeof(MeshVertexData[0]), &vertexBuffer.resource, L"MeshVertexBuffer");
 }
 
-UINT Mesh::CreateSRVs(Renderer& renderer)
+UINT Mesh::CreateSRVs(Renderer& renderer, uint32 index)
 {
-    UINT ret = renderer.CreateBufferSRV(&indexBuffer, (UINT)MeshIndexData.size(), sizeof(Mesh::IndexType));
-    UINT test = renderer.CreateBufferSRV(&vertexBuffer, (UINT)MeshVertexData.size(), sizeof(MeshVertexData[0]));
-
-    ThrowIfFalse(test == ret + 1, L"Index Buffer descriptor index must follow that of Vertex Buffer descriptor index");
-
-    return ret;
+    if(index == 0)
+        return renderer.CreateBufferSRV(&indexBuffer, (UINT)MeshIndexData.size(), sizeof(Mesh::IndexType));
+    
+    return renderer.CreateBufferSRV(&vertexBuffer, (UINT)MeshVertexData.size(), sizeof(MeshVertexData[0]));
 }

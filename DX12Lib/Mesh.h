@@ -130,9 +130,9 @@ public:
         
     void end();
 
-	// IB, VB
+	// @param index 0:IB, 1:VB
 	// @return base descriptor index
-	UINT CreateSRVs(Renderer& renderer);
+	UINT CreateSRVs(Renderer& renderer, uint32 index);
 
     // like FreeData / ReleaseDeviceDependentResources
     void Reset();

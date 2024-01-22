@@ -82,7 +82,8 @@ private:
     Mesh meshA;
     Mesh meshB;
 
-    D3D12_GPU_DESCRIPTOR_HANDLE m_allIBandVB = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_allIB = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_allVB = {};
 
     // Acceleration structure
     ComPtr<ID3D12Resource> topLevelAccelerationStructure;

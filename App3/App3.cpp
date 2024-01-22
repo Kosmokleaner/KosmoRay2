@@ -27,7 +27,8 @@ namespace GlobalRootSignatureParams {
         OutputViewSlot,             // DescriptorTable      UAV space0: u0 space1: u0,u1
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
-        IndexAndVertexBuffer,       // DescriptorTable      SRV space100: t0, space101: t0 
+        IndexBuffer,                // DescriptorTable      SRV space100: t0
+        VertexBuffer,               // DescriptorTable      SRV space101: t0 
         Count
     };
 }
@@ -70,15 +71,17 @@ void App3::CreateRootSignatures()
         UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);   // space 0: u0
         UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
 
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptor[2];
-        SRVDescriptor[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 101);  // space 100: t0: IndexBuffer
-        SRVDescriptor[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 102);  // space 101: t0: VertexBuffer
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1];
+        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);  // space 100: t0: IndexBuffer
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1];
+        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);  // space 101: t0: VertexBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
-        rootParameters[GlobalRootSignatureParams::IndexAndVertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptor), SRVDescriptor);
+        rootParameters[GlobalRootSignatureParams::IndexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorIB), SRVDescriptorIB);
+        rootParameters[GlobalRootSignatureParams::VertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorVB), SRVDescriptorVB);
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
 //        globalRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
@@ -242,7 +245,8 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 //    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshA.indexBuffer.gpuDescriptorHandle);
 //    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, meshB.indexBuffer.gpuDescriptorHandle);
 
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexAndVertexBuffer, m_allIBandVB);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexBuffer, m_allIB);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffer, m_allVB);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -730,13 +734,20 @@ void App3::CreateDeviceDependentResources()
 
     // set m_allIBandVB
     {
-        UINT baseDescriptorIndex = 
-            meshA.CreateSRVs(renderer);
-            meshB.CreateSRVs(renderer);
-        
-        m_allIBandVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        UINT baseDescriptorIndexIB = 
+            meshA.CreateSRVs(renderer, 0);
+            meshB.CreateSRVs(renderer, 0);
+        UINT baseDescriptorIndexVB =
+            meshA.CreateSRVs(renderer, 1);
+            meshB.CreateSRVs(renderer, 1);
+
+        m_allIB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
             renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
-            baseDescriptorIndex,
+            baseDescriptorIndexIB,
+            renderer.descriptorHeap.maxSize);
+        m_allVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+            renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+            baseDescriptorIndexVB,
             renderer.descriptorHeap.maxSize);
     }
 

@@ -180,8 +180,8 @@ void MyRaygenShader()
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
-//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
-    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // color e.g. barycentrics
+    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
+//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
 
@@ -444,7 +444,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 [shader("miss")]
 void MyMissShader(inout RayPayload payload)
 {
-//    payload.color = float4(0, 0, 0, 1);
+//    payload.color = float4(0, 0, 1, 1);
 }
 
 #endif // RAYTRACING_HLSL
