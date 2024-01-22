@@ -46,9 +46,6 @@ void Window::Show()
     ::ShowWindow(m_hWnd, SW_SHOW);
 }
 
-/**
-* Hide the window.
-*/
 void Window::Hide()
 {
     ::ShowWindow(m_hWnd, SW_HIDE);
@@ -98,14 +95,13 @@ bool Window::IsFullScreen() const
     return m_Fullscreen;
 }
 
-// Set the fullscreen state of the window.
 void Window::SetFullscreen(bool fullscreen)
 {
     if (m_Fullscreen != fullscreen)
     {
         m_Fullscreen = fullscreen;
 
-        if (m_Fullscreen) // Switching to fullscreen.
+        if (m_Fullscreen)
         {
             // Store the current window dimensions so they can be restored 
             // when switching out of fullscreen state.
