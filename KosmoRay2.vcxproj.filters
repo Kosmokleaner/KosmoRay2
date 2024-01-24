@@ -25,6 +25,9 @@
     <Filter Include="External\DearGPU">
       <UniqueIdentifier>{06705ef1-ba36-4ff0-bf8b-647b9f5db6fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{0e215b98-22ab-4336-9bbb-6ce5ada1ac21}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="App2\shaders\VertexShader.hlsl">
@@ -81,12 +84,6 @@
     <ClCompile Include="DX12Lib\AppBase.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
-    <ClCompile Include="DX12Lib\Mesh.cpp">
-      <Filter>DX12Lib</Filter>
-    </ClCompile>
-    <ClCompile Include="DX12Lib\Renderer.cpp">
-      <Filter>DX12Lib</Filter>
-    </ClCompile>
     <ClCompile Include="DX12Lib\DescriptorHeap.cpp">
       <Filter>DX12Lib</Filter>
     </ClCompile>
@@ -107,6 +104,18 @@
     </ClCompile>
     <ClCompile Include="Mock12.cpp">
       <Filter>Hidden</Filter>
+    </ClCompile>
+    <ClCompile Include="DataBlock.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderScene.cpp">
+      <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -161,12 +170,6 @@
     <ClInclude Include="DX12Lib\AppBase.h">
       <Filter>DX12Lib</Filter>
     </ClInclude>
-    <ClInclude Include="DX12Lib\Mesh.h">
-      <Filter>DX12Lib</Filter>
-    </ClInclude>
-    <ClInclude Include="DX12Lib\Renderer.h">
-      <Filter>DX12Lib</Filter>
-    </ClInclude>
     <ClInclude Include="DX12Lib\DescriptorHeap.h">
       <Filter>DX12Lib</Filter>
     </ClInclude>
@@ -203,11 +206,21 @@
     <ClInclude Include="external\stb_image.h">
       <Filter>External</Filter>
     </ClInclude>
+    <ClInclude Include="global.h" />
+    <ClInclude Include="DataBlock.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderScene.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="DX12Lib\CMakeLists.txt">
-      <Filter>DX12Lib</Filter>
-    </Text>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

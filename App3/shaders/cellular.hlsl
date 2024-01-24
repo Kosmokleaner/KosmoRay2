@@ -40,7 +40,7 @@ vec2 cellular(vec3 P) {
 #define K2 0.020408163265306 // 1/(7*7)
 #define Kz 0.166666666667 // 1/6
 #define Kzo 0.416666666667 // 1/2-1/6*2
-#define jitter 1.0 // smaller jitter gives more regular pattern
+    const float jitter = 1.0f; // smaller jitter gives more regular pattern
 
 	vec3 Pi = mod289(floor(P));
 	vec3 Pf = fract(P) - 0.5;

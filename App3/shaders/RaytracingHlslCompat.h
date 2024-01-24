@@ -12,6 +12,9 @@
 #ifndef RAYTRACINGHLSLCOMPAT_H
 #define RAYTRACINGHLSLCOMPAT_H
 
+// 0:off / 1:on
+#define ANTIALIASING 1
+
 typedef float2 XMFLOAT2;
 typedef float3 XMFLOAT3;
 typedef float4 XMFLOAT4;
@@ -41,7 +44,8 @@ struct SceneConstantBuffer
     // .x:frac(time), y.:frac(time*0.1)
     XMVECTOR sceneParam0;
     uint raytraceFlags;
-    uint dummy[3];
+    uint FrameIndex;
+    uint dummy[2];
 };
 
 // see struct VFormatFull

@@ -11,6 +11,8 @@ Code style (not yet fully executed):
 * No "." at end of comments that are not sentences 
 
 todo:
+* Better TAA like Feedback
+* Blue noise texture use
 * raytrace scene object
 * shader class
 * with Mock enabled RenderDoc crashes

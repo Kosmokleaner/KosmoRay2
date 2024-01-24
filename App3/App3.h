@@ -26,7 +26,8 @@ struct SceneConstantBuffer
     // .x:frac(time), y.:frac(time*0.1)
     XMFLOAT4 sceneParam0;
     uint32 raytraceFlags;
-    uint32 dummy[3];
+    uint32 FrameIndex;
+    uint32 dummy[2];
 };
 
 class App3 : public AppBase

@@ -129,7 +129,16 @@ uint3 LoadIndexBuffer( uint primitiveIndex )
 
 inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 worldFromClip)
 {
+#if ANTIALIASING == 0
     float2 xy = index + 0.5f; // center in the middle of the pixel.
+#else // ANTIALIASING
+    // 0..1
+    float jitter = ((g_sceneCB.FrameIndex % 8) + 0.5f) / 8.0f;
+    // float2(0..1, 0..1)
+    float2 jitterXY = float2(frac(jitter * 4.0f), jitter);
+    float2 xy = index + jitterXY;
+#endif // ANTIALIASING
+
     float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
 
     // Invert Y for DirectX-style coordinates.

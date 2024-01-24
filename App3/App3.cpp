@@ -216,6 +216,9 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_sceneCB->sceneParam0.y = frac(m_sceneCB->sceneParam0.y + (float)e.ElapsedTime * 0.1f);
     m_sceneCB->raytraceFlags = raytraceFlags;
 
+    static uint32 FrameIndex = 0; ++FrameIndex;
+    m_sceneCB->FrameIndex = FrameIndex;
+
     {
         // clipFromWorld = clipFromEye * eyeFromWorld
         XMMATRIX clipFromWorld = m_ProjectionMatrix * m_ViewMatrix;
