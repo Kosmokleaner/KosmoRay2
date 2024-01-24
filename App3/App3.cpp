@@ -24,7 +24,8 @@ const wchar_t* c_missShaderName = L"MyMissShader";
 
 namespace GlobalRootSignatureParams {
     enum Value {
-        OutputViewSlot,             // DescriptorTable      UAV space0: u0 space1: u0,u1
+        OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (Nvidia)
+        FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
         IndexBuffer,                // DescriptorTable      SRV space100: t0
@@ -68,16 +69,18 @@ void App3::CreateRootSignatures()
     // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
     {
         CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2];
-        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);   // space 0: u0
-        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);   // space 1: u0 and u1
-
+        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);       // space 0: u0
+        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);       // space 1: u0 and u1
+        CD3DX12_DESCRIPTOR_RANGE UAVFeedback;
+        UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space 0: u1
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1];
-        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);  // space 100: t0: IndexBuffer
+        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space 100: t0: IndexBuffer
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1];
-        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);  // space 101: t0: VertexBuffer
+        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space 101: t0: VertexBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
+        rootParameters[GlobalRootSignatureParams::FeedbackSlot].InitAsDescriptorTable(1, &UAVFeedback);
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
         rootParameters[GlobalRootSignatureParams::IndexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorIB), SRVDescriptorIB);
@@ -239,6 +242,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
     commandList->SetDescriptorHeaps(1, renderer.descriptorHeap.descriptorHeap.GetAddressOf());
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutput.m_UAVGpuDescriptor);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
@@ -671,6 +675,7 @@ void App3::CreateRaytracingOutputResource()
     auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(backbufferFormat, GetClientWidth(), GetClientHeight(), 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     m_raytracingOutput.CreateUAV(renderer, uavDesc);
+    m_raytracingFeedback.CreateUAV(renderer, uavDesc);
 }
 
 void App3::ReleaseDeviceDependentResources()
@@ -683,6 +688,7 @@ void App3::ReleaseDeviceDependentResources()
     dxrStateObject.Reset();
 
     m_raytracingOutput.Reset();
+    m_raytracingFeedback.Reset();
 
     meshA.Reset();
     meshB.Reset();
@@ -704,8 +710,7 @@ void App3::CreateDeviceDependentResources()
     // 2 - vertex and index buffer SRVs
     // 1 - raytracing output texture SRV
 //    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    // +2 for two meshes
-    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 5, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 1024 * 8, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     renderer.descriptorHeap.maxSize = renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     bool ok;

@@ -91,6 +91,7 @@ private:
 
     // Raytracing output, is copied to backbuffer each frame
     DataBlock m_raytracingOutput;
+    DataBlock m_raytracingFeedback;
 
     // Shader tables
     ComPtr<ID3D12Resource> missShaderTable;
