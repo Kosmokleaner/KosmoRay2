@@ -12,7 +12,7 @@ public:
 
     void Reset();
 
-    void CreateUAV(Renderer& renderer);
+    void CreateUAV(Renderer& renderer, const D3D12_RESOURCE_DESC& uavDesc);
 
 private:
 

@@ -6,8 +6,14 @@ void DataBlock::Reset()
     m_UAVDescriptorHeapIndex = UINT_MAX;
 } 
 
-void DataBlock::CreateUAV(Renderer& renderer)
+void DataBlock::CreateUAV(Renderer& renderer, const D3D12_RESOURCE_DESC& uavDesc)
 {
+    auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    ThrowIfFailed(renderer.device->CreateCommittedResource(
+        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_resource)));
+    NAME_D3D12_OBJECT(m_resource);
+
+
     D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
 
     m_UAVDescriptorHeapIndex = renderer.descriptorHeap.AllocateDescriptor(&uavDescriptorHandle, m_UAVDescriptorHeapIndex);

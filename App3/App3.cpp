@@ -670,12 +670,7 @@ void App3::CreateRaytracingOutputResource()
     // Create the output resource. The dimensions and format should match the swap-chain.
     auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(backbufferFormat, GetClientWidth(), GetClientHeight(), 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    ThrowIfFailed(device->CreateCommittedResource(
-        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_raytracingOutput.m_resource)));
-    NAME_D3D12_OBJECT(m_raytracingOutput.m_resource);
-
-    m_raytracingOutput.CreateUAV(renderer);
+    m_raytracingOutput.CreateUAV(renderer, uavDesc);
 }
 
 void App3::ReleaseDeviceDependentResources()

@@ -10,7 +10,7 @@
 #undef min
 #undef max
 //#include <d3dx12.h>
-#include <dxgi1_5.h> // IDXGISwapChain4
+//#include <dxgi1_5.h> // IDXGISwapChain4
 #include <dxgi1_6.h> // IDXGIAdapter4
 #include <wrl.h> // ComPtr<>
 using namespace Microsoft::WRL;
