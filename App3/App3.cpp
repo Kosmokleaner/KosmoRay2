@@ -282,6 +282,15 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
 {
     auto renderTarget = m_pWindow->GetCurrentBackBuffer();
 
+    {
+        // D3D12_RESOURCE_UAV_BARRIER 
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = m_raytracingFeedback.m_resource.Get();
+        commandList->ResourceBarrier(1, &barrier);
+    }
+
     D3D12_RESOURCE_BARRIER preCopyBarriers[2];
     preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
 //    preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -675,6 +684,9 @@ void App3::CreateRaytracingOutputResource()
     auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(backbufferFormat, GetClientWidth(), GetClientHeight(), 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
     m_raytracingOutput.CreateUAV(renderer, uavDesc);
+    
+    // higher quality feedback
+    uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     m_raytracingFeedback.CreateUAV(renderer, uavDesc);
 }
 
@@ -706,10 +718,7 @@ void App3::CreateDeviceDependentResources()
     // Create a raytracing pipeline state object which defines the binding of shaders, state and resources to be used during raytracing.
     CreateRaytracingPipelineStateObject();
 
-    // Allocate a heap for 3 descriptors:
-    // 2 - vertex and index buffer SRVs
-    // 1 - raytracing output texture SRV
-//    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 3, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    // Allocate a heap for a large number of descriptors
     renderer.descriptorHeap.CreateDescriptorHeap(renderer, 1024 * 8, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     renderer.descriptorHeap.maxSize = renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 

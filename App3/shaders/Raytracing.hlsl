@@ -278,6 +278,12 @@ void MyRaygenShader()
 //            RenderTarget[DispatchRaysIndex().xy] = payload.color;
 //        }
     }
+
+//    float4 feedback = g_Feedback[DispatchRaysIndex().xy];
+
+    const float blendInWeight = 0.1f;
+    g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], blendInWeight);
+    RenderTarget[DispatchRaysIndex().xy] = g_Feedback[DispatchRaysIndex().xy];
 }
 
 [shader("closesthit")]
