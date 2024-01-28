@@ -128,15 +128,15 @@ uint3 LoadIndexBuffer( uint primitiveIndex )
     return indices;
 }
 
-inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 worldFromClip)
+inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 worldFromClip, float2 jitterXY)
 {
 #if ANTIALIASING == 0
     float2 xy = index + 0.5f; // center in the middle of the pixel.
 #else // ANTIALIASING
     // 0..1
-    float jitter = ((g_sceneCB.FrameIndex % 8) + 0.5f) / 8.0f;
+//    float jitter = ((g_sceneCB.FrameIndex % 8) + 0.5f) / 8.0f;
     // float2(0..1, 0..1)
-    float2 jitterXY = float2(frac(jitter * 4.0f), jitter);
+//    float2 jitterXY = float2(frac(jitter * 4.0f), jitter);
     float2 xy = index + jitterXY;
 #endif // ANTIALIASING
 
@@ -163,6 +163,11 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
 [shader("raygeneration")]
 void MyRaygenShader()
 {
+    int2 move = g_sceneCB.FrameIndex * int2(13, 7);
+
+    // float2(0..1, 0..1) Blue Noise
+    float2 jitterXY = g_Texture.Load(int3((DispatchRaysIndex().xy + move) % 256, 0)).rg;
+
     uint startTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
 
     float2 lerpValues = (float2)DispatchRaysIndex() / (float2)DispatchRaysDimensions();
@@ -171,7 +176,7 @@ void MyRaygenShader()
 
     uint section = DispatchRaysIndex().x / 8;
 
-    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.worldFromClip);
+    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.worldFromClip, jitterXY);
     float3 origin = ray.origin;
     float3 rayDir = ray.direction;
 //    float3 origin = float3(0, 0, -1);
@@ -294,6 +299,11 @@ void MyRaygenShader()
     const float blendInWeight = 0.1f;
     g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], blendInWeight);
     RenderTarget[DispatchRaysIndex().xy] = g_Feedback[DispatchRaysIndex().xy];
+
+
+    // hack
+//    if(DispatchRaysIndex().x/2 < 256 && DispatchRaysIndex().y/2 < 256)
+//        RenderTarget[DispatchRaysIndex().xy] = g_Texture.Load(int3(DispatchRaysIndex().xy / 2, 0));
 }
 
 [shader("closesthit")]
