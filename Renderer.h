@@ -66,6 +66,10 @@ public:
     // used by CreateBufferSRV() and CreateRaytracingOutputResource()
     DescriptorHeap descriptorHeap;
 
+    // get the number of bits per pixel for a dxgi format
+    // @param 0 if not known
+    static uint32 GetFormatBitsPerPixel(DXGI_FORMAT dxgiFormat);
+    
 private:
     //
     void Reset();

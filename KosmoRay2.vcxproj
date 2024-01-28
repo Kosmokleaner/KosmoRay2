@@ -126,6 +126,9 @@
   <ItemGroup>
     <ResourceCompile Include="DX12Lib\DX12Lib.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

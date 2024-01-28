@@ -286,3 +286,25 @@ UINT Renderer::CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT element
     buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, descriptorHeap.maxSize);
     return descriptorIndex;
 }
+
+uint32 Renderer::GetFormatBitsPerPixel(DXGI_FORMAT dxgiFormat)
+{
+    if (dxgiFormat == DXGI_FORMAT_R32G32B32A32_FLOAT) return 128;
+    else if (dxgiFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) return 64;
+    else if (dxgiFormat == DXGI_FORMAT_R16G16B16A16_UNORM) return 64;
+    else if (dxgiFormat == DXGI_FORMAT_R8G8B8A8_UNORM) return 32;
+    else if (dxgiFormat == DXGI_FORMAT_B8G8R8A8_UNORM) return 32;
+    else if (dxgiFormat == DXGI_FORMAT_B8G8R8X8_UNORM) return 32;
+    else if (dxgiFormat == DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM) return 32;
+
+    else if (dxgiFormat == DXGI_FORMAT_R10G10B10A2_UNORM) return 32;
+    else if (dxgiFormat == DXGI_FORMAT_B5G5R5A1_UNORM) return 16;
+    else if (dxgiFormat == DXGI_FORMAT_B5G6R5_UNORM) return 16;
+    else if (dxgiFormat == DXGI_FORMAT_R32_FLOAT) return 32;
+    else if (dxgiFormat == DXGI_FORMAT_R16_FLOAT) return 16;
+    else if (dxgiFormat == DXGI_FORMAT_R16_UNORM) return 16;
+    else if (dxgiFormat == DXGI_FORMAT_R8_UNORM) return 8;
+    else if (dxgiFormat == DXGI_FORMAT_A8_UNORM) return 8;
+
+    return 0;
+}

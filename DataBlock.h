@@ -12,6 +12,8 @@ public:
 
     void Reset();
 
+    void Load(Renderer& renderer, const char* fileName);
+
     void CreateUAV(Renderer& renderer, const D3D12_RESOURCE_DESC& uavDesc);
 
 private:

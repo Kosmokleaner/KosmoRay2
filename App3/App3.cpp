@@ -30,6 +30,7 @@ namespace GlobalRootSignatureParams {
         SceneConstant,              // ConstantBufferView   CBV b0
         IndexBuffer,                // DescriptorTable      SRV space100: t0
         VertexBuffer,               // DescriptorTable      SRV space101: t0 
+        TextureSlot,                // DescriptorTable      SRV space102: t0
         Count
     };
 }
@@ -74,9 +75,11 @@ void App3::CreateRootSignatures()
         CD3DX12_DESCRIPTOR_RANGE UAVFeedback;
         UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space 0: u1
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1];
-        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space 100: t0: IndexBuffer
+        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space 101: t0: IndexBuffer, 2 SRV for 2 meshes
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1];
-        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space 101: t0: VertexBuffer
+        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space 102: t0: VertexBuffer, 2 SRV for 2 meshes
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorTex[1];
+        SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);    // space 103: t0: Texture
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
@@ -85,8 +88,9 @@ void App3::CreateRootSignatures()
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
         rootParameters[GlobalRootSignatureParams::IndexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorIB), SRVDescriptorIB);
         rootParameters[GlobalRootSignatureParams::VertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorVB), SRVDescriptorVB);
+        rootParameters[GlobalRootSignatureParams::TextureSlot].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorTex), SRVDescriptorTex);
+
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
-//        globalRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
     }
 
@@ -254,6 +258,8 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexBuffer, m_allIB);
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffer, m_allVB);
+
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::TextureSlot, m_texture.m_UAVGpuDescriptor);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -768,4 +774,7 @@ void App3::CreateDeviceDependentResources()
     BuildShaderTables();
 
     CreateRaytracingOutputResource();
+
+    // test
+    m_texture.Load(renderer, "../../data/Textures/BlueNoise/LDR_RG01_0.png");
 }

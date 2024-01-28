@@ -63,6 +63,7 @@ StructuredBuffer<Vertex> g_vertices[] : register(t0, space102);
 // https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
 // { float2 barycentrics }
 typedef BuiltInTriangleIntersectionAttributes MyAttributes;
+Texture2D<float4> g_Texture : register(t0, space103);
 
 // update App3.cpp if this gets larger
 struct RayPayload

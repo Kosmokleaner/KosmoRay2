@@ -228,4 +228,7 @@
       <Filter>DX12Lib</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
+  </ItemGroup>
 </Project>

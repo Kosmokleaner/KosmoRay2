@@ -23,3 +23,4 @@ https://www.youtube.com/watch?v=XZdRmJa9cKo
 * Cellular noise ("Worley noise") in 3D in GLSL. Stefan Gustavson MIT license. https://github.com/stegu/webgl-noise
 * Blue noise textures from https://momentsingraphics.de/Media/BlueNoise/FreeBlueNoiseTextures.zip CC0-licensing
 * stb_image to load image file format https://github.com/nothings/stb/blob/master/stb_image.h 
+* DirectXTK from https://github.com/microsoft/DirectXTK12/wiki/ResourceUploadBatch MIT license
