@@ -739,7 +739,8 @@ void App3::CreateDeviceDependentResources()
     ok = meshA.load(renderer, L"../../data/LShapeSmooth.obj");
     assert(ok);
 
-    ok = meshB.load(renderer, L"../../data/monkey.obj");
+//    ok = meshB.load(renderer, L"../../data/monkey.obj");
+    ok = meshB.load(renderer, L"../../data/monkey2.obj");
     assert(ok);
 
     // set m_allIBandVB
