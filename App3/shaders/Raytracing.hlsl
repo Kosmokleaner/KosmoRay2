@@ -245,7 +245,7 @@ void MyRaygenShader()
         float3 incomingLight = 0;
 
         if (payload.instanceIndex == 0)
-            incomingLight = payload.color * sampleCountAO;
+            incomingLight = payload.color * 2 * sampleCountAO;
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
@@ -262,7 +262,7 @@ void MyRaygenShader()
 //            incomingLight = payload2.color;
 
             if(payload2.instanceIndex == 0 || payload2.instanceIndex == -1)
-                incomingLight += payload2.color;
+                incomingLight += payload2.color*2;
 
 //            if(all(payload2.normal != float3(0, 0, 0)))
 //            {
@@ -515,10 +515,9 @@ void MyMissShader(inout RayPayload payload)
     // 0..1
     float alpha = WorldRayDirection().y * 0.5f + 0.5f;
 
-    const float3 skyColor = lerp(float3(0.2f, 0.3f, 0.9f) * 0.4f, float3(0.2f, 0.3f, 0.9f) * 1.3f, alpha);
+    const float3 skyColor = lerp(float3(0.2f, 0.3f, 0.9f) * 0.2f, float3(0.2f, 0.3f, 0.9f) * 0.6f, alpha);
 
     payload.color = skyColor;
-//    payload.instanceIndex = -1;
 }
 
 #endif // RAYTRACING_HLSL

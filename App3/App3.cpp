@@ -583,8 +583,8 @@ void App3::BuildAccelerationStructures()
             // x: right, y:up (closer), z:behind
             if (i)
             {
-                size = 1.0f;
-                dst->Transform[i - 1][3] = (i == 2) ? 1.0f : 5.0f; 
+                size = 1.5f;
+                dst->Transform[i - 1][3] = (i == 2) ? 2.0f : 6.0f; 
             }
 
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
