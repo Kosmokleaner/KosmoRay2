@@ -71,8 +71,10 @@ struct RayPayload
     float4 color;
     // in world space, normalized
     float3 normal;
-    //
-    uint primitiveIndex;
+    // -1 if not set
+    int primitiveIndex;
+    // -1 if not set
+    int instanceIndex;
     // to count intersections after sphere start, to test if inside the object
     int count;
     // used like z buffer, the smallest valus is used
@@ -160,6 +162,14 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
     return ray;
 }
 
+
+float3 filmicToneMapping(float3 color)
+{
+    color = max(0, color - 0.004f);
+    color = (color * (6.2f * color + 0.5f)) / (color * (6.2f * color + 1.7f) + 0.06f);
+    return color;
+}
+
 [shader("raygeneration")]
 void MyRaygenShader()
 {
@@ -191,7 +201,13 @@ void MyRaygenShader()
     // TMin should be kept small to prevent missing geometry at close contact areas.
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
-    RayPayload payload = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, 0, rayDesc.TMax, rayDesc.TMax };
+
+    RayPayload payload = (RayPayload)0;
+    payload.primitiveIndex = -1;
+    payload.instanceIndex = -1;
+    payload.color = float4(0.2f, 0.2f, 0.2f, 0);
+    payload.minT = payload.minTfront = rayDesc.TMax;
+
 
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
@@ -208,8 +224,15 @@ void MyRaygenShader()
 #elif RAY_TRACING_EXPERIMENT == 2
     float AO = 0.0f;
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+
+    const float3 skyColor = float3(0.2f, 0.3f, 0.9f);
+    const float3 materialColor = float3(0.9f, 0.8f, 0.7f);
+
+    float3 hdr = 0;
+
     if (all(payload.normal != float3(0, 0, 0)))
     {
+
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678);
         uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + (uint)(g_sceneCB.sceneParam0.x * 12347));
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
@@ -224,13 +247,24 @@ void MyRaygenShader()
         // visualize position
 //        RenderTarget[DispatchRaysIndex().xy] = float4(frac(rayDesc.Origin * 0.5f), 1.0f);
 
+        float3 incomingLight = 0;
+
         float3 unoccludedAreaDirection = 0;
         for(int i = 0; i < sampleCountAO; ++i)
         {
             rayDesc.Direction = getCosHemisphereSample(rnd, payload.normal);
 
-            RayPayload payload2 = { float4(0.2f, 0.2f, 0.2f, 0), float3(0, 0, 0), 0, 0, rayDesc.TMax, rayDesc.TMax };
+            RayPayload payload2 = (RayPayload)0;
+            payload2.primitiveIndex = -1;
+            payload2.instanceIndex = -1;
+            payload2.color = float4(0.2f, 0.2f, 0.2f, 0);
+            payload2.minT = payload2.minTfront = rayDesc.TMax;
+
             TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload2);
+
+            if(payload2.instanceIndex == 0 || payload.instanceIndex == 0)
+                incomingLight += float3(1.0f, 0.5f, 0.2f) * (5.0f / sampleCountAO);
+
             if(all(payload2.normal != float3(0, 0, 0)))
             {
                 AO -= 1.0f / sampleCountAO;
@@ -239,10 +273,13 @@ void MyRaygenShader()
         }
         // just in case
         AO = saturate(AO);
-        RenderTarget[DispatchRaysIndex().xy] = float4(AO, AO, AO, 1.0f);
-//        RenderTarget[DispatchRaysIndex().xy] = float4(unoccludedAreaDirection, 1.0f);
+
+        hdr = materialColor * (incomingLight + AO * skyColor);
     }
-    else RenderTarget[DispatchRaysIndex().xy] = float4(0, 0, 0.2f, 1.0f);
+    else hdr = skyColor;
+
+    float3 ldr = filmicToneMapping(hdr);
+    RenderTarget[DispatchRaysIndex().xy] = float4(ldr, 1);
 
 #endif
 
@@ -310,6 +347,7 @@ void MyRaygenShader()
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
     payload.primitiveIndex = PrimitiveIndex();
+    payload.instanceIndex = InstanceIndex();
 
     // triangle corner vertex indices
     const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
