@@ -68,7 +68,8 @@ Texture2D<float4> g_Texture : register(t0, space103);
 // update App3.cpp if this gets larger
 struct RayPayload
 {
-    float4 color;
+    // skycolor or material color
+    float3 color;
     // in world space, normalized
     float3 normal;
     // -1 if not set
@@ -205,7 +206,6 @@ void MyRaygenShader()
     RayPayload payload = (RayPayload)0;
     payload.primitiveIndex = -1;
     payload.instanceIndex = -1;
-    payload.color = float4(0.2f, 0.2f, 0.2f, 0);
     payload.minT = payload.minTfront = rayDesc.TMax;
 
 
@@ -213,7 +213,7 @@ void MyRaygenShader()
     // closesthit
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
     RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
-//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color.rgb, 1.0f); // color e.g. barycentrics
+//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
 
@@ -222,34 +222,31 @@ void MyRaygenShader()
     RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // normal
 
 #elif RAY_TRACING_EXPERIMENT == 2
-    float AO = 0.0f;
+//    float AO = 0.0f;
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
-
-    const float3 skyColor = float3(0.2f, 0.3f, 0.9f);
-    const float3 materialColor = float3(0.9f, 0.8f, 0.7f);
 
     float3 hdr = 0;
 
     if (all(payload.normal != float3(0, 0, 0)))
     {
+        const float3 materialColor = payload.color;
 
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678);
         uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + (uint)(g_sceneCB.sceneParam0.x * 12347));
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
         uint sampleCountAO = 64;
-        AO = 1;
+//        AO = 1;
 
         rayDesc.Origin = rayDesc.Origin + rayDesc.Direction * payload.minT;
         rayDesc.Origin += payload.normal * 0.01f;
         payload.minT = rayDesc.TMin;
 
-        // visualize position
-//        RenderTarget[DispatchRaysIndex().xy] = float4(frac(rayDesc.Origin * 0.5f), 1.0f);
-
         float3 incomingLight = 0;
 
-        float3 unoccludedAreaDirection = 0;
+        if (payload.instanceIndex == 0)
+            incomingLight = payload.color * sampleCountAO;
+
         for(int i = 0; i < sampleCountAO; ++i)
         {
             rayDesc.Direction = getCosHemisphereSample(rnd, payload.normal);
@@ -257,26 +254,31 @@ void MyRaygenShader()
             RayPayload payload2 = (RayPayload)0;
             payload2.primitiveIndex = -1;
             payload2.instanceIndex = -1;
-            payload2.color = float4(0.2f, 0.2f, 0.2f, 0);
+            payload2.color = float3(0.2f, 0.2f, 0.2f);
             payload2.minT = payload2.minTfront = rayDesc.TMax;
 
             TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload2);
 
-            if(payload2.instanceIndex == 0 || payload.instanceIndex == 0)
-                incomingLight += float3(1.0f, 0.5f, 0.2f) * (5.0f / sampleCountAO);
+//            incomingLight = payload2.color;
 
-            if(all(payload2.normal != float3(0, 0, 0)))
-            {
-                AO -= 1.0f / sampleCountAO;
-                unoccludedAreaDirection += rayDesc.Direction;
-            }
+            if(payload2.instanceIndex == 0 || payload2.instanceIndex == -1)
+                incomingLight += payload2.color;
+
+//            if(all(payload2.normal != float3(0, 0, 0)))
+//            {
+//                AO -= 1.0f / sampleCountAO;
+//                unoccludedAreaDirection += rayDesc.Direction;
+//            }
         }
         // just in case
-        AO = saturate(AO);
+//        AO = saturate(AO);
 
-        hdr = materialColor * (incomingLight + AO * skyColor);
+        incomingLight /= sampleCountAO;
+
+//        hdr = materialColor * (incomingLight + AO * skyColor);
+        hdr = materialColor * incomingLight;
     }
-    else hdr = skyColor;
+    else hdr = payload.color;   // sky
 
     float3 ldr = filmicToneMapping(hdr);
     RenderTarget[DispatchRaysIndex().xy] = float4(ldr, 1);
@@ -290,22 +292,9 @@ void MyRaygenShader()
 
         
 
-    // Write the raytraced color to the output texture.
-
-/*    if(DispatchRaysIndex().y < 100)
-        RenderTarget[DispatchRaysIndex().xy] = frac(payload.minT / 100.0f);
-    else if (DispatchRaysIndex().y < 200)
-        RenderTarget[DispatchRaysIndex().xy] = payload.color;
-    else if (DispatchRaysIndex().y < 300)
-        RenderTarget[DispatchRaysIndex().xy] = float4(0.1f,0.2f,0.3f, 1.0f) * payload.count;
-    else if (DispatchRaysIndex().y < 400)
- */
        uint endTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
 //       float f = endTime * 0.1f;
 //      RenderTarget[DispatchRaysIndex().xy] = float4(f,f,f, 1.0f);
-//       RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f);
- //   else
-//        RenderTarget[DispatchRaysIndex().xy] = payload.color;
 
     if(0)
     {
@@ -322,18 +311,12 @@ void MyRaygenShader()
 
 
 
-//        if((payload.count % 2) == 1) {
-            RenderTarget[DispatchRaysIndex().xy] = float4(col, 0, 0, 1);
-//        }
-//        else 
-//        {
-//            RenderTarget[DispatchRaysIndex().xy] = payload.color;
-//        }
+        RenderTarget[DispatchRaysIndex().xy] = float4(col, 0, 0, 1);
     }
 
 //    float4 feedback = g_Feedback[DispatchRaysIndex().xy];
 
-    const float blendInWeight = 0.1f;
+    const float blendInWeight = 0.5f;
     g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], blendInWeight);
     RenderTarget[DispatchRaysIndex().xy] = g_Feedback[DispatchRaysIndex().xy];
 
@@ -354,7 +337,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 
     float3 bary = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
 
-    payload.color = float4(bary, 1); // color from barycentrics
+    payload.color = bary; // color from barycentrics
 
     uint VBIndex = INSTANCE_ID;
 
@@ -374,18 +357,20 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 osNormal = n0 * bary.x + n1 * bary.y + n2 * bary.z;
     float3 osPos = p0 * bary.x + p1 * bary.y + p2 * bary.z;
     float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-    float3 intepolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
+    float3 interpolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
     payload.minT = RayTCurrent();
 
     // visualize indexbuffer data as color
-//    payload.color = float4(intepolIndex, 1);
+//    payload.color = interpolIndex;
 
     // visualize object space position as color
-    payload.color = float4(frac(osPos), 1);
+//    payload.color = frac(osPos);
+
+    payload.color = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
 
     // visualize world space position as color
-//    payload.color = float4(frac(wsPos), 1);
+//    payload.color = frac(wsPos);
 
 //    float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
 
@@ -450,10 +435,10 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 payload.minT = t;
                 payload.minTfront = t;
                 float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-                payload.color = float4(barycentrics, 1);
+                payload.color = barycentrics;
 
                 // visualize triangleId as color, flat shading
-//                payload.color = float4(IndexToColor(PrimitiveIndex()), 1);
+//                payload.color = IndexToColor(PrimitiveIndex());
 
                 payload.normal = float3(0, 1, 0);
 
@@ -466,12 +451,12 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 const float3 p1 = g_vertices[VBIndex][ii.y].position;
                 const float3 p2 = g_vertices[VBIndex][ii.z].position;
                 // visualize position id as color, gourand shading
-//                payload.color = float4((p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0)), 1);
+//                payload.color = (p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0));
 
                 // visualize indexbuffer id as color, gourand shading
-//                const float4 vCol0 = float4(IndexToColor(ii.x), 1);
-//                const float4 vCol1 = float4(IndexToColor(ii.y), 1);
-//                const float4 vCol2 = float4(IndexToColor(ii.z), 1);
+//                const float3 vCol0 = IndexToColor(ii.x);
+//                const float3 vCol1 = IndexToColor(ii.y);
+//                const float3 vCol2 = IndexToColor(ii.z);
 //                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
 
                 float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
@@ -482,8 +467,6 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 
                 payload.primitiveIndex = PrimitiveIndex();
                 payload.normal = worldNormal;
-    //            if(length(pos + float3(0.5f, 0, 0)) > 0.9f)
-    //                payload.color = float4(1,0,0,1);
             }
         }
 
@@ -529,7 +512,13 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 [shader("miss")]
 void MyMissShader(inout RayPayload payload)
 {
-//    payload.color = float4(0, 0, 1, 1);
+    // 0..1
+    float alpha = WorldRayDirection().y * 0.5f + 0.5f;
+
+    const float3 skyColor = lerp(float3(0.2f, 0.3f, 0.9f) * 0.4f, float3(0.2f, 0.3f, 0.9f) * 1.3f, alpha);
+
+    payload.color = skyColor;
+//    payload.instanceIndex = -1;
 }
 
 #endif // RAYTRACING_HLSL
