@@ -247,7 +247,7 @@ bool OBJMeshLoader::ParseValue(uint8* &p, float &outValue)
 	return true;
 }
 
-bool OBJMeshLoader::ParseValue(uint8* &p, float3 &outValue)
+bool OBJMeshLoader::ParseValue(uint8* &p, glm::vec3 &outValue)
 {
 	uint8 *Backup = p;
 
@@ -262,7 +262,7 @@ bool OBJMeshLoader::ParseValue(uint8* &p, float3 &outValue)
 	return false;
 }
 
-bool OBJMeshLoader::ParseValue(uint8* &p, XMFLOAT2 &outValue)
+bool OBJMeshLoader::ParseValue(uint8* &p, glm::vec2 &outValue)
 {
 	uint8 *Backup = p;
 
@@ -418,7 +418,7 @@ bool OBJMeshLoader::LoadMeshPass2(const wchar_t*FileName, IIndexedMeshSink &Sink
 			}
 			if(ParseName(p, "v"))
 			{
-				float3 Value;
+                glm::vec3 Value;
 
 				if(!ParseValue(p, Value))
 				{
@@ -428,7 +428,7 @@ bool OBJMeshLoader::LoadMeshPass2(const wchar_t*FileName, IIndexedMeshSink &Sink
 
 				if(Flags & OLF_Reorient)
 				{
-					Value = float3(Value.x, Value.z, -Value.y);
+					Value = glm::vec3(Value.x, Value.z, -Value.y);
 				}
 
 				Value.x *= Scale;
@@ -439,7 +439,7 @@ bool OBJMeshLoader::LoadMeshPass2(const wchar_t*FileName, IIndexedMeshSink &Sink
 			}
 			else if(ParseName(p, "vt"))
 			{
-				XMFLOAT2 Value;
+                glm::vec2 Value;
 
 				if(!ParseValue(p, Value))
 				{
@@ -453,7 +453,7 @@ bool OBJMeshLoader::LoadMeshPass2(const wchar_t*FileName, IIndexedMeshSink &Sink
 			}
 			else if(ParseName(p, "vn"))
 			{
-				float3 Value;
+                glm::vec3 Value;
 
 				if(!ParseValue(p, Value))
 				{
@@ -463,7 +463,7 @@ bool OBJMeshLoader::LoadMeshPass2(const wchar_t*FileName, IIndexedMeshSink &Sink
 
 				if(Flags & OLF_Reorient)
 				{
-					Value = float3(Value.x, Value.z, -Value.y);
+					Value = glm::vec3(Value.x, Value.z, -Value.y);
 				}
 
 				if(!(Flags & OLF_NoImportNormals))

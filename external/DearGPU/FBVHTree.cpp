@@ -21,7 +21,7 @@ uint32 ComputeCount(FTriangleInputLeaf* InputContent)
 }
 
 // @return smaller is better
-FLOAT ComputeHeuristicBVH(FTriangleInputLeaf* InputContent, UINT SplitAxis, FLOAT SplitPos, float3* VertexData, UINT* IndexData)
+FLOAT ComputeHeuristicBVH(FTriangleInputLeaf* InputContent, UINT SplitAxis, FLOAT SplitPos, glm::vec3* VertexData, UINT* IndexData)
 {
 	assert(SplitAxis < 3);
 	assert(VertexData);
@@ -34,7 +34,7 @@ FLOAT ComputeHeuristicBVH(FTriangleInputLeaf* InputContent, UINT SplitAxis, FLOA
 	{
 		// could be optimized
 		FBBox3F TriangleBBox = ComputeTriangleMinMax(InputContent->TriangleId, VertexData, IndexData);
-		float3 TriangleCenter = TriangleBBox.ComputeCenter();
+        glm::vec3 TriangleCenter = TriangleBBox.ComputeCenter();
 
 		UINT Side = TriangleCenter[SplitAxis] < SplitPos ? 0 : 1;
 
@@ -53,7 +53,7 @@ FLOAT ComputeHeuristicBVH(FTriangleInputLeaf* InputContent, UINT SplitAxis, FLOA
 }
 
 // @return Tree node index, >0: index into Nodes[], <=0: index into LeafData[]
-static int RecursivelyProcessBVH(FBVHTree& Tree, FTriangleInputLeaf* InputContent, FBBox3F InputContentBBox, float3* VertexData, UINT* IndexData)
+static int RecursivelyProcessBVH(FBVHTree& Tree, FTriangleInputLeaf* InputContent, FBBox3F InputContentBBox, glm::vec3* VertexData, UINT* IndexData)
 {
 	// find best split position and axis
 	UINT BestSplitAxis = 0;
@@ -70,7 +70,7 @@ static int RecursivelyProcessBVH(FBVHTree& Tree, FTriangleInputLeaf* InputConten
 		
 			for(UINT Test = 0 ; Test < TestCount; ++Test)
 			{
-				FLOAT SplitPos = lerp(InputContentBBox.MinPos[Axis], InputContentBBox.MaxPos[Axis], (Test + 1.0f) / (TestCount + 2.0f));
+				FLOAT SplitPos = glm::mix(InputContentBBox.MinPos[Axis], InputContentBBox.MaxPos[Axis], (Test + 1.0f) / (TestCount + 2.0f));
 
 				FLOAT Heuristic = ComputeHeuristicBVH(InputContent, Axis, SplitPos, VertexData, IndexData);
 
@@ -97,7 +97,7 @@ static int RecursivelyProcessBVH(FBVHTree& Tree, FTriangleInputLeaf* InputConten
 			FTriangleInputLeaf* NextLeaf = Leaf->NextLeaf;
 
 			FBBox3F TriangleBBox = ComputeTriangleMinMax(Leaf->TriangleId, VertexData, IndexData);
-			float3 TriangleCenter = TriangleBBox.ComputeCenter();
+            glm::vec3 TriangleCenter = TriangleBBox.ComputeCenter();
 
 			UINT Side = TriangleCenter[BestSplitAxis] < BestSplitPos ? 0 : 1;
 
@@ -151,7 +151,7 @@ static int RecursivelyProcessBVH(FBVHTree& Tree, FTriangleInputLeaf* InputConten
 	return ret;
 }
 
-void FBVHTree::Construct(UINT TriangleCount, float3* VertexData, UINT* IndexData)
+void FBVHTree::Construct(UINT TriangleCount, glm::vec3* VertexData, UINT* IndexData)
 {
 	FBBox3F ContentBBox;
 

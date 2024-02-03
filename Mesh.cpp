@@ -221,15 +221,15 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
 
                 IndexMap.insert(std::pair<MultiIndex<3>, uint32>(SrcIndex, Index));
 
-                float3 Pos = IndexedMesh.Positions[SrcIndex.Index[0]];
+                glm::vec3 Pos = IndexedMesh.Positions[SrcIndex.Index[0]];
 
-                float3 tangentU, tangentV, normal;
+                glm::vec3 tangentU, tangentV, normal;
 
                 TSCalc.GetBase(BaseIndices[v], (float*)&tangentU, (float*)&tangentV, (float*)&normal);
 
                 if (AlignToNormal)
                 {
-                    float3 oldNormal = IndexedMesh.Normals[ref.Vertex[v].NormalIndex];
+                    glm::vec3 oldNormal = IndexedMesh.Normals[ref.Vertex[v].NormalIndex];
 
                     tangentU = normalize(tangentU - oldNormal * dot(tangentU, oldNormal));
                     tangentV = normalize(tangentV - oldNormal * dot(tangentV, oldNormal));
@@ -242,14 +242,14 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
                 //				Normal = Normal.UnsafeNormal();
 
 //later				TColorFixedBGRA Color = TColorFixedBGRA(MakeTVector4F(Normal.X * 0.5f + 0.5f, Normal.Y * 0.5f + 0.5f, Normal.Z * 0.5f + 0.5f, 1)); 
-                XMFLOAT2 UV = XMFLOAT2(0, 0);
+                glm::vec2 UV = glm::vec2(0, 0);
 
                 if (!IndexedMesh.UVs.empty())
                 {
                     UV = IndexedMesh.UVs[SrcIndex.Index[2]];
                 }
 
-                MeshVertexData.push_back(VFormatFull(Convert(Pos), Convert(tangentU), Convert(tangentV), Convert(normal), Convert(UV))); // later, Color));
+                MeshVertexData.push_back(VFormatFull(Pos, tangentU, tangentV, normal, UV)); // later, Color));
             }
             else
             {
@@ -352,13 +352,13 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
 
     // create BVH
     {
-        std::vector<float3> VertexDataVec;
+        std::vector<glm::vec3> VertexDataVec;
 
         VertexDataVec.reserve(VertexCount);
 
         for (uint32 i = 0; i < VertexCount; ++i)
         {
-            float3 Pos = *(float3*)((uint8*)&MeshVertexData[0] + i * vertexStride);
+            glm::vec3 Pos = *(glm::vec3*)((uint8*)&MeshVertexData[0] + i * vertexStride);
 
             VertexDataVec.push_back(Pos);
         }
@@ -388,17 +388,17 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
 
 void Mesh::UpdateLocalMinMax()
 {
-    LocalMin = float3(FLT_MAX, FLT_MAX, FLT_MAX);
-    LocalMax = float3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    LocalMin = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    LocalMax = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
     auto end = MeshVertexData.end();
     for (auto it = MeshVertexData.begin(); it != end; ++it)
     {
         const VFormatFull& v = *it;
-        float3 Pos = Convert(v.Pos);
+        glm::vec3 Pos = v.Pos;
 
-        LocalMin = Min(LocalMin, Pos);
-        LocalMax = Max(LocalMax, Pos);
+        LocalMin = glm::min(LocalMin, Pos);
+        LocalMax = glm::max(LocalMax, Pos);
     }
 }
 

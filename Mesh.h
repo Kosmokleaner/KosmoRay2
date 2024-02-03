@@ -62,8 +62,8 @@ struct VFormatFull
 	}
 
     glm::vec3			Pos;
-	//	float3			TangentU;
-	//	float3			TangentV;
+	//	glm::vec3			TangentU;
+	//	glm::vec3			TangentV;
     glm::vec3			TangentN;
     glm::vec2			UV;
 
@@ -154,7 +154,7 @@ public:
     uint32 vertexStride = 0;
 
     // call UpdateLocalMinMax() to recompute
-    float3 LocalMin, LocalMax;
+    glm::vec3 LocalMin, LocalMax;
 
     // -1 if not set, index into CBVHTreeData.dataBVHTree0[]
     uint32 BVHRootNodeId;

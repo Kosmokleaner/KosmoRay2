@@ -6,6 +6,7 @@
 
 //#pragma comment(lib, "external/DirectXTK/lib/x64/Release/DirectXTK12.lib")
 #pragma comment(lib, "external/DirectXTK/lib/x64/Debug/DirectXTK12.lib")
+
 #include "external/DirectXTK/include/ResourceUploadBatch.h"
 
 void DataBlock::Reset()
@@ -56,7 +57,7 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
     NAME_D3D12_OBJECT(m_resource);
 
     
-    ResourceUploadBatch resourceUpload(renderer.device.Get());
+    DirectX::ResourceUploadBatch resourceUpload(renderer.device.Get());
     
     resourceUpload.Begin();
 

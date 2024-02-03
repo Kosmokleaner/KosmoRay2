@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 #include <d3d11.h>
-#include <DirectXMath.h>
-
-using namespace DirectX;
+//#include <DirectXMath.h>
+//using namespace DirectX;
 
 // features:
 // * does not reconstruct normals, doesn't intepret smoothing groups
@@ -18,8 +17,8 @@ class COBJMeshMaterial
 public:
 	std::string			MaterialName;
 
-	float3			DiffuseColor;
-	float3			SpecularColor;
+    glm::vec3			DiffuseColor;
+    glm::vec3			SpecularColor;
 
 	std::wstring		DiffuseTexture;
 	std::wstring		SpecularTexture;
@@ -31,8 +30,8 @@ public:
 	COBJMeshMaterial()
 		: SpecularPower(64.0f)
 	{
-		DiffuseColor = float3(1, 1, 1);
-		SpecularColor = float3(1, 1, 0);
+		DiffuseColor = glm::vec3(1, 1, 1);
+		SpecularColor = glm::vec3(1, 1, 0);
 	}
 };
 
@@ -78,11 +77,11 @@ struct IIndexedMeshSink
 
 	virtual void OnFailed(const char* ErrorString) = 0;
 
-	virtual void SetPos(uint32 Index, float3 Value) = 0;
+	virtual void SetPos(uint32 Index, glm::vec3 Value) = 0;
 
-	virtual void SetNormal(uint32 Index, float3 Value) = 0;
+	virtual void SetNormal(uint32 Index, glm::vec3 Value) = 0;
 
-	virtual void SetUV(uint32 Index, XMFLOAT2 Value) = 0;
+	virtual void SetUV(uint32 Index, glm::vec2 Value) = 0;
 
 	virtual void AddPoly(const SIndexedVertex* Vertices, uint32 VertexCount, uint32 MaterialId) = 0;
 
@@ -140,12 +139,12 @@ private: // -------------------------------------------------------
 	//
 	// will not change BufferPos if the parsing wasn't successful
 	// also jumps over following whitespace
-	static bool ParseValue(uint8 * &BufferPos, float3 &outValue);
+	static bool ParseValue(uint8 * &BufferPos, glm::vec3&outValue);
 
 	//
 	// will not change BufferPos if the parsing wasn't successful
 	// also jumps over following whitespace
-	static bool ParseValue(uint8 * &BufferPos, XMFLOAT2 &outValue);
+	static bool ParseValue(uint8 * &BufferPos, glm::vec2 &outValue);
 
 	// can be optimized
 	static void ParseName(uint8 * & p, std::string &Out);

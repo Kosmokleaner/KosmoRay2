@@ -2,13 +2,13 @@
 
 #include <vector>
 #include <float.h>			// FLT_MAX
-
+#include "external/glm/glm.hpp"
 
 class FBBox3F
 {
 public:
-	float3 MinPos;
-	float3 MaxPos;
+    glm::vec3 MinPos;
+    glm::vec3 MaxPos;
 
 	// default constructor
 	FBBox3F() :MinPos(FLT_MAX, FLT_MAX, FLT_MAX), MaxPos(-FLT_MAX, -FLT_MAX, -FLT_MAX)
@@ -16,16 +16,16 @@ public:
 	}
 
 	// constructor
-	FBBox3F(const float3& rhs) :MinPos(rhs), MaxPos(rhs)
+	FBBox3F(const glm::vec3& rhs) :MinPos(rhs), MaxPos(rhs)
 	{
 	}
 
 	// constructor
-	FBBox3F(const float3& Min, const float3& Max) :MinPos(Min), MaxPos(Max)
+	FBBox3F(const glm::vec3& Min, const glm::vec3& Max) :MinPos(Min), MaxPos(Max)
 	{
 	}
 
-	// copy constructor (no need as XMFLOAT3 should have copy constructors and the default copy constructor will work)
+	// copy constructor (no need as XMglm::vec3 should have copy constructors and the default copy constructor will work)
 //	FBBox3F(const FBBox3F& rhs) :MinPos(rhs.MinPos), MaxPos(rhs.MaxPos)
 //	{
 //	}
@@ -40,29 +40,29 @@ public:
 
 	void Union(const FBBox3F &rhs)
 	{
-		MinPos = Min(MinPos, rhs.MinPos);
-		MaxPos = Max(MaxPos, rhs.MaxPos);
+		MinPos = glm::min(MinPos, rhs.MinPos);
+		MaxPos = glm::max(MaxPos, rhs.MaxPos);
 	}
 
-	void Union(const float3 &rhs)
+	void Union(const glm::vec3&rhs)
 	{
-		MinPos = Min(MinPos, rhs);
-		MaxPos = Max(MaxPos, rhs);
+		MinPos = glm::min(MinPos, rhs);
+		MaxPos = glm::max(MaxPos, rhs);
 	}
 
-	float3 ComputeCenter() const
+    glm::vec3 ComputeCenter() const
 	{
 		return (MinPos + MaxPos) * 0.5f;
 	}
 
-	float3 ComputeExtent() const
+    glm::vec3 ComputeExtent() const
 	{
 		return MaxPos - MinPos;
 	}
 
 	FLOAT ComputeArea() const
 	{
-		float3 Extent = ComputeExtent();
+        glm::vec3 Extent = ComputeExtent();
 
 		return 2 * (Extent.x * Extent.y + Extent.x * Extent.z + Extent.y * Extent.z);
 	}
@@ -79,7 +79,7 @@ inline void operator &(CGeneralArchive& ar, FBBox3F& In)
 
 // serialize
 template<class CGeneralArchive>
-inline void operator &(CGeneralArchive& ar, float3& g)
+inline void operator &(CGeneralArchive& ar, glm::vec3& g)
 {
 	ar & g.x;
 	ar & g.y;
@@ -137,11 +137,11 @@ public:
 };
 
 
-inline FBBox3F ComputeTriangleMinMax(UINT TriangleId, float3* VertexData, UINT* IndexData)
+inline FBBox3F ComputeTriangleMinMax(UINT TriangleId, glm::vec3* VertexData, UINT* IndexData)
 {
 	UINT Index = TriangleId * 3;
 	UINT Indices[3] = { IndexData[Index], IndexData[Index + 1], IndexData[Index + 2] };
-	float3 Vertices[3] = { VertexData[Indices[0]], VertexData[Indices[1]], VertexData[Indices[2]] };
+    glm::vec3 Vertices[3] = { VertexData[Indices[0]], VertexData[Indices[1]], VertexData[Indices[2]] };
 
 	FBBox3F ret(Vertices[0]);
 

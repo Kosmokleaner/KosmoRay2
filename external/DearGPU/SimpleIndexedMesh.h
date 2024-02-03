@@ -68,19 +68,19 @@ public:
 
 		for(auto it = Positions.begin(), end = Positions.end(); it !=end; ++it)
 		{
-			float3 &Pos = *it;
+            glm::vec3 &Pos = *it;
 
 			AABB.Union(Pos);
 		}
 
-		float3 OldCenter = AABB.ComputeCenter();
+        glm::vec3 OldCenter = AABB.ComputeCenter();
 
 		// bottom at 0,0,0
 		OldCenter.y = AABB.MinPos.y;
 
 		for(auto it = Positions.begin(), end = Positions.end(); it !=end; ++it)
 		{
-			float3 &Pos = *it;
+            glm::vec3&Pos = *it;
 
 			Pos.x -= OldCenter.x;
 			Pos.y -= OldCenter.y;
@@ -111,7 +111,7 @@ public:
 	void GetPos( const unsigned int indwPos, float outfPos[3] ) const
 	{
 		assert(indwPos < Positions.size());
-		const float3 &ref = Positions[indwPos];
+		const glm::vec3&ref = Positions[indwPos];
 
 		outfPos[0] = ref.x;
 		outfPos[1] = ref.y;
@@ -128,7 +128,7 @@ public:
 		}
 
 		assert(InIndex < UVs.size());
-		const XMFLOAT2 &ref = UVs[InIndex];
+		const glm::vec2&ref = UVs[InIndex];
 
 		outfUV[0] = ref.x;
 		outfUV[1] = ref.y;
@@ -167,19 +167,19 @@ public:
 	{
 	}
 
-	virtual void SetPos(UINT Index, float3 Value)
+	virtual void SetPos(UINT Index, glm::vec3 Value)
 	{
 		assert(Index < Positions.size());
 		Positions[Index] = Value;
 	}
 
-	virtual void SetNormal(UINT Index, float3 Value)
+	virtual void SetNormal(UINT Index, glm::vec3 Value)
 	{
 		assert(Index < Normals.size());
 		Normals[Index] = Value;
 	}
 
-	virtual void SetUV(UINT Index, XMFLOAT2 Value)
+	virtual void SetUV(UINT Index, glm::vec2 Value)
 	{
 		assert(Index < UVs.size());
 		UVs[Index] = Value;
@@ -211,9 +211,9 @@ public:
 
 	uint32								TriangleCount;
 	std::vector<SIndexedTriangle>		Triangles;
-	std::vector<float3>					Positions;	
-	std::vector<float3>					Normals;
-	std::vector<XMFLOAT2>				UVs;
+	std::vector<glm::vec3>				Positions;
+	std::vector<glm::vec3>				Normals;
+	std::vector<glm::vec2>				UVs;
 
 private: // -----------------------------------------------------------------
 

@@ -15,12 +15,14 @@
 // 0:off / 1:on
 #define ANTIALIASING 1
 
-typedef float2 XMFLOAT2;
-typedef float3 XMFLOAT3;
-typedef float4 XMFLOAT4;
-typedef float4 XMVECTOR;
-typedef float4x4 XMMATRIX;
+#ifdef __cplusplus
+typedef float2 glm::vec2;
+typedef float3 glm::vec3;
+typedef float4 glm::vec4;
+typedef float4 glm::vec4;
+typedef float4x4 glm::mat4;
 typedef uint UINT;
+#endif
 
 struct Viewport
 {
@@ -38,11 +40,11 @@ struct RayGenConstantBuffer
 
 struct SceneConstantBuffer
 {
-    XMMATRIX clipFromWorld;
-    XMMATRIX worldFromClip;
-    XMVECTOR cameraPosition;
+    float4x4 clipFromWorld;
+    float4x4 worldFromClip;
+    float4 cameraPosition;
     // .x:frac(time), y.:frac(time*0.1)
-    XMVECTOR sceneParam0;
+    float4 sceneParam0;
     uint raytraceFlags;
     uint FrameIndex;
     uint dummy[2];
@@ -51,9 +53,9 @@ struct SceneConstantBuffer
 // see struct VFormatFull
 struct Vertex
 {
-    XMFLOAT3 position;
-    XMFLOAT3 normal;
-    XMFLOAT2 uv;
+    float3 position;
+    float3 normal;
+    float2 uv;
 };
 
 #endif // RAYTRACINGHLSLCOMPAT_H

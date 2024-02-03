@@ -97,15 +97,16 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     // Update the model matrix.
 //    float angle = static_cast<float>(e.TotalTime * 90.0);
-    float angle = 0.0f;
-    const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-    m_ModelMatrix = Convert(XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle))));
+//    float angle = 0.0f;
+//    const glm::vec4 rotationAxis(0, 1, 1, 0);
+//    m_ModelMatrix = glm::transpose(XMMatrixRotationAxis(rotationAxis, ConvertToRadians(angle)));
+    m_ModelMatrix = glm::mat4(1);
 
     // Update the view matrix.
-    const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
-    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
-    const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-    m_ViewMatrix = Convert(XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection)));
+    const glm::vec3 eyePosition(0, 0, -10);
+    const glm::vec3 focusPoint(0, 0, 0);
+    const glm::vec3 upDirection(0, 1, 0);
+    m_ViewMatrix = glm::transpose(glm::lookAtLH(eyePosition, focusPoint, upDirection));
 
     extern CRelativeMouseInput g_MouseInput;
     CRelativeMouseInput::MouseInputButtons Buttons = g_MouseInput.GetMouseButtons();
@@ -140,7 +141,7 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     }
 
     glm::vec3 forward = camera.GetForward();
-    glm::vec3 left = normalize(cross(forward, camera.GetUp()));
+    glm::vec3 left = glm::normalize(glm::cross(forward, camera.GetUp()));
 
     float dt = (float)e.ElapsedTime;
     forward *= movementSpeed * dt;
@@ -172,12 +173,13 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     // world->eye aka eyeFromWorld
     //camera.GetDirX();
-    //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
+    //m_ViewMatrix = glm::inverse(0, camera.GetViewMatrix());
     m_ViewMatrix = glm::transpose(camera.GetViewMatrix());
 
     // Update the projection matrix.
-    float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
-    m_ProjectionMatrix = Convert(XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), aspectRatio, 0.1f, 100.0f)));
+//    float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
+    // XMMatrixPerspectiveFovLH
+    m_ProjectionMatrix = glm::transpose(glm::perspectiveFovLH<float>(fieldOfView * PI / 180, (float)GetClientWidth(), (float)GetClientHeight(), 0.1f, 100.0f));
 }
 
 

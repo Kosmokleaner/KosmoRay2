@@ -9,7 +9,7 @@ public:
 
 	// VertexData[VertexId]
 	// IndexData[TriangelId*3 + 0/1/2]
-	void Construct(UINT TriangleCount, float3* VertexData, UINT* IndexData);
+	void Construct(UINT TriangleCount, glm::vec3* VertexData, UINT* IndexData);
 
 	// @return Index
 	UINT AddHalfNode();
