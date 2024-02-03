@@ -140,7 +140,7 @@ bool App3::LoadContent()
 
     // A single 32-bit constant root parameter that is used by the vertex shader.
     CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-    rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[0].InitAsConstants(sizeof(glm::mat4) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
     rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
@@ -225,10 +225,10 @@ void App3::OnUpdate(UpdateEventArgs& e)
 
     {
         // clipFromWorld = clipFromEye * eyeFromWorld
-        XMMATRIX clipFromWorld = Convert(m_ViewMatrix * m_ProjectionMatrix);
-        m_sceneCB->cameraPosition = XMFLOAT4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
-        m_sceneCB->clipFromWorld = XMMatrixTranspose(clipFromWorld);
-        m_sceneCB->worldFromClip = XMMatrixTranspose(XMMatrixInverse(nullptr, clipFromWorld));
+        glm::mat4 clipFromWorld = m_ViewMatrix * m_ProjectionMatrix;
+        m_sceneCB->cameraPosition = glm::vec4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
+        m_sceneCB->clipFromWorld = glm::transpose(clipFromWorld);
+        m_sceneCB->worldFromClip = glm::transpose(glm::inverse(clipFromWorld));
     }
 }
 
