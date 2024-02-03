@@ -177,7 +177,7 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
-    m_ProjectionMatrix = XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), aspectRatio, 0.1f, 100.0f));
+    m_ProjectionMatrix = Convert(XMMatrixTranspose(XMMatrixPerspectiveFovLH(XMConvertToRadians(fieldOfView), aspectRatio, 0.1f, 100.0f)));
 }
 
 

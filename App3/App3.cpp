@@ -225,7 +225,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
 
     {
         // clipFromWorld = clipFromEye * eyeFromWorld
-        XMMATRIX clipFromWorld = m_ProjectionMatrix * Convert(m_ViewMatrix);
+        XMMATRIX clipFromWorld = Convert(m_ViewMatrix * m_ProjectionMatrix);
         m_sceneCB->cameraPosition = XMFLOAT4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
         m_sceneCB->clipFromWorld = XMMatrixTranspose(clipFromWorld);
         m_sceneCB->worldFromClip = XMMatrixTranspose(XMMatrixInverse(nullptr, clipFromWorld));
@@ -552,7 +552,7 @@ void App3::BuildAccelerationStructures()
 
     // Allocate resources for acceleration structures.
     // Acceleration structures can only be placed in resources that are created in the default heap (or custom heap equivalent). 
-    // Default heap is OK since the application doesn’t need CPU read/write access to them. 
+    // Default heap is OK since the application doesnï¿½t need CPU read/write access to them. 
     // The resources that will contain acceleration structures must be created in the state D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, 
     // and must have resource flag D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS. The ALLOW_UNORDERED_ACCESS requirement simply acknowledges both: 
     //  - the system will be doing this type of access in its implementation of acceleration structure builds behind the scenes.

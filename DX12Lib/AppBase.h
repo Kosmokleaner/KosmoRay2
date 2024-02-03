@@ -69,7 +69,7 @@ protected:
     // world->eye aka eyeFromWorld
     glm::mat4 m_ViewMatrix = {};
     // eye->clip aka clipFromEye
-    DirectX::XMMATRIX m_ProjectionMatrix = {};
+    glm::mat4 m_ProjectionMatrix = {};
 
     CTransform camera;
 
