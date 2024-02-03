@@ -38,7 +38,7 @@ struct VFormatFull
 	{
 	}
 
-	VFormatFull(float3 InPos)	//later , TColorFixedBGRA InColor) 
+	VFormatFull(glm::vec3 InPos)	//later , TColorFixedBGRA InColor) 
 		: Pos(InPos)
 		, UV(0, 0)
 		//		, TangentU(0, 0, 0)
@@ -52,7 +52,7 @@ struct VFormatFull
 				| ((AARRGGBB & 0xff)<<16);*/
 	}
 
-	VFormatFull(float3 InPos, float3 InTangentU, float3 InTangentV, float3 InTangentN, XMFLOAT2 InUV) //, TColorFixedBGRA InColor) 
+	VFormatFull(glm::vec3 InPos, glm::vec3 InTangentU, glm::vec3 InTangentV, glm::vec3 InTangentN, glm::vec2 InUV) //, TColorFixedBGRA InColor) 
 		: Pos(InPos)
 		//	, TangentU(InTangentU)
 		//	, TangentV(InTangentV)
@@ -61,11 +61,11 @@ struct VFormatFull
 	{
 	}
 
-	float3			Pos;
+    glm::vec3			Pos;
 	//	float3			TangentU;
 	//	float3			TangentV;
-	float3			TangentN;
-	XMFLOAT2			UV;
+    glm::vec3			TangentN;
+    glm::vec2			UV;
 
 
 	// todo - hide DX at that level

@@ -17,14 +17,14 @@
 
 // todo: bad tangent and binormal, normal is smooth which looks bad for box
 static VFormatFull g_Vertices[8] = {
-    VFormatFull(float3(-1.0f, -1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f)), // 0
-    VFormatFull(float3(-1.0f,  1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f,  1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f)), // 1
-    VFormatFull(float3(1.0f,  1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f,  1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f)), // 2
-    VFormatFull(float3(1.0f, -1.0f, -1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f)), // 3
-    VFormatFull(float3(-1.0f, -1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f, -1.0f,  1.0f), XMFLOAT2(0.0f, 0.0f)), // 4
-    VFormatFull(float3(-1.0f,  1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(-1.0f,  1.0f,  1.0f), XMFLOAT2(0.0f, 1.0f)), // 5
-    VFormatFull(float3(1.0f,  1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f,  1.0f,  1.0f), XMFLOAT2(1.0f, 1.0f)), // 6
-    VFormatFull(float3(1.0f, -1.0f,  1.0f), float3(0,0,0), float3(0,0,0), float3(1.0f, -1.0f,  1.0f), XMFLOAT2(1.0f, 0.0f))  // 7
+    VFormatFull(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec2(0.0f, 0.0f)), // 0
+    VFormatFull(glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec2(0.0f, 1.0f)), // 1
+    VFormatFull(glm::vec3(1.0f,  1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f,  1.0f, -1.0f), glm::vec2(1.0f, 1.0f)), // 2
+    VFormatFull(glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f, -1.0f, -1.0f), glm::vec2(1.0f, 0.0f)), // 3
+    VFormatFull(glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec2(0.0f, 0.0f)), // 4
+    VFormatFull(glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec2(0.0f, 1.0f)), // 5
+    VFormatFull(glm::vec3(1.0f,  1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f,  1.0f,  1.0f), glm::vec2(1.0f, 1.0f)), // 6
+    VFormatFull(glm::vec3(1.0f, -1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f, -1.0f,  1.0f), glm::vec2(1.0f, 0.0f))  // 7
 };
 
 static Mesh::IndexType g_Indicies[36] =
@@ -83,7 +83,7 @@ bool App2::LoadContent()
 
     // A single 32-bit constant root parameter that is used by the vertex shader.
     CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-    rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[0].InitAsConstants(sizeof(glm::mat4) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
     rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);

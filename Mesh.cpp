@@ -249,7 +249,7 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
                     UV = IndexedMesh.UVs[SrcIndex.Index[2]];
                 }
 
-                MeshVertexData.push_back(VFormatFull(Pos, tangentU, tangentV, normal, UV)); // later, Color));
+                MeshVertexData.push_back(VFormatFull(Convert(Pos), Convert(tangentU), Convert(tangentV), Convert(normal), Convert(UV))); // later, Color));
             }
             else
             {
@@ -395,7 +395,7 @@ void Mesh::UpdateLocalMinMax()
     for (auto it = MeshVertexData.begin(); it != end; ++it)
     {
         const VFormatFull& v = *it;
-        float3 Pos = v.Pos;
+        float3 Pos = Convert(v.Pos);
 
         LocalMin = Min(LocalMin, Pos);
         LocalMax = Max(LocalMax, Pos);
