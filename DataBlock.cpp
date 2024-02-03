@@ -4,8 +4,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image.h"
 
-//#pragma comment(lib, "external/DirectXTK/lib/x64/Release/DirectXTK12.lib")
-#pragma comment(lib, "external/DirectXTK/lib/x64/Debug/DirectXTK12.lib")
+#ifdef _DEBUG
+    #pragma comment(lib, "external/DirectXTK/lib/x64/Debug/DirectXTK12.lib")
+#else
+    #pragma comment(lib, "external/DirectXTK/lib/x64/Release/DirectXTK12.lib")
+#endif
 
 #include "external/DirectXTK/include/ResourceUploadBatch.h"
 
