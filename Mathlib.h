@@ -4,12 +4,15 @@
 #include <cmath>
 #include <assert.h>
 
+
+#include "external/glm/glm.hpp"
+#include "external/glm/gtc/quaternion.hpp"
+
 #include <directxmath.h>
 using namespace DirectX;
 
 #include <algorithm>			// std::swap
 #include <stdlib.h> // rand()
-
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
@@ -1169,3 +1172,36 @@ struct int2
 	}
 };
 
+
+inline XMMATRIX Convert(glm::mat4 input)
+{
+    input = glm::transpose(input);
+    XMMATRIX ret;
+    memcpy(&ret, &input, sizeof(ret));
+    return ret;
+}
+inline glm::mat4 Convert(XMMATRIX input)
+{
+    glm::mat4 ret;
+    memcpy(&ret, &input, sizeof(ret));
+    ret = glm::transpose(ret);
+    return ret;
+}
+inline glm::vec3 Convert(float3 input)
+{
+    glm::vec3 ret;
+    memcpy(&ret, &input, sizeof(ret));
+    return ret;
+}
+inline float3 Convert(glm::vec3 input)
+{
+    float3 ret;
+    memcpy(&ret, &input, sizeof(ret));
+    return ret;
+}
+inline glm::vec2 Convert(XMFLOAT2 input)
+{
+    glm::vec2 ret;
+    memcpy(&ret, &input, sizeof(ret));
+    return ret;
+}

@@ -2,9 +2,6 @@
 
 #include "Mathlib.h"
 
-#include "external/glm/glm.hpp"
-#include "external/glm/gtc/quaternion.hpp"
-
 class CTransform
 {
 public:
