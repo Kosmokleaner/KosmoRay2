@@ -27,3 +27,4 @@ https://www.youtube.com/watch?v=XZdRmJa9cKo
 * Blue noise textures from https://momentsingraphics.de/Media/BlueNoise/FreeBlueNoiseTextures.zip CC0-licensing
 * stb_image to load image file format https://github.com/nothings/stb/blob/master/stb_image.h 
 * DirectXTK from https://github.com/microsoft/DirectXTK12/wiki/ResourceUploadBatch MIT license
+* GLM OpenGL math library https://github.com/g-truc/glm

@@ -100,6 +100,29 @@
     <ClInclude Include="external\DearGPU\OBJMeshLoader.h" />
     <ClInclude Include="external\DearGPU\SimpleIndexedMesh.h" />
     <ClInclude Include="external\DearGPU\TangentSpaceCalculation.h" />
+    <ClInclude Include="external\glm\common.hpp" />
+    <ClInclude Include="external\glm\exponential.hpp" />
+    <ClInclude Include="external\glm\ext.hpp" />
+    <ClInclude Include="external\glm\fwd.hpp" />
+    <ClInclude Include="external\glm\geometric.hpp" />
+    <ClInclude Include="external\glm\glm.hpp" />
+    <ClInclude Include="external\glm\integer.hpp" />
+    <ClInclude Include="external\glm\mat2x2.hpp" />
+    <ClInclude Include="external\glm\mat2x3.hpp" />
+    <ClInclude Include="external\glm\mat2x4.hpp" />
+    <ClInclude Include="external\glm\mat3x2.hpp" />
+    <ClInclude Include="external\glm\mat3x3.hpp" />
+    <ClInclude Include="external\glm\mat3x4.hpp" />
+    <ClInclude Include="external\glm\mat4x2.hpp" />
+    <ClInclude Include="external\glm\mat4x3.hpp" />
+    <ClInclude Include="external\glm\mat4x4.hpp" />
+    <ClInclude Include="external\glm\matrix.hpp" />
+    <ClInclude Include="external\glm\packing.hpp" />
+    <ClInclude Include="external\glm\trigonometric.hpp" />
+    <ClInclude Include="external\glm\vec2.hpp" />
+    <ClInclude Include="external\glm\vec3.hpp" />
+    <ClInclude Include="external\glm\vec4.hpp" />
+    <ClInclude Include="external\glm\vector_relational.hpp" />
     <ClInclude Include="external\stb_image.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="Mesh.h" />
@@ -121,6 +144,7 @@
     <ClInclude Include="RenderScene.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="external\glm\CMakeLists.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -249,6 +273,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\;$(IntDir)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

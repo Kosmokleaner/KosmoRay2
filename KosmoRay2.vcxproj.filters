@@ -28,6 +28,9 @@
     <Filter Include="Renderer">
       <UniqueIdentifier>{0e215b98-22ab-4336-9bbb-6ce5ada1ac21}</UniqueIdentifier>
     </Filter>
+    <Filter Include="External\glm">
+      <UniqueIdentifier>{d7093c42-6028-4f7a-89bf-d6329bc0e25a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="App2\shaders\VertexShader.hlsl">
@@ -219,9 +222,81 @@
     <ClInclude Include="RenderScene.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="external\glm\mat4x3.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat4x4.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\matrix.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\vec2.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\vec3.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\vec4.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\common.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\exponential.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\ext.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\fwd.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\geometric.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\glm.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\integer.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat2x2.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat2x3.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat2x4.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat3x2.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat3x3.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat3x4.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\mat4x2.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\packing.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\trigonometric.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
+    <ClInclude Include="external\glm\vector_relational.hpp">
+      <Filter>External\glm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="external\glm\CMakeLists.txt">
+      <Filter>External\glm</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DX12Lib\DX12Lib.rc">
