@@ -225,7 +225,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
 
     {
         // clipFromWorld = clipFromEye * eyeFromWorld
-        XMMATRIX clipFromWorld = m_ProjectionMatrix * m_ViewMatrix;
+        XMMATRIX clipFromWorld = m_ProjectionMatrix * Convert(m_ViewMatrix);
         m_sceneCB->cameraPosition = XMFLOAT4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
         m_sceneCB->clipFromWorld = XMMatrixTranspose(clipFromWorld);
         m_sceneCB->worldFromClip = XMMatrixTranspose(XMMatrixInverse(nullptr, clipFromWorld));

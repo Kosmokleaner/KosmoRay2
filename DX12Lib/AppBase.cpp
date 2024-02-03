@@ -99,13 +99,13 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 //    float angle = static_cast<float>(e.TotalTime * 90.0);
     float angle = 0.0f;
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-    m_ModelMatrix = XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle)));
+    m_ModelMatrix = Convert(XMMatrixTranspose(XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle))));
 
     // Update the view matrix.
     const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
     const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
     const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-    m_ViewMatrix = XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection));
+    m_ViewMatrix = Convert(XMMatrixTranspose(XMMatrixLookAtLH(eyePosition, focusPoint, upDirection)));
 
     extern CRelativeMouseInput g_MouseInput;
     CRelativeMouseInput::MouseInputButtons Buttons = g_MouseInput.GetMouseButtons();
@@ -173,8 +173,7 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     // world->eye aka eyeFromWorld
     //camera.GetDirX();
     //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
-    glm::mat4 m = glm::transpose(camera.GetViewMatrix());
-    memcpy(&m_ViewMatrix, &m, sizeof(m_ViewMatrix));
+    m_ViewMatrix = glm::transpose(camera.GetViewMatrix());
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());

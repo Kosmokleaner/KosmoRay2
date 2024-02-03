@@ -1175,7 +1175,7 @@ struct int2
 
 inline XMMATRIX Convert(glm::mat4 input)
 {
-    input = glm::transpose(input);
+//    input = glm::transpose(input);
     XMMATRIX ret;
     memcpy(&ret, &input, sizeof(ret));
     return ret;
@@ -1184,7 +1184,7 @@ inline glm::mat4 Convert(XMMATRIX input)
 {
     glm::mat4 ret;
     memcpy(&ret, &input, sizeof(ret));
-    ret = glm::transpose(ret);
+//    ret = glm::transpose(ret);
     return ret;
 }
 inline glm::vec3 Convert(float3 input)

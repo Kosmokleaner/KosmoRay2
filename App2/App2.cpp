@@ -201,7 +201,7 @@ void App2::OnRender(RenderEventArgs& e)
 //    // same as
 //    XMMATRIX mvpMatrix = m_ModelMatrix * m_ViewMatrix * m_ProjectionMatrix;
 
-    XMMATRIX mvpMatrix = m_ProjectionMatrix * m_ViewMatrix * m_ModelMatrix;
+    XMMATRIX mvpMatrix = m_ProjectionMatrix * Convert(m_ModelMatrix * m_ViewMatrix);
     mvpMatrix = XMMatrixTranspose(mvpMatrix);
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
 
