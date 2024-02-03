@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mathlib.h" // int2
+#include "external/glm/vec2.hpp" // glm::ivec2
 #include "windows.h" // HWND
 
 //
@@ -49,7 +49,7 @@ public:
 		// relative mouse movement, 0 when not captured
 		int					RelativeY;
 		// absolute mouse position on the screen (does not change when captured)
-		int2				AbsolutePos;
+        glm::ivec2			AbsolutePos;
 		// current button state
 		MouseInputButtons	ButtonMask;
 	};
@@ -99,7 +99,7 @@ public:
 	
 	void *					UserData;
 
-	int2 GetAbsPos() const { return Current.AbsolutePos;  }
+    glm::ivec2 GetAbsPos() const { return Current.AbsolutePos;  }
 
 private: // ---------------------------------------
 
@@ -117,7 +117,7 @@ private: // ---------------------------------------
 	// current button state and position
 	MouseInputData			Current;
 	// absolute mouse position
-	int2					DragLastPos;
+    glm::ivec2				DragLastPos;
 	// 0 if not, name is used for debugging
 	const char*				UserCapture;
 	

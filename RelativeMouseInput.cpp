@@ -63,7 +63,7 @@ void CRelativeMouseInput::WndProc(HWND Wnd, UINT message, WPARAM wParam, LPARAM 
 				Current.ButtonMask = (MouseInputButtons)(wParam & MIB_All);
 	//			UpdateCaptureState();
 
-//				int2 GlobalPos(LOWORD(lParam), HIWORD(lParam));
+//				glm::ivec2 GlobalPos(LOWORD(lParam), HIWORD(lParam));
 			}
 			break;
 	}
@@ -176,7 +176,7 @@ void CRelativeMouseInput::UpdateCaptureState()
 		SetCapture(ObservedWindow);
 		POINT Center = GetScreenCenter();
 		SetCursorPos(Center.x, Center.y);
-		DragLastPos = int2(Center.x, Center.y);
+		DragLastPos = glm::ivec2(Center.x, Center.y);
 
 /*
 		RECT rect;
