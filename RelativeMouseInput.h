@@ -115,13 +115,13 @@ private: // ---------------------------------------
 	// --------------------------------------------
 
 	// current button state and position
-	MouseInputData			Current;
+	MouseInputData Current;
 	// absolute mouse position
-    glm::ivec2				DragLastPos;
+    glm::ivec2 DragLastPos = glm::ivec2(0.0f, 0.0f);
 	// 0 if not, name is used for debugging
-	const char*				UserCapture;
+	const char* UserCapture;
 	
-	HWND					ObservedWindow;
+	HWND ObservedWindow;
 
 	bool bCaptured;
 };

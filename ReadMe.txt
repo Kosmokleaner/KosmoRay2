@@ -12,7 +12,8 @@ Code style (not yet fully executed):
 
 todo:
 * Better TAA like Feedback
-* Blue noise texture use
+* better Blue noise texture use
+* ReSTIR
 * raytrace scene object
 * shader class
 * with Mock enabled RenderDoc crashes

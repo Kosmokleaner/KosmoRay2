@@ -84,6 +84,7 @@ private:
     Mesh meshA;
     Mesh meshB;
 
+    // blue noise texture
     DataBlock m_texture;
 
     D3D12_GPU_DESCRIPTOR_HANDLE m_allIB = {};

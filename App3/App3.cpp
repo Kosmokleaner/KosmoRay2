@@ -69,16 +69,16 @@ void App3::CreateRootSignatures()
     // Global Root Signature
     // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
     {
-        CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2];
+        CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2] = {};
         UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);       // space 0: u0
         UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);       // space 1: u0 and u1
         CD3DX12_DESCRIPTOR_RANGE UAVFeedback;
         UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space 0: u1
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1];
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1] = {};
         SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space 101: t0: IndexBuffer, 2 SRV for 2 meshes
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1];
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1] = {};
         SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space 102: t0: VertexBuffer, 2 SRV for 2 meshes
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorTex[1];
+        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorTex[1] = {};
         SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);    // space 103: t0: Texture
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
