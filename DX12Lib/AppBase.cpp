@@ -124,8 +124,8 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     static bool first = true;
     if (first) {
-        camera.SetPos(float3(0, 0, -10));
-        camera.SetRotation(float2(3.1415f, 0.0f));
+        camera.SetPos(glm::vec3(0, 0, -10));
+        camera.SetRotation(glm::vec2(3.1415f, 0.0f));
         first = false;
     }
 
@@ -139,14 +139,14 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
         camera.Rotate(rotateSpeed * data.RelativeX, -rotateSpeed * data.RelativeY * fInvMouse);
     }
 
-    float3 forward = camera.GetForward();
-    float3 left = normalize(cross(forward, camera.GetUp()));
+    glm::vec3 forward = camera.GetForward();
+    glm::vec3 left = normalize(cross(forward, camera.GetUp()));
 
     float dt = (float)e.ElapsedTime;
     forward *= movementSpeed * dt;
     left *= movementSpeed * dt;
 
-    float3 move(0, 0, 0);
+    glm::vec3 move(0, 0, 0);
 
     if (m_pWindow->isActive())
     {
@@ -173,7 +173,8 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
     // world->eye aka eyeFromWorld
     //camera.GetDirX();
     //m_ViewMatrix = XMMatrixInverse(0, camera.GetViewMatrix());
-    m_ViewMatrix = XMMatrixTranspose(camera.GetViewMatrix());
+    glm::mat4 m = glm::transpose(camera.GetViewMatrix());
+    memcpy(&m_ViewMatrix, &m, sizeof(m_ViewMatrix));
 
     // Update the projection matrix.
     float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
