@@ -196,14 +196,9 @@ void App2::OnRender(RenderEventArgs& e)
 
     // worldFromLocal * eyeFromWorld * clipFromEye
 
-//    XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-//    mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
-//    // same as
-//    XMMATRIX mvpMatrix = m_ModelMatrix * m_ViewMatrix * m_ProjectionMatrix;
+    glm::mat4 mvpMatrix = glm::transpose(m_ModelMatrix * m_ViewMatrix * m_ProjectionMatrix);
 
-    XMMATRIX mvpMatrix = Convert(m_ModelMatrix * m_ViewMatrix * m_ProjectionMatrix);
-    mvpMatrix = XMMatrixTranspose(mvpMatrix);
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(glm::mat4) / 4, &mvpMatrix, 0);
 
     commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 
