@@ -30,7 +30,7 @@ bool CLineReader::Open(const wchar_t*FileName, const size_t MaxBufferSize)
 
 		FileSize = _filelength(LocalHandle);
 
-		Buffer.resize(Min(FileSize, MaxBufferSize));
+		Buffer.resize(glm::min(FileSize, MaxBufferSize));
 
 		_close(LocalHandle);
 

@@ -406,16 +406,6 @@ inline std::string ws2s(const std::wstring& wstr)
 */
 
 
-// don't use macro min() max(), use this instead
-inline int Max(int x, int y) { return (x > y) ? x : y; }
-inline int Min(int x, int y) { return (x < y) ? x : y; }
-inline uint32 Max(uint32 x, uint32 y) { return (x > y) ? x : y; }
-inline uint32 Min(uint32 x, uint32 y) { return (x < y) ? x : y; }
-inline size_t Max(size_t x, size_t y) { return (x > y) ? x : y; }
-inline size_t Min(size_t x, size_t y) { return (x < y) ? x : y; }
-inline float Max(float x, float y) { return (x > y) ? x : y; }
-inline float Min(float x, float y) { return (x < y) ? x : y; }
-
 
 // ported from HLSL, should be moved in MathUtils
 // public domain: https://github.com/elfrank/raytracer-gpupro4/blob/master/RayTracerCS/Shaders/Core/Intersection.hlsl
@@ -429,14 +419,14 @@ inline glm::vec2 IntersectBox(glm::vec3 RayStart, glm::vec3 RayInvDir, glm::vec3
 	DiffMax *= RayInvDir;
 	DiffMin *= RayInvDir;
 
-	Ret[0] = Min(DiffMin.x, DiffMax.x);
-	Ret[1] = Max(DiffMin.x, DiffMax.x);
+	Ret[0] = glm::min(DiffMin.x, DiffMax.x);
+	Ret[1] = glm::max(DiffMin.x, DiffMax.x);
 
-	Ret[0] = Max(Ret[0], Min(DiffMin.y, DiffMax.y));
-	Ret[1] = Min(Ret[1], Max(DiffMin.y, DiffMax.y));
+	Ret[0] = glm::max(Ret[0], glm::min(DiffMin.y, DiffMax.y));
+	Ret[1] = glm::min(Ret[1], glm::max(DiffMin.y, DiffMax.y));
 
-	Ret[0] = Max(Ret[0], Min(DiffMin.z, DiffMax.z));
-	Ret[1] = Min(Ret[1], Max(DiffMin.z, DiffMax.z));
+	Ret[0] = glm::max(Ret[0], glm::min(DiffMin.z, DiffMax.z));
+	Ret[1] = glm::min(Ret[1], glm::max(DiffMin.z, DiffMax.z));
 
 	//empty interval
 	if (Ret[0] > Ret[1])

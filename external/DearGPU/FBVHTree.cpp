@@ -204,7 +204,7 @@ uint32 FBVHTree::UpdateSubtreeHeights(uint32 Index)
 		uint32 DepthL = UpdateSubtreeHeights(Node.ChildIndex);
 		uint32 DepthR = UpdateSubtreeHeights(Node.ChildIndex + 1);
 
-		Ret = Max(DepthL, DepthR) + 1;
+		Ret = glm::max(DepthL, DepthR) + 1;
 	}
 
 	Node.SubtreeHeight = Ret;

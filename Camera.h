@@ -9,9 +9,9 @@ public:
 
     CTransform(glm::vec3 InPos = glm::vec3(0, 0, 0))
     {
-        //		eye = glm::vec3(2.0f, 20.7f, 110.0f);
         SetPos(InPos);
-        Rot = glm::quat(1,0,0,0);
+        rot = glm::quat(1,0,0,0);
+//todo        scale = glm::vec3(1, 1, 1);
     }
 
     void SetPos(glm::vec3 InPos)
@@ -50,12 +50,12 @@ public:
         const float yborder = 0.00001f;
 
         // clamp top
-        w.y = Max(w.y, -PI * 0.5f + yborder);
+        w.y = glm::max(w.y, -PI * 0.5f + yborder);
         // clamp bottom
-        w.y = Min(w.y, PI * 0.5f - yborder);
+        w.y = glm::min(w.y, PI * 0.5f - yborder);
 
         glm::vec3 euler(w.y, w.x, 0);
-        Rot = glm::quat(euler);
+        rot = glm::quat(euler);
 //        Rot.SetRot(XMQuaternionRotationRollPitchYaw(w.y, w.x, 0));
     }
 /*
@@ -76,7 +76,7 @@ public:
     // @return forward vector, is normalized
     glm::vec3 GetForward() const
     {
-        return Rot * glm::vec3(0, 0, -1);
+        return rot * glm::vec3(0, 0, -1);
     }
 
     // @return up vector, is normalized
@@ -88,17 +88,17 @@ public:
     // @return right vector, is normalized
     glm::vec3 GetDirX() const
     {
-        return Rot * glm::vec3(1, 0, 0);
+        return rot * glm::vec3(1, 0, 0);
     }
     // @return up vector, is normalized
     glm::vec3 GetDirY() const
     {
-        return Rot * glm::vec3(0, 1, 0);
+        return rot * glm::vec3(0, 1, 0);
     }
     // @return back vector, is normalized
     glm::vec3 GetDirZ() const
     {
-        return Rot * glm::vec3(0, 0, 1);
+        return rot * glm::vec3(0, 0, 1);
     }
 
     glm::mat4 GetViewMatrix() const
@@ -119,7 +119,7 @@ public:
     // e.g. if this is n object matrix, b is in object space and the output is in world space
     glm::vec3 TransformPosition(const glm::vec3& x) const
     {
-        return eye + Rot * x;
+        return eye + rot * x;
     }
 
     // multiply, b is applied first
@@ -128,13 +128,14 @@ public:
         CTransform Ret;
 
         // The result represents the rotation a followed by the rotation b to be consistent with XMMatrixMulplity concatenation
-        Ret.Rot = a.Rot * b.Rot;
-        Ret.eye = a.eye + a.Rot * b.eye;
+        Ret.rot = a.rot * b.rot;
+        Ret.eye = a.eye + a.rot * b.eye;
 
         return Ret;
     }
 
-    glm::quat Rot;
+    glm::quat rot;
+//todo    glm::vec3 scale;
 
 protected:
     // camera center
