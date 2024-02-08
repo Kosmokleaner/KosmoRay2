@@ -179,7 +179,8 @@ void MyRaygenShader()
     // float2(0..1, 0..1) Blue Noise
     float2 jitterXY = g_Texture.Load(int3((DispatchRaysIndex().xy + move) % 256, 0)).rg;
 
-    uint startTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
+// IntelArc artifact with g_Texture.Load()
+//    uint startTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
 
     float2 lerpValues = (float2)DispatchRaysIndex() / (float2)DispatchRaysDimensions();
 
@@ -292,7 +293,9 @@ void MyRaygenShader()
 
         
 
-       uint endTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
+// IntelArc artifact with g_Texture.Load()
+//       uint endTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
+ 
 //       float f = endTime * 0.1f;
 //      RenderTarget[DispatchRaysIndex().xy] = float4(f,f,f, 1.0f);
 
