@@ -5,6 +5,9 @@ DXR experiments
 by Martin Mittring    1/21/2024
 
 ## Non triangle procedural geometry (analytical spheres in AABB BLAS)
+![Screenshot 2024-08-22 152212](https://github.com/user-attachments/assets/76500d2e-3d01-4bf6-a586-971208ad57a3)
+<img width="637" alt="image" src="https://github.com/user-attachments/assets/76500d2e-3d01-4bf6-a586-971208ad57a3">
+
 
 ## Beginnings of a Path Tracer (Skylight + AreaLight)
 <img width="589" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/50cf3ac3-76bf-49fe-b260-e75b4c415794">
