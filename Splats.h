@@ -2,17 +2,17 @@
 #include "Renderer.h"
 
 // per splat data
+#pragma pack(push,1)
 struct SplatData
 {
 	SplatData()
 	{
 	}
 
-    glm::vec3 Pos;
+	glm::vec3 position;
 	float radius;
-//    glm::vec3 TangentN;
-//    glm::vec2 UV;
 };
+#pragma pack(pop)
 
 
 class Splats
@@ -26,16 +26,14 @@ public:
 	// build bottomLevelAccelerationStructure
     void BuildAccelerationStructures(Renderer& renderer);
 
+	UINT CreateSRVs(Renderer& renderer);
 	void Reset();
 
 	std::vector<SplatData> splatData;
 
 	D3DBuffer splatBuffer;
 	D3DBuffer aabbBuffer;
-	D3D12_VERTEX_BUFFER_VIEW splatBufferView;
 
 private:
-
-	void init();
 };
 

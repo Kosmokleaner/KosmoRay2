@@ -55,15 +55,23 @@ ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 // sizeof(IndexType) 2:16bit, 4:32bit
 #define INDEX_STRIDE 4
 
+// see struct VFormatFull
+struct Splat
+{
+    float3 position;
+    float radius;
+};
+
 // index buffer (element size is INDEX_STRIDE)
 ByteAddressBuffer g_indices[] : register(t0, space101);
 // vertex buffer
 StructuredBuffer<Vertex> g_vertices[] : register(t0, space102);
+Texture2D<float4> g_Texture : register(t0, space103);
+StructuredBuffer<Splat> g_splats[] : register(t0, space104);
 
 // https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
 // { float2 barycentrics }
 typedef BuiltInTriangleIntersectionAttributes MyAttributes;
-Texture2D<float4> g_Texture : register(t0, space103);
 
 // update App3.cpp if this gets larger
 struct RayPayload
@@ -247,7 +255,7 @@ void MyRaygenShader()
 //        AO = 1;
 
         rayDesc.Origin = rayDesc.Origin + rayDesc.Direction * payload.minT;
-        rayDesc.Origin += payload.normal * 0.01f;
+        rayDesc.Origin += payload.normal * 0.001f;
         payload.minT = rayDesc.TMin;
 
         float3 incomingLight = 0;
@@ -339,8 +347,27 @@ void MyRaygenShader()
 [shader("closesthit")]
 void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 {
-    payload.primitiveIndex = PrimitiveIndex();
+    payload.primitiveIndex = PrimitiveIndex(); // triangle or splat
     payload.instanceIndex = InstanceIndex();
+    payload.minT = RayTCurrent();
+
+    if (HitKind() == 1)
+    {
+        // AABB / Sphere / splat intersection
+    
+        // todo
+    //    uint BIndex = InstanceID();
+        uint BIndex = 0;
+
+        Splat splat = g_splats[BIndex][payload.primitiveIndex];
+
+        payload.color = float3(0.6f, 0.5f, 0.4f);
+        float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
+        payload.normal = normalize(wsPos - splat.position);
+        return;
+    }
+
+
 
     // triangle corner vertex indices
     const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
@@ -369,8 +396,6 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     float3 interpolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
-    payload.minT = RayTCurrent();
-
     // visualize indexbuffer data as color
 //    payload.color = interpolIndex;
 
@@ -389,13 +414,6 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     //float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
     payload.normal = normalize(worldNormal);
-
-    if (HitKind() == 1)
-    {
-        payload.color = float3(100, 10, 10);
-        return;
-    }
-
 }
 
 // from https://gist.github.com/wwwtyro/beecc31d65d1004f5a9d
@@ -537,16 +555,47 @@ void MyMissShader(inout RayPayload payload)
     payload.color = skyColor;
 }
 
+// Inigo Quilez sphere ray intersection
+// @param rayDir must be normalized
+// https://iquilezles.org/articles/intersectors
+float2 hit_sphere(float3 center, float radius, float3 rayStart, float3 rayDir)
+{
+    float3 oc = rayStart - center;
+    float b = dot(oc, rayDir);
+    float3 qc = oc - b * rayDir;
+    float h = radius * radius - dot( qc, qc );
+    if( h < 0.0f ) 
+		return float2(-1, -1); // no intersection
+    h = sqrt( h );
+    return float2(-b -h, -b + h);
+}
+
+
 [shader("intersection")]
 void MyIntersectShader()
 {
-	BuiltInTriangleIntersectionAttributes attr;
-	attr.barycentrics = 0.5f;
+    uint prim = PrimitiveIndex();
 
-	float t = 0.5f;
-	// 0-127, can query with: uint hitKind = HitKind()
+    // todo
+//    uint BIndex = InstanceID();
+    uint BIndex = 0;
+
+    Splat splat = g_splats[BIndex][prim];
+
+    // slide 153 https://intro-to-dxr.cwyman.org/presentations/IntroDXR_ShaderTutorial.pdf
+    float3 sphCenter = splat.position;
+    float sphRadius = splat.radius;
+
+    //	// 0-127, can query with: uint hitKind = HitKind()
 	uint hitKind = 1;
-	ReportHit(t, hitKind, attr);
+
+    float2 hit2 = hit_sphere(sphCenter, sphRadius, ObjectRayOrigin(), ObjectRayDirection());
+    if (hit2.x >= 0.0f)
+    {
+        BuiltInTriangleIntersectionAttributes attr;
+        attr.barycentrics = 0.5f;
+        ReportHit(hit2.x, hitKind, attr );
+    }
 }
 
 

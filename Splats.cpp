@@ -8,18 +8,8 @@ void Splats::CreateRenderMesh(Renderer& renderer)
 	AllocateUploadBuffer(device.Get(), splatData.data(), splatData.size() * sizeof(splatData[0]), &splatBuffer.resource, L"SplatBuffer");
 
 	NAME_D3D12_OBJECT(splatBuffer.resource);
-
-	init();
 }
 
-void Splats::init()
-{
-    assert(!splatData.empty());
-
-	splatBufferView.BufferLocation = splatBuffer.resource->GetGPUVirtualAddress();
-	splatBufferView.StrideInBytes = sizeof(SplatData);
-	splatBufferView.SizeInBytes = (UINT)splatData.size() * splatBufferView.StrideInBytes;
-}
 
 void Splats::Reset()
 {
@@ -38,12 +28,12 @@ void Splats::BuildAccelerationStructures(Renderer& renderer)
     {
         D3D12_RAYTRACING_AABB aabb;
 
-        aabb.MinX = el.Pos.x - el.radius;
-		aabb.MinY = el.Pos.y - el.radius;
-		aabb.MinZ = el.Pos.z - el.radius;
-		aabb.MaxX = el.Pos.x + el.radius;
-		aabb.MaxY = el.Pos.y + el.radius;
-		aabb.MaxZ = el.Pos.z + el.radius;
+        aabb.MinX = el.position.x - el.radius;
+		aabb.MinY = el.position.y - el.radius;
+		aabb.MinZ = el.position.z - el.radius;
+		aabb.MaxX = el.position.x + el.radius;
+		aabb.MaxY = el.position.y + el.radius;
+		aabb.MaxZ = el.position.z + el.radius;
 
         aabs.push_back(aabb);
     }
@@ -111,3 +101,7 @@ void Splats::BuildAccelerationStructures(Renderer& renderer)
     commandQueue->WaitForFenceValue(fenceValue);
 }
 
+UINT Splats::CreateSRVs(Renderer& renderer)
+{
+	return renderer.CreateBufferSRV(&splatBuffer, (UINT)splatData.size(), sizeof(splatData[0]));
+}

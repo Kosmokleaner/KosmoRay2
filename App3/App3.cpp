@@ -11,7 +11,7 @@
 #include "Mathlib.h"
 #include <Mock12.h>
 
-#include <d3dcompiler.h> // D3DReadFileToBlob
+//#include <d3dcompiler.h> // D3DReadFileToBlob
 
 // only on NVidia
 bool g_NVAPI_enabled = false;
@@ -27,13 +27,15 @@ const wchar_t* c_intersectShaderName = L"MyIntersectShader";
 
 namespace GlobalRootSignatureParams {
     enum Value {
-        OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (Nvidia)
+        OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (NVidia)
         FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
-        IndexBuffer,                // DescriptorTable      SRV space100: t0
-        VertexBuffer,               // DescriptorTable      SRV space101: t0 
-        TextureSlot,                // DescriptorTable      SRV space102: t0
+        IndexBuffer,                // DescriptorTable      SRV space101: t0: indices[IBIndex][]
+        VertexBuffer,               // DescriptorTable      SRV space102: t0: vertices[VBIndex][]
+        TextureSlot,                // DescriptorTable      SRV space103: t0: g_Texture[]
+		SplatBuffer,                // DescriptorTable      SRV space104: t0: splats[BIndex][]
+        // -----
         Count
     };
 }
@@ -73,16 +75,18 @@ void App3::CreateRootSignatures()
     // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
     {
         CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2] = {};
-        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);       // space 0: u0
-        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);       // space 1: u0 and u1
+        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);       // space0: u0
+        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);       // space1: u0 and u1
         CD3DX12_DESCRIPTOR_RANGE UAVFeedback;
-        UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space 0: u1
+        UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space0: u1
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1] = {};
-        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space 101: t0: IndexBuffer, 2 SRV for 2 meshes
+        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space101: t0: IndexBuffer, 2 SRV for 2 meshes
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1] = {};
-        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space 102: t0: VertexBuffer, 2 SRV for 2 meshes
+        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space102: t0: VertexBuffer, 2 SRV for 2 meshes
         CD3DX12_DESCRIPTOR_RANGE SRVDescriptorTex[1] = {};
-        SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);    // space 103: t0: Texture
+        SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);   // space103: t0: Texture
+		CD3DX12_DESCRIPTOR_RANGE SRVDescriptorSplat[1] = {};
+		SRVDescriptorSplat[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 104); // space104: t0: SplatBuffer
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
@@ -92,6 +96,7 @@ void App3::CreateRootSignatures()
         rootParameters[GlobalRootSignatureParams::IndexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorIB), SRVDescriptorIB);
         rootParameters[GlobalRootSignatureParams::VertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorVB), SRVDescriptorVB);
         rootParameters[GlobalRootSignatureParams::TextureSlot].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorTex), SRVDescriptorTex);
+		rootParameters[GlobalRootSignatureParams::SplatBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorSplat), SRVDescriptorSplat);
 
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
@@ -192,8 +197,8 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::IndexBuffer, m_allIB);
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffer, m_allVB);
-
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::TextureSlot, m_texture.m_UAVGpuDescriptor);
+	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::SplatBuffer, m_allSplats);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -542,8 +547,9 @@ void App3::BuildAccelerationStructures()
             {
                 // AABB procedural
 
+				dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = 1.0f;
 				dst->Transform[0][3] = 0.0f;
-				dst->Transform[1][3] = -3.0f;
+				dst->Transform[1][3] = 0.0f;
 				dst->Transform[2][3] = 0.0f;
 
                 dst->AccelerationStructure = splatA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
@@ -729,12 +735,20 @@ void App3::CreateDeviceDependentResources()
     assert(ok);
 
     {
-        SplatData a;
-        a.Pos = glm::vec3(0, 0, 0);
-        a.radius = 1.0f;
-//		a.TangentN = glm::vec3(0, 0, 0);
-//		a.Pos = glm::vec3(0, 0, 0);
-        splatA.splatData.push_back(a);
+        uint32 count = 64;
+        for (uint32 i = 0; i < count; ++i)
+        {
+            float f = i / (float)count * PI * 2;
+
+            SplatData a;
+
+//            a.Pos = glm::vec3(sinf(f) * 2, 0, cosf(f) * 2);
+//            a.radius = 0.2f + 0.1f * sinf(f * 6.0f);
+			a.position = glm::vec3(sinf(f) * 2, 0, cosf(f) * 2);
+            a.radius = 0.2f + 0.1f * sinf(f * 6.0f);
+
+            splatA.splatData.push_back(a);
+        }
         splatA.CreateRenderMesh(renderer);
     }
 
@@ -746,6 +760,8 @@ void App3::CreateDeviceDependentResources()
         UINT baseDescriptorIndexVB =
             meshA.CreateSRVs(renderer, 1);
             meshB.CreateSRVs(renderer, 1);
+        UINT baseDescriptorIndexSplat =
+            splatA.CreateSRVs(renderer);
 
         m_allIB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
             renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
@@ -755,6 +771,10 @@ void App3::CreateDeviceDependentResources()
             renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
             baseDescriptorIndexVB,
             renderer.descriptorHeap.maxSize);
+		m_allSplats = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			baseDescriptorIndexSplat,
+			renderer.descriptorHeap.maxSize);
     }
 
 
