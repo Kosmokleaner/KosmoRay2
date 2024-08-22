@@ -11,8 +11,6 @@
 #include "Mathlib.h"
 #include <Mock12.h>
 
-//#include <d3dcompiler.h> // D3DReadFileToBlob
-
 // only on NVidia
 bool g_NVAPI_enabled = false;
 

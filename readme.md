@@ -1,25 +1,19 @@
 # KosmoRay2
 
-DXR experiments
+DirectX 12 Ray tracing experiments
 
-by Martin Mittring    1/21/2024
-
-## Non triangle procedural geometry (analytical spheres in AABB BLAS)
-<img width="318" alt="image" src="https://github.com/user-attachments/assets/76500d2e-3d01-4bf6-a586-971208ad57a3">
-
-
-## Beginnings of a Path Tracer (Skylight + AreaLight)
-<img width="589" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/50cf3ac3-76bf-49fe-b260-e75b4c415794">
-
-## Ambient Occlusion
-<img width="411" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/98bdd472-3382-44bb-844f-eb731cfb7de7">
-
-## Interpolated Normals visualized
-
-<img width="358" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/112a28db-9806-4d86-b39f-d11a20158dcc">
-
-## Boolean mesh (triangle mesh against sphere)
-https://www.youtube.com/watch?v=XZdRmJa9cKo
+by Martin Mittring
+## History:
+* Non triangle procedural geometry (analytical spheres in AABB BLAS)
+  <img width="318" alt="image" src="https://github.com/user-attachments/assets/76500d2e-3d01-4bf6-a586-971208ad57a3">
+* 8/22/2024 Beginnings of a Path Tracer (Skylight + AreaLight)
+  <img width="589" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/50cf3ac3-76bf-49fe-b260-e75b4c415794">
+* Ambient Occlusion
+  <img width="411" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/98bdd472-3382-44bb-844f-eb731cfb7de7">
+* Interpolated Normals visualized
+  <img width="358" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/112a28db-9806-4d86-b39f-d11a20158dcc">
+* Boolean mesh (triangle mesh against sphere)
+  https://www.youtube.com/watch?v=XZdRmJa9cKo
 
 
 ## External / Third Party:
