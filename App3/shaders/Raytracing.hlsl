@@ -209,22 +209,29 @@ void MyRaygenShader()
     payload.instanceIndex = -1;
     payload.minT = payload.minTfront = rayDesc.TMax;
 
+    //RAY_FLAG flags = RAY_FLAG_CULL_BACK_FACING_TRIANGLES;
+    RAY_FLAG flags = RAY_FLAG_NONE;
+    uint instanceMask = ~0;
+
+    uint RayContributionToHitGroupIndex = 0;
+    uint MultiplierForGeometryContributionToHitGroupIndex = 1;
+    uint MissShaderIndex = 0;
 
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
-    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+    TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
     RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
 //    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
 
 #elif RAY_TRACING_EXPERIMENT == 1
-    TraceRay(Scene, g_sceneCB.raytraceFlags, ~0, 0, 1, 0, rayDesc, payload);
+    TraceRay(Scene, g_sceneCB.raytraceFlags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
     RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // normal
 
 #elif RAY_TRACING_EXPERIMENT == 2
 //    float AO = 0.0f;
-    TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload);
+    TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
 
     float3 hdr = 0;
 
@@ -258,7 +265,7 @@ void MyRaygenShader()
             payload2.color = float3(0.2f, 0.2f, 0.2f);
             payload2.minT = payload2.minTfront = rayDesc.TMax;
 
-            TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, ~0, 0, 1, 0, rayDesc, payload2);
+            TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
 //            incomingLight = payload2.color;
 
@@ -287,9 +294,9 @@ void MyRaygenShader()
 #endif
 
     // closesthit
-    //  TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, ~0, 0, 1, 0, ray, payload);
+    //  TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, ray, payload);
     // anyhit
-    //  TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, ~0, 0, 1, 0, ray, payload);
+    //  TraceRay(Scene, RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, ray, payload);
 
         
 
@@ -382,6 +389,13 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     //float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
     payload.normal = normalize(worldNormal);
+
+    if (HitKind() == 1)
+    {
+        payload.color = float3(100, 10, 10);
+        return;
+    }
+
 }
 
 // from https://gist.github.com/wwwtyro/beecc31d65d1004f5a9d
@@ -522,5 +536,18 @@ void MyMissShader(inout RayPayload payload)
 
     payload.color = skyColor;
 }
+
+[shader("intersection")]
+void MyIntersectShader()
+{
+	BuiltInTriangleIntersectionAttributes attr;
+	attr.barycentrics = 0.5f;
+
+	float t = 0.5f;
+	// 0-127, can query with: uint hitKind = HitKind()
+	uint hitKind = 1;
+	ReportHit(t, hitKind, attr);
+}
+
 
 #endif // RAYTRACING_HLSL

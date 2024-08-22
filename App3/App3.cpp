@@ -16,11 +16,14 @@
 // only on NVidia
 bool g_NVAPI_enabled = false;
 
-const wchar_t* c_hitGroupName = L"MyHitGroup";
+const wchar_t* c_hitGroupName1 = L"MyHitGroupTri";
+const wchar_t* c_hitGroupName2 = L"MyHitGroupAABB";
+
 const wchar_t* c_raygenShaderName = L"MyRaygenShader";
 const wchar_t* c_closestHitShaderName = L"MyClosestHitShader";
 const wchar_t* c_anyHitShaderName = L"MyAnyHitShader";
 const wchar_t* c_missShaderName = L"MyMissShader";
+const wchar_t* c_intersectShaderName = L"MyIntersectShader";
 
 namespace GlobalRootSignatureParams {
     enum Value {
@@ -204,10 +207,10 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
         // Since each shader table has only one shader record, the stride is same as the size.
         dispatchDesc.HitGroupTable.StartAddress = hitGroupShaderTable->GetGPUVirtualAddress();
         dispatchDesc.HitGroupTable.SizeInBytes = hitGroupShaderTable->GetDesc().Width;
-        dispatchDesc.HitGroupTable.StrideInBytes = dispatchDesc.HitGroupTable.SizeInBytes;
+        dispatchDesc.HitGroupTable.StrideInBytes = m_hitGroupShaderTableStrideInBytes;
         dispatchDesc.MissShaderTable.StartAddress = missShaderTable->GetGPUVirtualAddress();
         dispatchDesc.MissShaderTable.SizeInBytes = missShaderTable->GetDesc().Width;
-        dispatchDesc.MissShaderTable.StrideInBytes = dispatchDesc.MissShaderTable.SizeInBytes;
+        dispatchDesc.MissShaderTable.StrideInBytes = m_missShaderTableStrideInBytes;
         dispatchDesc.RayGenerationShaderRecord.StartAddress = rayGenShaderTable->GetGPUVirtualAddress();
         dispatchDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderTable->GetDesc().Width;
         dispatchDesc.Width = GetClientWidth();
@@ -383,16 +386,29 @@ void App3::CreateRaytracingPipelineStateObject()
         lib->DefineExport(c_closestHitShaderName);
         lib->DefineExport(c_anyHitShaderName);
         lib->DefineExport(c_missShaderName);
+		lib->DefineExport(c_intersectShaderName);
     }
 
     // Triangle hit group
     // A hit group specifies closest hit, any hit and intersection shaders to be executed when a ray intersects the geometry's triangle/AABB.
     // In this sample, we only use triangle geometry with a closest hit shader, so others are not set.
-    auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
-    hitGroup->SetClosestHitShaderImport(c_closestHitShaderName);
-    hitGroup->SetAnyHitShaderImport(c_anyHitShaderName);
-    hitGroup->SetHitGroupExport(c_hitGroupName);
-    hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
+    {
+        auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
+		hitGroup->SetHitGroupExport(c_hitGroupName1); // must be unique
+        hitGroup->SetClosestHitShaderImport(c_closestHitShaderName);
+        hitGroup->SetAnyHitShaderImport(c_anyHitShaderName);
+        hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
+    }
+
+    // AABB/procedural geometry hit group
+	{
+		auto hitGroup = raytracingPipeline.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
+		hitGroup->SetHitGroupExport(c_hitGroupName2); // must be unique
+		hitGroup->SetClosestHitShaderImport(c_closestHitShaderName);
+		hitGroup->SetAnyHitShaderImport(c_anyHitShaderName);
+        hitGroup->SetIntersectionShaderImport(c_intersectShaderName);
+		hitGroup->SetHitGroupType(D3D12_HIT_GROUP_TYPE_PROCEDURAL_PRIMITIVE);
+	}
 
     // Shader config
     // Defines the maximum sizes in bytes for the ray payload and attribute structure.
@@ -452,6 +468,7 @@ void App3::BuildAccelerationStructures()
 {
     meshA.BuildAccelerationStructures(Application::Get().renderer);
     meshB.BuildAccelerationStructures(Application::Get().renderer);
+    splatA.BuildAccelerationStructures(Application::Get().renderer);
 
     auto device = Application::Get().renderer.device;
 
@@ -499,13 +516,13 @@ void App3::BuildAccelerationStructures()
 
     uint32 instanceCount;
     {
-        D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[4] = {};
+        D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[5] = {};
 
         instanceCount = _countof(instanceDesc);
 
         D3D12_RAYTRACING_INSTANCE_DESC *dst = instanceDesc;
 
-        for(UINT i = 0; i < 4; ++i)
+        for(UINT i = 0; i < instanceCount; ++i)
         {
             *dst = {};
 
@@ -521,13 +538,29 @@ void App3::BuildAccelerationStructures()
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
             dst->InstanceMask = 1;
 
-            const uint32 meshIndex = (i == 0) ? 0 : 1;
+            if (i == 4)
+            {
+                // AABB procedural
 
-            Mesh& ref = meshIndex ? meshB : meshA;
+				dst->Transform[0][3] = 0.0f;
+				dst->Transform[1][3] = -3.0f;
+				dst->Transform[2][3] = 0.0f;
 
-            dst->AccelerationStructure = ref.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
-            // will go to HLSL InstanceID()
-            dst->InstanceID = meshIndex;
+                dst->AccelerationStructure = splatA.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+				// will go to HLSL InstanceID()
+				dst->InstanceID = 0;
+            }
+            else
+            {
+                const uint32 meshIndex = (i == 0) ? 0 : 1;
+
+                Mesh& ref = meshIndex ? meshB : meshA;
+
+                dst->AccelerationStructure = ref.bottomLevelAccelerationStructure->GetGPUVirtualAddress();
+                // will go to HLSL InstanceID()
+                dst->InstanceID = meshIndex;
+            }
+			dst->InstanceContributionToHitGroupIndex = i;
 
             ++dst;
         }
@@ -578,8 +611,18 @@ void App3::BuildShaderTables()
     ThrowIfFailed(dxrStateObject.As(&stateObjectProperties));
     void* rayGenShaderIdentifier = stateObjectProperties.Get()->GetShaderIdentifier(c_raygenShaderName);
     void* missShaderIdentifier = stateObjectProperties.Get()->GetShaderIdentifier(c_missShaderName);
-    void* hitGroupShaderIdentifier = stateObjectProperties.Get()->GetShaderIdentifier(c_hitGroupName);
+    void* hitGroupShaderIdentifier1 = stateObjectProperties.Get()->GetShaderIdentifier(c_hitGroupName1);
+	void* hitGroupShaderIdentifier2 = stateObjectProperties.Get()->GetShaderIdentifier(c_hitGroupName2);
     UINT shaderIdentifierSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+
+	// A shader name look-up table for shader table debug print out.
+	std::unordered_map<void*, std::wstring> shaderIdToStringMap;
+
+    // todo: GetShaderIdentifier and this can be single line saving multiple lines of code
+	shaderIdToStringMap[rayGenShaderIdentifier] = c_raygenShaderName;
+    shaderIdToStringMap[missShaderIdentifier] = c_missShaderName;
+	shaderIdToStringMap[hitGroupShaderIdentifier1] = c_hitGroupName1;
+	shaderIdToStringMap[hitGroupShaderIdentifier2] = c_hitGroupName2;
 
     // Ray gen shader table
     {
@@ -591,7 +634,8 @@ void App3::BuildShaderTables()
         UINT numShaderRecords = 1;
         UINT shaderRecordSize = shaderIdentifierSize + sizeof(rootArguments);
         ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"RayGenShaderTable");
-        table.push_back(ShaderRecord(rayGenShaderIdentifier, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
+		table.push_back(ShaderRecord(rayGenShaderIdentifier, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
+		table.DebugPrint(shaderIdToStringMap);
         rayGenShaderTable = table.GetResource();
     }
 
@@ -601,15 +645,24 @@ void App3::BuildShaderTables()
         UINT shaderRecordSize = shaderIdentifierSize;
         ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"MissShaderTable");
         table.push_back(ShaderRecord(missShaderIdentifier, shaderIdentifierSize));
+		table.DebugPrint(shaderIdToStringMap);
+		m_missShaderTableStrideInBytes = table.GetShaderRecordSize();
         missShaderTable = table.GetResource();
     }
 
     // Hit group shader table
     {
-        UINT numShaderRecords = 1;
+        // number of objects in the scene
+        UINT numShaderRecords = 5;
         UINT shaderRecordSize = shaderIdentifierSize;
         ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
-        table.push_back(ShaderRecord(hitGroupShaderIdentifier, shaderIdentifierSize));
+        table.push_back(ShaderRecord(hitGroupShaderIdentifier1, shaderIdentifierSize));
+		table.push_back(ShaderRecord(hitGroupShaderIdentifier1, shaderIdentifierSize));
+		table.push_back(ShaderRecord(hitGroupShaderIdentifier1, shaderIdentifierSize));
+		table.push_back(ShaderRecord(hitGroupShaderIdentifier1, shaderIdentifierSize));
+		table.push_back(ShaderRecord(hitGroupShaderIdentifier2, shaderIdentifierSize));
+		table.DebugPrint(shaderIdToStringMap);
+		m_hitGroupShaderTableStrideInBytes = table.GetShaderRecordSize();
         hitGroupShaderTable = table.GetResource();
     }
 }
@@ -644,6 +697,7 @@ void App3::ReleaseDeviceDependentResources()
 
     meshA.Reset();
     meshB.Reset();
+	splatA.Reset();
 
     topLevelAccelerationStructure.Reset();
 }
@@ -673,6 +727,16 @@ void App3::CreateDeviceDependentResources()
 //    ok = meshB.load(renderer, L"../../data/monkey.obj");
     ok = meshB.load(renderer, L"../../data/monkey2.obj");
     assert(ok);
+
+    {
+        SplatData a;
+        a.Pos = glm::vec3(0, 0, 0);
+        a.radius = 1.0f;
+//		a.TangentN = glm::vec3(0, 0, 0);
+//		a.Pos = glm::vec3(0, 0, 0);
+        splatA.splatData.push_back(a);
+        splatA.CreateRenderMesh(renderer);
+    }
 
     // set m_allIBandVB
     {

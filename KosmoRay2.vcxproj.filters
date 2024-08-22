@@ -120,6 +120,7 @@
     <ClCompile Include="RenderScene.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Splats.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -291,6 +292,8 @@
     <ClInclude Include="external\glm\vector_relational.hpp">
       <Filter>External\glm</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Splats.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

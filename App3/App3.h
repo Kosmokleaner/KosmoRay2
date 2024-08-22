@@ -3,6 +3,7 @@
 #include "DX12Lib/AppBase.h"
 #include "DX12Lib/Helpers.h" // ConstantBuffer<>
 #include "../DataBlock.h"
+#include "Splats.h"
 
 struct Viewport
 {
@@ -83,6 +84,7 @@ private:
 
     Mesh meshA;
     Mesh meshB;
+    Splats splatA;
 
     // blue noise texture
     DataBlock m_texture;
@@ -101,4 +103,7 @@ private:
     ComPtr<ID3D12Resource> missShaderTable;
     ComPtr<ID3D12Resource> hitGroupShaderTable;
     ComPtr<ID3D12Resource> rayGenShaderTable;
+
+    UINT m_missShaderTableStrideInBytes = UINT_MAX;
+    UINT m_hitGroupShaderTableStrideInBytes = UINT_MAX;
 };
