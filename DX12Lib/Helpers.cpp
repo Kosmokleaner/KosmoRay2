@@ -74,14 +74,31 @@ void PrintStateObjectDesc(const D3D12_STATE_OBJECT_DESC* desc)
             }
             woss << L" [" << i << L"]: ";
             if (exports[i].ExportToRename) woss << exports[i].ExportToRename << L" --> ";
-            woss << exports[i].Name << L"\n";
+            woss << "\"" << exports[i].Name << L"\"\n";
         }
         return woss.str();
     };
 
-    for (UINT i = 0; i < desc->NumSubobjects; i++)
+    wstr << L"| \n";
+
+    // sort by type for easier reading
+    std::vector<std::pair<UINT, UINT>> sortedByType;
+    sortedByType.resize(desc->NumSubobjects);
     {
-        wstr << L"| [" << i << L"]: ";
+        UINT i = 0;
+        for (auto& el : sortedByType)
+        {
+            el.first = desc->pSubobjects[i].Type;
+			el.second = i++;
+        }
+    }
+    sort(sortedByType.begin(), sortedByType.end());
+
+	for (auto& el : sortedByType)
+	{
+        UINT i = el.second;
+
+        wstr << L"| subobject #" << i << L": ";
         switch (desc->pSubobjects[i].Type)
         {
         case D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE:
@@ -111,13 +128,13 @@ void PrintStateObjectDesc(const D3D12_STATE_OBJECT_DESC* desc)
         }
         case D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION:
         {
-            wstr << L"Subobject to Exports Association (Subobject [";
+            wstr << L"Subobject to Exports Association (Subobject #";
             auto association = static_cast<const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION*>(desc->pSubobjects[i].pDesc);
             UINT index = static_cast<UINT>(association->pSubobjectToAssociate - desc->pSubobjects);
-            wstr << index << L"])\n";
+            wstr << index << L")\n";
             for (UINT j = 0; j < association->NumExports; j++)
             {
-                wstr << L"|  [" << j << L"]: " << association->pExports[j] << L"\n";
+                wstr << L"|  [" << j << L"]: \"" << association->pExports[j] << L"\"\n";
             }
             break;
         }
@@ -136,25 +153,25 @@ void PrintStateObjectDesc(const D3D12_STATE_OBJECT_DESC* desc)
         {
             wstr << L"Raytracing Shader Config\n";
             auto config = static_cast<const D3D12_RAYTRACING_SHADER_CONFIG*>(desc->pSubobjects[i].pDesc);
-            wstr << L"|  [0]: Max Payload Size: " << config->MaxPayloadSizeInBytes << L" bytes\n";
-            wstr << L"|  [1]: Max Attribute Size: " << config->MaxAttributeSizeInBytes << L" bytes\n";
+            wstr << L"|    Max Payload Size: " << config->MaxPayloadSizeInBytes << L" bytes\n";
+            wstr << L"|  Max Attribute Size: " << config->MaxAttributeSizeInBytes << L" bytes\n";
             break;
         }
         case D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG:
         {
             wstr << L"Raytracing Pipeline Config\n";
             auto config = static_cast<const D3D12_RAYTRACING_PIPELINE_CONFIG*>(desc->pSubobjects[i].pDesc);
-            wstr << L"|  [0]: Max Recursion Depth: " << config->MaxTraceRecursionDepth << L"\n";
+            wstr << L"|  Max Recursion Depth: " << config->MaxTraceRecursionDepth << L"\n";
             break;
         }
         case D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP:
         {
-            wstr << L"Hit Group (";
+            wstr << L"Hit Group \"";
             auto hitGroup = static_cast<const D3D12_HIT_GROUP_DESC*>(desc->pSubobjects[i].pDesc);
-            wstr << (hitGroup->HitGroupExport ? hitGroup->HitGroupExport : L"[none]") << L")\n";
-            wstr << L"|  [0]: Any Hit Import: " << (hitGroup->AnyHitShaderImport ? hitGroup->AnyHitShaderImport : L"[none]") << L"\n";
-            wstr << L"|  [1]: Closest Hit Import: " << (hitGroup->ClosestHitShaderImport ? hitGroup->ClosestHitShaderImport : L"[none]") << L"\n";
-            wstr << L"|  [2]: Intersection Import: " << (hitGroup->IntersectionShaderImport ? hitGroup->IntersectionShaderImport : L"[none]") << L"\n";
+            wstr << (hitGroup->HitGroupExport ? hitGroup->HitGroupExport : L"") << L"\"\n";
+            wstr << L"|        AnyHit Import: \"" << (hitGroup->AnyHitShaderImport ? hitGroup->AnyHitShaderImport : L"") << L"\"\n";
+            wstr << L"|    ClosestHit Import: \"" << (hitGroup->ClosestHitShaderImport ? hitGroup->ClosestHitShaderImport : L"") << L"\"\n";
+            wstr << L"|  Intersection Import: \"" << (hitGroup->IntersectionShaderImport ? hitGroup->IntersectionShaderImport : L"") << L"\"\n";
             break;
         }
         }

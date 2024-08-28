@@ -342,12 +342,12 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
         // vertex cache optimization
         delete[] IndexData; IndexData = 0;
         delete[] VertexData; VertexData = 0;
-
-        {
+/*        {
             char str[256];
-            sprintf_s(str, sizeof(str) / sizeof(str[0]), "   VertexCacheOptimized");
+            sprintf_s(str, sizeof(str) / sizeof(str[0]), "   VertexCacheOptimized\n");
             OutputDebugStringA(str);
         }
+*/
     }
 
     // create BVH
@@ -380,7 +380,7 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
             uint32 TriangleCount = (uint32)MeshIndexData.size() / 3;
             char str[256];
             //			sprintf_s(str, sizeof(str) / sizeof(str[0]), "   BVHTree: %d HalfNodes, %d Leafs, %.2f\n", BVHTree.HalfNodes.size(), BVHTree.LeafData.size(), BVHTree.ComputeAvgLeafSize());
-            sprintf_s(str, sizeof(str) / sizeof(str[0]), "   BVHTree: %d HalfNodes, %d Leafs\n", (uint32)BVHTree.HalfNodes.size(), (uint32)BVHTree.LeafData.size());
+            sprintf_s(str, sizeof(str) / sizeof(str[0]), "   BVHTree: %d HalfNodes, %d Leafs\n\n", (uint32)BVHTree.HalfNodes.size(), (uint32)BVHTree.LeafData.size());
             OutputDebugStringA(str);
         }
     }
