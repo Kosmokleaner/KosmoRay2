@@ -574,6 +574,19 @@ float2 hit_sphere(float3 center, float radius, float3 rayStart, float3 rayDir)
 [shader("intersection")]
 void MyIntersectShader()
 {
+    //	// 0-127, can query with: uint hitKind = HitKind()
+	uint hitKind = 1;
+
+    // set to 1 to visualize AABB
+    if(0)
+    {
+        BuiltInTriangleIntersectionAttributes attr;
+        attr.barycentrics = 0.5f; // required for stable result
+        // ReportHit(0, .. would not be a valid hit
+        ReportHit(0.01f, hitKind, attr);
+        return;
+    }
+
     uint prim = PrimitiveIndex();
 
     // todo
@@ -586,8 +599,6 @@ void MyIntersectShader()
     float3 sphCenter = splat.position;
     float sphRadius = splat.radius;
 
-    //	// 0-127, can query with: uint hitKind = HitKind()
-	uint hitKind = 1;
 
     float2 hit2 = hit_sphere(sphCenter, sphRadius, ObjectRayOrigin(), ObjectRayDirection());
     if (hit2.x >= 0.0f)
