@@ -23,6 +23,8 @@ const wchar_t* c_anyHitShaderName = L"MyAnyHitShader";
 const wchar_t* c_missShaderName = L"MyMissShader";
 const wchar_t* c_intersectShaderName = L"MyIntersectShader";
 
+#define NUMBER_OF_OBJECT_IN_SCENE 5
+
 namespace GlobalRootSignatureParams {
     enum Value {
         OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (NVidia)
@@ -519,7 +521,7 @@ void App3::BuildAccelerationStructures()
 
     uint32 instanceCount;
     {
-        D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[5] = {};
+        D3D12_RAYTRACING_INSTANCE_DESC instanceDesc[NUMBER_OF_OBJECT_IN_SCENE] = {};
 
         instanceCount = _countof(instanceDesc);
 
@@ -565,6 +567,8 @@ void App3::BuildAccelerationStructures()
                 dst->InstanceID = meshIndex;
             }
 			dst->InstanceContributionToHitGroupIndex = i;
+//            dst->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+			dst->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
 
             ++dst;
         }
@@ -600,9 +604,6 @@ void App3::BuildAccelerationStructures()
 void App3::CreateWindowSizeDependentResources()
 {
     CreateRaytracingOutputResource();
-
-    // For simplicity, we will rebuild the shader tables.
-    BuildShaderTables();
 }
 
 // This encapsulates all shader records - shaders and the arguments for their local root signatures.
@@ -657,7 +658,7 @@ void App3::BuildShaderTables()
     // Hit group shader table
     {
         // number of objects in the scene
-        UINT numShaderRecords = 5;
+        UINT numShaderRecords = NUMBER_OF_OBJECT_IN_SCENE;
         UINT shaderRecordSize = shaderIdentifierSize;
         ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"HitGroupShaderTable");
         table.push_back(ShaderRecord(hitGroupShaderIdentifier1, shaderIdentifierSize));
@@ -785,9 +786,7 @@ void App3::CreateDeviceDependentResources()
 
     BuildAccelerationStructures();
 
-    BuildShaderTables();
-
-    CreateRaytracingOutputResource();
+	BuildShaderTables();
 
     // test
     m_texture.Load(renderer, "../../data/Textures/BlueNoise/LDR_RG01_0.png");
