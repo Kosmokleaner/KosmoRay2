@@ -38,35 +38,16 @@ struct VFormatFull
 	{
 	}
 
-	VFormatFull(glm::vec3 InPos)	//later , TColorFixedBGRA InColor) 
+	VFormatFull(glm::vec3 InPos, glm::vec3 InTangentU, glm::vec3 InTangentV, glm::vec3 InTangentN, glm::vec2 InUV)
 		: Pos(InPos)
-		, UV(0, 0)
-		//		, TangentU(0, 0, 0)
-		//		, TangentV(0, 0, 0)
-		, TangentN(0, 0, 0)
-	{
-		/*	later uint32 AARRGGBB = InColor.integer;
-
-			Color = (AARRGGBB & 0xff00ff00)
-				| ((AARRGGBB & 0xff0000)>>16)
-				| ((AARRGGBB & 0xff)<<16);*/
-	}
-
-	VFormatFull(glm::vec3 InPos, glm::vec3 InTangentU, glm::vec3 InTangentV, glm::vec3 InTangentN, glm::vec2 InUV) //, TColorFixedBGRA InColor) 
-		: Pos(InPos)
-		//	, TangentU(InTangentU)
-		//	, TangentV(InTangentV)
 		, TangentN(InTangentN)
-		, UV(InUV)//, Color(InColor)
+		, UV(InUV)
 	{
 	}
 
-    glm::vec3			Pos;
-	//	glm::vec3			TangentU;
-	//	glm::vec3			TangentV;
-    glm::vec3			TangentN;
-    glm::vec2			UV;
-
+    glm::vec3 Pos;
+    glm::vec3 TangentN;
+    glm::vec2 UV;
 
 	// todo - hide DX at that level
 	static const CInputElementDesc& GetDesc()

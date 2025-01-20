@@ -91,6 +91,7 @@
     <ClInclude Include="App3\shaders\RaytracingHlslCompat.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DataBlock.h" />
+    <ClInclude Include="DataDefinitions.h" />
     <ClInclude Include="DX12Lib\AppBase.h" />
     <ClInclude Include="DX12Lib\DescriptorHeap.h" />
     <ClInclude Include="external\DearGPU\BBox3F.h" />
@@ -141,10 +142,12 @@
     <ClInclude Include="DX12Lib\resource.h" />
     <ClInclude Include="DX12Lib\Window.h" />
     <ClInclude Include="Mathlib.h" />
+    <ClInclude Include="ReflectionHelper.h" />
     <ClInclude Include="RelativeMouseInput.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderScene.h" />
     <ClInclude Include="Splats.h" />
+    <ClInclude Include="VertexDefinitions.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="external\glm\CMakeLists.txt" />

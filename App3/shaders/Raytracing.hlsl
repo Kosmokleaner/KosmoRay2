@@ -65,7 +65,7 @@ struct Splat
 // index buffer (element size is INDEX_STRIDE)
 ByteAddressBuffer g_indices[] : register(t0, space101);
 // vertex buffer
-StructuredBuffer<Vertex> g_vertices[] : register(t0, space102);
+StructuredBuffer<VFormatFull> g_vertices[] : register(t0, space102);
 Texture2D<float4> g_Texture : register(t0, space103);
 StructuredBuffer<Splat> g_splats[] : register(t0, space104);
 

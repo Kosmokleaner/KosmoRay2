@@ -294,6 +294,9 @@
     </ClInclude>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Splats.h" />
+    <ClInclude Include="ReflectionHelper.h" />
+    <ClInclude Include="DataDefinitions.h" />
+    <ClInclude Include="VertexDefinitions.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
