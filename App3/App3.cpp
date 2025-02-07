@@ -727,6 +727,7 @@ void App3::CreateDeviceDependentResources()
 //    meshA.load(renderer, L"../../data/NewXYZ.obj");
 //    ok = meshA.load(renderer, L"../../data/LShape.obj");
     ok = meshA.load(renderer, L"../../data/LShapeSmooth.obj");
+//	ok = meshA.load(renderer, L"../../data/Quad.obj");
     assert(ok);
 
 //    ok = meshB.load(renderer, L"../../data/monkey.obj");

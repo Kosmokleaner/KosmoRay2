@@ -338,7 +338,7 @@ bool OBJMeshLoader::LoadMeshPass1(const wchar_t*FileName, IIndexedMeshSink &Sink
 
 				UINT VertexInThatLine = 0;
 
-				while(*p)
+				while(*p)		// todo: endless loop bug with OBJ not ending in empty line
 				{
 					int Value;
 
