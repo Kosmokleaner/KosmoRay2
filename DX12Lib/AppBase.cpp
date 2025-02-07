@@ -125,7 +125,7 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     static bool first = true;
     if (first) {
-        camera.SetPos(glm::vec3(0, 0, -10));
+        camera.SetPos(glm::vec3(0, 2, -10));
         camera.SetRotation(glm::vec2(3.1415f, 0.0f));
         first = false;
     }
