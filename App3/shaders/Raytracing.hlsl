@@ -14,6 +14,19 @@
 // 2:AO
 #define RAY_TRACING_EXPERIMENT 2
 
+// 0/1
+#define INSTANCE_1_IS_EMISSIVE 1
+// 0/1
+#define SKY_IS_EMISSIVE 1
+// To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
+#define FEEDBACK_FRACTION  0.5f
+// 0/1 animate TemporalAA jitter and noise seed
+#define ANIMATE_OVER_TIME 1
+// 1:very low, 8:low, 64:good
+#define SAMPLE_COUNT_AO 64
+
+
+
 #define INSTANCE_ID InstanceID()
 // test
 //#define INSTANCE_ID 0
@@ -160,7 +173,7 @@ inline Ray GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 
 //    float4 cameraPositionHom = mul(worldFromClip, float4(0, 0, 0, 1));
 //    float3 cameraPosition = cameraPositionHom.xyz / cameraPositionHom.w;
 
-    // Unproject the pixel coordinate into a world positon.
+    // Unproject the pixel coordinate into a world position.
     float4 worldHom = mul(worldFromClip, float4(screenPos, 1, 1));
     float3 world = worldHom.xyz / worldHom.w;
 
@@ -179,10 +192,28 @@ float3 filmicToneMapping(float3 color)
     return color;
 }
 
+// @param worldRayDirection normalized, e.g. WorldRayDirection()
+float3 getSkyColor(float3 worldRayDirection)
+{
+    float3 skyColor = 0;
+
+#if SKY_IS_EMISSIVE == 1
+    // 0..1
+    float alpha = worldRayDirection.y * 0.5f + 0.5f;
+    skyColor = lerp(float3(0.2f, 0.3f, 0.9f) * 0.2f, float3(0.2f, 0.3f, 0.9f) * 0.6f, alpha);
+#endif
+
+    return skyColor;
+}
+
 [shader("raygeneration")]
 void MyRaygenShader()
 {
-    int2 move = g_sceneCB.FrameIndex * int2(13, 7);
+    // animate jitter offset over time for TemporalAA
+    int2 move = 0;
+#if ANIMATE_OVER_TIME == 1
+    move = g_sceneCB.FrameIndex * int2(13, 7);
+#endif
 
     // float2(0..1, 0..1) Blue Noise
     float2 jitterXY = g_Texture.Load(int3((DispatchRaysIndex().xy + move) % 256, 0)).rg;
@@ -247,21 +278,32 @@ void MyRaygenShader()
     {
         const float3 materialColor = payload.color;
 
-//        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678);
-        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + (uint)(g_sceneCB.sceneParam0.x * 12347));
+        //
+        // animate random over time for monte carlo integration 
+        uint perFrameNoiseSeed = 0;
+#if ANIMATE_OVER_TIME == 1
+        perFrameNoiseSeed = (uint)(g_sceneCB.sceneParam0.x * 12347);
+#endif
+
+        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
-        uint sampleCountAO = 64;
+        uint sampleCountAO = SAMPLE_COUNT_AO;
+
 //        AO = 1;
 
         rayDesc.Origin = rayDesc.Origin + rayDesc.Direction * payload.minT;
+        // start slightly above the surface to avoid hit with own surface
         rayDesc.Origin += payload.normal * 0.001f;
         payload.minT = rayDesc.TMin;
 
         float3 incomingLight = 0;
 
+#if INSTANCE_1_IS_EMISSIVE == 1
+        // emissive object shows it's own emissiveness
         if (payload.instanceIndex == 0)
             incomingLight = payload.color * 2 * sampleCountAO;
+#endif
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
@@ -277,7 +319,13 @@ void MyRaygenShader()
 
 //            incomingLight = payload2.color;
 
-            if(payload2.instanceIndex == 0 || payload2.instanceIndex == -1)
+#if INSTANCE_1_IS_EMISSIVE == 1
+            // effect of emissive object onto others objects
+            if(payload2.instanceIndex == 0)
+                incomingLight += payload2.color*2;
+#endif
+            // effect of sky onto others objects
+            if(payload2.instanceIndex == -1)
                 incomingLight += payload2.color*2;
 
 //            if(all(payload2.normal != float3(0, 0, 0)))
@@ -334,8 +382,7 @@ void MyRaygenShader()
 
 //    float4 feedback = g_Feedback[DispatchRaysIndex().xy];
 
-    const float blendInWeight = 0.5f;
-    g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], blendInWeight);
+    g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], FEEDBACK_FRACTION);
     RenderTarget[DispatchRaysIndex().xy] = g_Feedback[DispatchRaysIndex().xy];
 
 
@@ -547,12 +594,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 [shader("miss")]
 void MyMissShader(inout RayPayload payload)
 {
-    // 0..1
-    float alpha = WorldRayDirection().y * 0.5f + 0.5f;
-
-    const float3 skyColor = lerp(float3(0.2f, 0.3f, 0.9f) * 0.2f, float3(0.2f, 0.3f, 0.9f) * 0.6f, alpha);
-
-    payload.color = skyColor;
+    payload.color = getSkyColor(WorldRayDirection());
 }
 
 // Inigo Quilez sphere ray intersection
