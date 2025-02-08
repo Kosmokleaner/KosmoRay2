@@ -11,7 +11,7 @@
 
 // 0:MyClosestHitShader barycentric triangle color
 // 1:MyAnyHitShader CSG boolean mesh operation
-// 2:AO
+// 2:Single bounce Indirect lighting
 #define RAY_TRACING_EXPERIMENT 2
 
 // 0/1
@@ -24,6 +24,8 @@
 #define ANIMATE_OVER_TIME 1
 // 1:very low, 8:low, 64:good
 #define SAMPLE_COUNT_AO 64
+// 0:reference path tracing / 1:less noise
+#define AREA_LIGHT_SAMPLING 1
 
 
 
@@ -92,7 +94,7 @@ struct RayPayload
     // skycolor or material color
     float3 color;
     // in world space, normalized
-    float3 normal;
+    float3 interpolatedNormal;
     // -1 if not set
     int primitiveIndex;
     // -1 if not set
@@ -107,6 +109,7 @@ struct RayPayload
 struct Ray
 {
     float3 origin;
+    // normalized
     float3 direction;
 };
 
@@ -206,6 +209,21 @@ float3 getSkyColor(float3 worldRayDirection)
     return skyColor;
 }
 
+// hard coded to work with Quad.obj
+float3 getEmissiveQuadSample(float3 rayDirection, inout uint rnd, out float3 outNormal)
+{
+	// 0..1
+	float2 uv = nextRand2(rnd);
+
+    // todo: flip if needed
+    if(rayDirection.y > 0)
+        outNormal = float3(0, 1, 0);
+    else
+        outNormal = float3(0, -1, 0);
+
+    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 4;
+}
+
 [shader("raygeneration")]
 void MyRaygenShader()
 {
@@ -259,14 +277,14 @@ void MyRaygenShader()
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
     TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
-    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // face normal
+    RenderTarget[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal * 0.5f + 0.5f, 1.0f); // face normal
 //    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
 
 #elif RAY_TRACING_EXPERIMENT == 1
     TraceRay(Scene, g_sceneCB.raytraceFlags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
-    RenderTarget[DispatchRaysIndex().xy] = float4(payload.normal * 0.5f + 0.5f, 1.0f); // normal
+    RenderTarget[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal * 0.5f + 0.5f, 1.0f); // normal
 
 #elif RAY_TRACING_EXPERIMENT == 2
 //    float AO = 0.0f;
@@ -274,7 +292,7 @@ void MyRaygenShader()
 
     float3 hdr = 0;
 
-    if (all(payload.normal != float3(0, 0, 0)))
+    if (all(payload.interpolatedNormal != float3(0, 0, 0)))
     {
         const float3 materialColor = payload.color;
 
@@ -294,7 +312,7 @@ void MyRaygenShader()
 
         rayDesc.Origin = rayDesc.Origin + rayDesc.Direction * payload.minT;
         // start slightly above the surface to avoid hit with own surface
-        rayDesc.Origin += payload.normal * 0.001f;
+        rayDesc.Origin += payload.interpolatedNormal * 0.001f;
         payload.minT = rayDesc.TMin;
 
         float3 incomingLight = 0;
@@ -307,7 +325,26 @@ void MyRaygenShader()
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
-            rayDesc.Direction = getCosHemisphereSample(rnd, payload.normal);
+            float weight = 1.0f;
+
+#if AREA_LIGHT_SAMPLING == 1
+            // hack, todo: lambert
+            float3 lightNormal;
+            float3 delta = getEmissiveQuadSample(rayDesc.Origin, rnd, lightNormal) - rayDesc.Origin;
+            float deltaLength2 = dot(delta, delta);
+            rayDesc.Direction = delta / sqrt(deltaLength2);
+            // lambert weight
+            float area = 64.0f; // -4..4 => 8x8
+//            addLight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal)) * 100 / area;   // 100 is hack
+            // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
+//            float pdf = deltaLength2 / (max(0.0f, dot(lightNormal, -rayDesc.Direction)) * area);
+//            weight = 1.0f / pdf / PI;
+//            weight = (max(0.0f, dot(lightNormal, -payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
+            weight = (abs(dot(lightNormal, payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
+#else
+            // reference 
+            rayDesc.Direction = getCosHemisphereSample(rnd, payload.interpolatedNormal);
+#endif
 
             RayPayload payload2 = (RayPayload)0;
             payload2.primitiveIndex = -1;
@@ -317,22 +354,27 @@ void MyRaygenShader()
 
             TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
-//            incomingLight = payload2.color;
+            float3 addLight = 0;
+
+//            incomingLight = addLight;
 
 #if INSTANCE_1_IS_EMISSIVE == 1
             // effect of emissive object onto others objects
             if(payload2.instanceIndex == 0)
-                incomingLight += payload2.color*2;
+                addLight = payload2.color*2;
 #endif
             // effect of sky onto others objects
             if(payload2.instanceIndex == -1)
-                incomingLight += payload2.color*2;
+                addLight = payload2.color*2;
 
-//            if(all(payload2.normal != float3(0, 0, 0)))
+//            if(all(payload2.interpolatedNormal != float3(0, 0, 0)))
 //            {
 //                AO -= 1.0f / sampleCountAO;
 //                unoccludedAreaDirection += rayDesc.Direction;
 //            }
+
+            addLight *= weight;
+            incomingLight += addLight;
         }
         // just in case
 //        AO = saturate(AO);
@@ -410,7 +452,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 
         payload.color = float3(0.6f, 0.5f, 0.4f);
         float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
-        payload.normal = normalize(wsPos - splat.position);
+        payload.interpolatedNormal = normalize(wsPos - splat.position);
         return;
     }
 
@@ -454,13 +496,12 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     // visualize world space position as color
 //    payload.color = frac(wsPos);
 
-//    float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
-
+    float3 triangleNormal = normalize(cross(p1 - p0, p2 - p0));
     
-    float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());
-    //float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+    float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());           // todo: account for non uniform scale
+//    float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
-    payload.normal = normalize(worldNormal);
+    payload.interpolatedNormal = normalize(worldNormal);
 }
 
 // from https://gist.github.com/wwwtyro/beecc31d65d1004f5a9d
@@ -522,7 +563,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 // visualize triangleId as color, flat shading
 //                payload.color = IndexToColor(PrimitiveIndex());
 
-                payload.normal = float3(0, 1, 0);
+                payload.interpolatedNormal = float3(0, 1, 0);
 
                 const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
 
@@ -548,7 +589,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
                 payload.primitiveIndex = PrimitiveIndex();
-                payload.normal = worldNormal;
+                payload.interpolatedNormal = worldNormal;
             }
         }
 
@@ -567,7 +608,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                     payload.minTfront = tSphere.x;
                     float3 localPos = WorldRayOrigin() - sphereCenter + payload.minT * WorldRayDirection();
                     // world normal
-                    payload.normal = normalize(-localPos);
+                    payload.interpolatedNormal = normalize(-localPos);
                 }
         }
     /*    if (t >= tSphere.x && tSphere.x != -1) {
@@ -581,7 +622,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 if (tSphere.x < payload.minT) {
                     payload.minT = tSphere.x;
                     float3 localPos = WorldRayOrigin() - sphereCenter + payload.minT * WorldRayDirection();
-                    payload.normal = normalize(localPos);
+                    payload.interpolatedNormal = normalize(localPos);
                 }
         }
     */
