@@ -14,6 +14,9 @@ by Martin Mittring
   <img width="358" alt="image" src="https://github.com/Kosmokleaner/KosmoRay2/assets/44132/112a28db-9806-4d86-b39f-d11a20158dcc">
 * Boolean mesh (triangle mesh against sphere)<br>
   https://www.youtube.com/watch?v=XZdRmJa9cKo
+* Path tracing and area light sampling compared  
+  ![image](https://github.com/user-attachments/assets/10f3734a-a540-4126-a804-4e18b4b23b15)
+
 
 
 ## External / Third Party:
