@@ -542,6 +542,23 @@ void App3::BuildAccelerationStructures()
                 size = 1.5f;
                 dst->Transform[i - 1][3] = (i == 2) ? 2.0f : 6.0f; 
             }
+			
+            if (i == 4)
+				size = 1.0f;
+
+            // hack off some objects and other stuff to make Cornell box
+			{
+				if (i == 0)
+					size = 0.08f;
+                if (i == 1 || i == 2 || i == 4)
+                    size = 0.0f;
+                dst->Transform[0][3] = 0.0f;
+				dst->Transform[1][3] = 0.0f;
+				dst->Transform[2][3] = 0.0f;
+
+                if (i == 0)
+					dst->Transform[1][3] = 2.95f;   // pretty close to the area light in the original Cornell box
+            }
 
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
             dst->InstanceMask = 1;
@@ -550,7 +567,7 @@ void App3::BuildAccelerationStructures()
             {
                 // AABB procedural
 
-				dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = 1.0f;
+				dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
 				dst->Transform[0][3] = 0.0f;
 				dst->Transform[1][3] = 0.0f;
 				dst->Transform[2][3] = 0.0f;
@@ -729,12 +746,13 @@ void App3::CreateDeviceDependentResources()
     //meshA.load(renderer, "../../data/monkey.obj");
 //    meshA.load(renderer, L"../../data/NewXYZ.obj");
 //    ok = meshA.load(renderer, L"../../data/LShape.obj");
-    ok = meshA.load(renderer, L"../../data/LShapeSmooth.obj");
-//	ok = meshA.load(renderer, L"../../data/Quad.obj");
+//    ok = meshA.load(renderer, L"../../data/LShapeSmooth.obj");
+	ok = meshA.load(renderer, L"../../data/Quad.obj");
     assert(ok);
 
 //    ok = meshB.load(renderer, L"../../data/monkey.obj");
-    ok = meshB.load(renderer, L"../../data/monkey2.obj");
+//    ok = meshB.load(renderer, L"../../data/monkey2.obj");
+	ok = meshB.load(renderer, L"../../data/CornellBox.obj");
     assert(ok);
 
     {

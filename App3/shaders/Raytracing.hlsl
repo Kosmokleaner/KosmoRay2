@@ -17,15 +17,15 @@
 // 0/1
 #define INSTANCE_1_IS_EMISSIVE 1
 // 0/1
-#define SKY_IS_EMISSIVE 1
+#define SKY_IS_EMISSIVE 0
 // To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
-#define FEEDBACK_FRACTION  0.5f
+#define FEEDBACK_FRACTION  1.0f
 // 0/1 animate TemporalAA jitter and noise seed
-#define ANIMATE_OVER_TIME 1
+#define ANIMATE_OVER_TIME 0
 // 1:very low, 8:low, 64:good
-#define SAMPLE_COUNT_AO 64
-// 0:reference path tracing / 1:less noise
-#define AREA_LIGHT_SAMPLING 1
+#define SAMPLE_COUNT_AO 256
+// 0:reference path tracing / 1:less noise, 2: viewport split in half
+#define AREA_LIGHT_SAMPLING 2
 
 
 
@@ -92,8 +92,8 @@ typedef BuiltInTriangleIntersectionAttributes MyAttributes;
 struct RayPayload
 {
     // skycolor or material color
-    float3 color;
-    // in world space, normalized
+    float3 materialColor;
+    // in world space, normalized, (0,0,0) means emissive
     float3 interpolatedNormal;
     // -1 if not set
     int primitiveIndex;
@@ -210,18 +210,21 @@ float3 getSkyColor(float3 worldRayDirection)
 }
 
 // hard coded to work with Quad.obj
+// @param outNormal will be normalized
 float3 getEmissiveQuadSample(float3 rayDirection, inout uint rnd, out float3 outNormal)
 {
+    float yPos = 2.95f; // pretty close to the area light in the original Cornell box
+
 	// 0..1
 	float2 uv = nextRand2(rnd);
 
     // todo: flip if needed
-    if(rayDirection.y > 0)
+    if(rayDirection.y > yPos)
         outNormal = float3(0, 1, 0);
     else
         outNormal = float3(0, -1, 0);
 
-    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 4;
+    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 4 *  0.08f + float3(0, yPos, 0);
 }
 
 [shader("raygeneration")]
@@ -261,6 +264,31 @@ void MyRaygenShader()
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
 
+
+    // ugly visualize getEmissiveQuadSample
+    if(0)
+    for(int i = 0; i < 50; ++i)
+    {
+        const float sphereRadius = 0.05f;
+
+        uint rnd2 = initRand(82927 * i, 1233);
+
+        float3 normal;
+        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal);
+        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
+        {
+            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
+            return;
+        }
+        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos + normal * sphereRadius, 0.03f).y > 0)    // with white dot to indicate normal direction
+        {
+            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 1, 1);
+            return;
+        }
+    }
+
+
+
     RayPayload payload = (RayPayload)0;
     payload.primitiveIndex = -1;
     payload.instanceIndex = -1;
@@ -278,7 +306,7 @@ void MyRaygenShader()
     // closesthit
     TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
     RenderTarget[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal * 0.5f + 0.5f, 1.0f); // face normal
-//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.color, 1.0f); // color e.g. barycentrics
+//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.materialColor, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
 
@@ -292,9 +320,9 @@ void MyRaygenShader()
 
     float3 hdr = 0;
 
-    if (all(payload.interpolatedNormal != float3(0, 0, 0)))
+    if (any(payload.interpolatedNormal != float3(0, 0, 0))) // if emissive?
     {
-        const float3 materialColor = payload.color;
+        const float3 materialColor = payload.materialColor;
 
         //
         // animate random over time for monte carlo integration 
@@ -320,36 +348,46 @@ void MyRaygenShader()
 #if INSTANCE_1_IS_EMISSIVE == 1
         // emissive object shows it's own emissiveness
         if (payload.instanceIndex == 0)
-            incomingLight = payload.color * 2 * sampleCountAO;
+            incomingLight = payload.materialColor * 2 * sampleCountAO;
 #endif
+
+        bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
             float weight = 1.0f;
 
-#if AREA_LIGHT_SAMPLING == 1
-            // hack, todo: lambert
-            float3 lightNormal;
-            float3 delta = getEmissiveQuadSample(rayDesc.Origin, rnd, lightNormal) - rayDesc.Origin;
-            float deltaLength2 = dot(delta, delta);
-            rayDesc.Direction = delta / sqrt(deltaLength2);
-            // lambert weight
-            float area = 64.0f; // -4..4 => 8x8
-//            addLight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal)) * 100 / area;   // 100 is hack
-            // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
-//            float pdf = deltaLength2 / (max(0.0f, dot(lightNormal, -rayDesc.Direction)) * area);
-//            weight = 1.0f / pdf / PI;
-//            weight = (max(0.0f, dot(lightNormal, -payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
-            weight = (abs(dot(lightNormal, payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
-#else
-            // reference 
-            rayDesc.Direction = getCosHemisphereSample(rnd, payload.interpolatedNormal);
-#endif
+            if(areaLightSampling)
+            {
+                // normalized
+                float3 lightNormal;
+                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rnd, lightNormal) - rayDesc.Origin;
+                float deltaLength2 = dot(delta, delta);
+//                rayDesc.Direction = delta / (0.0001f + sqrt(deltaLength2)); // bias to avoid div by 0
+                rayDesc.Direction = normalize(delta);
+                // lambert weight
+                float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
+    //            addLight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal)) * 100 / area;   // 100 is hack
+                // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
+    //            float pdf = deltaLength2 / (max(0.0f, dot(lightNormal, -rayDesc.Direction)) * area);
+    //            weight = 1.0f / pdf / PI;
+    //            weight = (max(0.0f, dot(lightNormal, -payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
+                weight = area / deltaLength2 / PI;  // wrong
+
+                // lambert
+                weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
+                weight *= saturate(dot(rayDesc.Direction, -lightNormal));
+            }
+            else
+            {
+                // reference 
+                rayDesc.Direction = getCosHemisphereSample(rnd, payload.interpolatedNormal);
+            }
 
             RayPayload payload2 = (RayPayload)0;
             payload2.primitiveIndex = -1;
             payload2.instanceIndex = -1;
-            payload2.color = float3(0.2f, 0.2f, 0.2f);
+            payload2.materialColor = float3(0.2f, 0.2f, 0.2f);        // ???? what is this ?
             payload2.minT = payload2.minTfront = rayDesc.TMax;
 
             TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
@@ -361,11 +399,11 @@ void MyRaygenShader()
 #if INSTANCE_1_IS_EMISSIVE == 1
             // effect of emissive object onto others objects
             if(payload2.instanceIndex == 0)
-                addLight = payload2.color*2;
+                addLight = payload2.materialColor*2;
 #endif
             // effect of sky onto others objects
             if(payload2.instanceIndex == -1)
-                addLight = payload2.color*2;
+                addLight = payload2.materialColor*2;
 
 //            if(all(payload2.interpolatedNormal != float3(0, 0, 0)))
 //            {
@@ -384,9 +422,15 @@ void MyRaygenShader()
 //        hdr = materialColor * (incomingLight + AO * skyColor);
         hdr = materialColor * incomingLight;
     }
-    else hdr = payload.color;   // sky
+    else hdr = payload.materialColor;   // sky
+
+
 
     float3 ldr = filmicToneMapping(hdr);
+
+    if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
+        ldr = float3(0.5f, 0,0);
+
     RenderTarget[DispatchRaysIndex().xy] = float4(ldr, 1);
 
 #endif
@@ -450,7 +494,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 
         Splat splat = g_splats[BIndex][payload.primitiveIndex];
 
-        payload.color = float3(0.6f, 0.5f, 0.4f);
+        payload.materialColor = float3(0.6f, 0.5f, 0.4f);
         float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
         payload.interpolatedNormal = normalize(wsPos - splat.position);
         return;
@@ -463,7 +507,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 
     float3 bary = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
 
-    payload.color = bary; // color from barycentrics
+    payload.materialColor = bary; // color from barycentrics
 
     uint VBIndex = INSTANCE_ID;
 
@@ -486,20 +530,24 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 interpolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
     // visualize indexbuffer data as color
-//    payload.color = interpolIndex;
+//    payload.materialColor = interpolIndex;
 
     // visualize object space position as color
-//    payload.color = frac(osPos);
+//    payload.materialColor = frac(osPos);
 
-    payload.color = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
+//    payload.materialColor = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
+    payload.materialColor = float3(0.9f, 0.8f, 0.7f);       // albedo color
 
     // visualize world space position as color
-//    payload.color = frac(wsPos);
+//    payload.materialColor = frac(wsPos);
 
     float3 triangleNormal = normalize(cross(p1 - p0, p2 - p0));
     
-    float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());           // todo: account for non uniform scale
-//    float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+//    float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());           // todo: account for non uniform scale, some .obj have no normals stored
+    float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+
+//    if(dot(worldNormal, WorldRayDirection()) < 0)
+//        worldNormal = -worldNormal;
 
     payload.interpolatedNormal = normalize(worldNormal);
 }
@@ -558,10 +606,10 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 payload.minT = t;
                 payload.minTfront = t;
                 float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
-                payload.color = barycentrics;
+                payload.materialColor = barycentrics;
 
                 // visualize triangleId as color, flat shading
-//                payload.color = IndexToColor(PrimitiveIndex());
+//                payload.materialColor = IndexToColor(PrimitiveIndex());
 
                 payload.interpolatedNormal = float3(0, 1, 0);
 
@@ -574,13 +622,13 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 const float3 p1 = g_vertices[VBIndex][ii.y].position;
                 const float3 p2 = g_vertices[VBIndex][ii.z].position;
                 // visualize position id as color, gourand shading
-//                payload.color = (p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0));
+//                payload.materialColor = (p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0));
 
                 // visualize indexbuffer id as color, gourand shading
 //                const float3 vCol0 = IndexToColor(ii.x);
 //                const float3 vCol1 = IndexToColor(ii.y);
 //                const float3 vCol2 = IndexToColor(ii.z);
-//                payload.color = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
+//                payload.materialColor = vCol0 + bary.x * (vCol1 - vCol0) + bary.y * (vCol2 - vCol0);
 
                 float3 triangleNormal = normalize(cross(p2 - p0, p1 - p0));
 
@@ -589,7 +637,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
 
                 payload.primitiveIndex = PrimitiveIndex();
-                payload.interpolatedNormal = worldNormal;
+                payload.interpolatedNormal = normalize(worldNormal);
             }
         }
 
@@ -635,7 +683,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 [shader("miss")]
 void MyMissShader(inout RayPayload payload)
 {
-    payload.color = getSkyColor(WorldRayDirection());
+    payload.materialColor = getSkyColor(WorldRayDirection());
 }
 
 // Inigo Quilez sphere ray intersection

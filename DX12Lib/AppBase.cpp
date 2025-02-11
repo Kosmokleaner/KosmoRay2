@@ -125,8 +125,11 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 
     static bool first = true;
     if (first) {
-        camera.SetPos(glm::vec3(0, 2, -10));
-        camera.SetRotation(glm::vec2(3.1415f, 0.0f));
+//        camera.SetPos(glm::vec3(0, 2, -10));
+//        camera.SetRotation(glm::vec2(3.1415f, 0.0f));
+        // look at cornell box
+		camera.SetPos(glm::vec3(0, 2, 10));
+		camera.SetRotation(glm::vec2(0, 0.0f));
         first = false;
     }
 
