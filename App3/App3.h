@@ -71,9 +71,12 @@ private:
     // Acceleration structure
     ComPtr<ID3D12Resource> topLevelAccelerationStructure;
 
-    // Raytracing output, is copied to backbuffer each frame
+    // Raytracing output, is copied to backbuffer each frame, frame buffer sized
     DataBlock m_raytracingOutput;
+    // frame buffer sized
     DataBlock m_raytracingFeedback;
+    //
+	DataBlock m_reservoirs;
 
     // Shader tables
     ComPtr<ID3D12Resource> missShaderTable;

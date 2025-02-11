@@ -45,15 +45,22 @@
 #include "RaytracingHlslCompat.h"
 #include "cellular.hlsl"
 #include "Helper.hlsl"
+#include "Reservoir.hlsl"
 
 #define NV_SHADER_EXTN_SLOT u1
 #define NV_SHADER_EXTN_REGISTER_SPACE space1
 #include "../../external/nv-api/nvHLSLExtns.h"
 
 RaytracingAccelerationStructure Scene : register(t0, space0);
+// frame buffer sized
 RWTexture2D<float4> RenderTarget : register(u0);
+// frame buffer sized
 RWTexture2D<float4> g_Feedback : register(u1);
+// frame buffer sized
+RWTexture2D<float4> g_Reservoirs : register(u2);
+//
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
+//
 ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 
 // sizeof(IndexType) 2:16bit, 4:32bit
@@ -342,6 +349,11 @@ void MyRaygenShader()
 
         bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
 
+        uint rndState = randomInit(DispatchRaysIndex().x, DispatchRaysIndex().y);
+
+        Reservoir reservoir;
+        reservoir.init();
+
         for(int i = 0; i < sampleCountAO; ++i)
         {
             float weight = 1.0f;
@@ -366,6 +378,14 @@ void MyRaygenShader()
                 // lambert
                 weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
                 weight *= saturate(dot(rayDesc.Direction, -lightNormal));
+
+//                reservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
+
+                reservoir.push(rndState, weight);
+
+                randomNext(rndState);
+
+//                g_Reservoirs[DispatchRaysIndex().xy] = reservoir.storeToRaw();
             }
             else
             {
@@ -546,6 +566,22 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     payload.interpolatedNormal = normalize(worldNormal);
 }
 
+// Inigo Quilez sphere ray intersection
+// @param rayDir must be normalized
+// https://iquilezles.org/articles/intersectors
+float2 hit_sphere(float3 center, float radius, float3 rayStart, float3 rayDir)
+{
+    float3 oc = rayStart - center;
+    float b = dot(oc, rayDir);
+    float3 qc = oc - b * rayDir;
+    float h = radius * radius - dot( qc, qc );
+    if( h < 0.0f ) 
+		return float2(-1, -1); // no intersection
+    h = sqrt( h );
+    return float2(-b -h, -b + h);
+}
+
+// todo: replace with hit_sphere()
 // from https://gist.github.com/wwwtyro/beecc31d65d1004f5a9d
 float2 raySphereIntersect(float3 r0, float3 rd, float3 s0, float sr) {
     // - r0: ray origin
@@ -568,10 +604,6 @@ float2 raySphereIntersect(float3 r0, float3 rd, float3 s0, float sr) {
     return ret;
 }
 
-// Direct computational noise in GLSL Supplementary material
-// from https://github.com/stegu/webgl-noise
-
-
 [shader("anyhit")]
 void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 {
@@ -580,7 +612,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
     // [tMin..tMax]
     float t = RayTCurrent();
 
-    // not animated, 0.9f to clip suzanne
+    // not animated, 0.9f to clip Suzanne
 //    const float radius = 0.9f;
     // animated
     float radius = 1.4f + 1.2f * sin(g_sceneCB.sceneParam0.y * 3.14159265f * 2.0f);
@@ -679,22 +711,6 @@ void MyMissShader(inout RayPayload payload)
 {
     payload.materialColor = getSkyColor(WorldRayDirection());
 }
-
-// Inigo Quilez sphere ray intersection
-// @param rayDir must be normalized
-// https://iquilezles.org/articles/intersectors
-float2 hit_sphere(float3 center, float radius, float3 rayStart, float3 rayDir)
-{
-    float3 oc = rayStart - center;
-    float b = dot(oc, rayDir);
-    float3 qc = oc - b * rayDir;
-    float h = radius * radius - dot( qc, qc );
-    if( h < 0.0f ) 
-		return float2(-1, -1); // no intersection
-    h = sqrt( h );
-    return float2(-b -h, -b + h);
-}
-
 
 [shader("intersection")]
 void MyIntersectShader()

@@ -29,6 +29,7 @@ namespace GlobalRootSignatureParams {
     enum Value {
         OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (NVidia)
         FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
+		ReservoirsSlot,             // DescriptorTable      UAV space0: u2(g_Reservoirs)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
         IndexBuffer,                // DescriptorTable      SRV space101: t0: g_indices[IBIndex][]
@@ -75,35 +76,64 @@ void App3::CreateRootSignatures()
     // Global Root Signature
     // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
     {
-        CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2] = {};
-        UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);       // space0: u0
-        UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);       // space1: u0 and u1
-        CD3DX12_DESCRIPTOR_RANGE UAVFeedback;
-        UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space0: u1
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1] = {};
-        SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space101: t0: IndexBuffer, 2 SRV for 2 meshes
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1] = {};
-        SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space102: t0: VertexBuffer, 2 SRV for 2 meshes
-        CD3DX12_DESCRIPTOR_RANGE SRVDescriptorTex[1] = {};
-        SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);   // space103: t0: Texture
-		CD3DX12_DESCRIPTOR_RANGE SRVDescriptorSplat[1] = {};
-		SRVDescriptorSplat[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 104); // space104: t0: SplatBuffer
-		CD3DX12_DESCRIPTOR_RANGE SRVDescriptorMaterials[1] = {};
-		SRVDescriptorMaterials[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 105); // space105: t0: Materials
+		CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
 
-        CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
-        rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
-        rootParameters[GlobalRootSignatureParams::FeedbackSlot].InitAsDescriptorTable(1, &UAVFeedback);
+        {
+            CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2] = {};
+            UAVDescriptors[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);       // space0: u0
+            UAVDescriptors[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 2, 0, 1);       // space1: u0 and u1
+            rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE UAVFeedback;
+            UAVFeedback.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0);             // space0: u1
+            rootParameters[GlobalRootSignatureParams::FeedbackSlot].InitAsDescriptorTable(1, &UAVFeedback);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE range;
+            range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2, 0);             // space0: u2
+            rootParameters[GlobalRootSignatureParams::ReservoirsSlot].InitAsDescriptorTable(1, &range);
+        }
+
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
-        rootParameters[GlobalRootSignatureParams::IndexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorIB), SRVDescriptorIB);
-        rootParameters[GlobalRootSignatureParams::VertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorVB), SRVDescriptorVB);
-        rootParameters[GlobalRootSignatureParams::TextureSlot].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorTex), SRVDescriptorTex);
-		rootParameters[GlobalRootSignatureParams::SplatBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorSplat), SRVDescriptorSplat);
-		rootParameters[GlobalRootSignatureParams::MaterialBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorMaterials), SRVDescriptorMaterials);
 
-        CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
-        SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
+        {
+            CD3DX12_DESCRIPTOR_RANGE SRVDescriptorIB[1] = {};
+            SRVDescriptorIB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 101);    // space101: t0: IndexBuffer, 2 SRV for 2 meshes
+            rootParameters[GlobalRootSignatureParams::IndexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorIB), SRVDescriptorIB);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE SRVDescriptorVB[1] = {};
+            SRVDescriptorVB[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 102);    // space102: t0: VertexBuffer, 2 SRV for 2 meshes
+            rootParameters[GlobalRootSignatureParams::VertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorVB), SRVDescriptorVB);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE SRVDescriptorTex[1] = {};
+            SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);   // space103: t0: Texture
+            rootParameters[GlobalRootSignatureParams::TextureSlot].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorTex), SRVDescriptorTex);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE SRVDescriptorSplat[1] = {};
+            SRVDescriptorSplat[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 104); // space104: t0: SplatBuffer
+            rootParameters[GlobalRootSignatureParams::SplatBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorSplat), SRVDescriptorSplat);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE SRVDescriptorMaterials[1] = {};
+            SRVDescriptorMaterials[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 105); // space105: t0: Materials
+            rootParameters[GlobalRootSignatureParams::MaterialBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorMaterials), SRVDescriptorMaterials);
+        }
+
+        {
+            CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+            SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
+        }
     }
 
     // Local Root Signature
@@ -192,7 +222,8 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
     commandList->SetDescriptorHeaps(1, renderer.descriptorHeap.descriptorHeap.GetAddressOf());
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutput.m_UAVGpuDescriptor);
-    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
+	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
+	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::ReservoirsSlot, m_reservoirs.m_UAVGpuDescriptor);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
@@ -243,6 +274,15 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
         barrier.UAV.pResource = m_raytracingFeedback.m_resource.Get();
         commandList->ResourceBarrier(1, &barrier);
     }
+    // todo: combine with former barrier
+	{
+		// D3D12_RESOURCE_UAV_BARRIER 
+
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		barrier.UAV.pResource = m_reservoirs.m_resource.Get();
+		commandList->ResourceBarrier(1, &barrier);
+	}
 
     D3D12_RESOURCE_BARRIER preCopyBarriers[2];
     preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -711,6 +751,9 @@ void App3::CreateRaytracingOutputResource()
     // higher quality feedback
     uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     m_raytracingFeedback.CreateUAV(renderer, uavDesc);
+
+	uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	m_reservoirs.CreateUAV(renderer, uavDesc);
 }
 
 void App3::ReleaseDeviceDependentResources()
@@ -724,6 +767,7 @@ void App3::ReleaseDeviceDependentResources()
 
     m_raytracingOutput.Reset();
     m_raytracingFeedback.Reset();
+    m_reservoirs.Reset();
 
     meshA.Reset();
     meshB.Reset();
