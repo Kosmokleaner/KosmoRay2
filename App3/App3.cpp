@@ -192,6 +192,8 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_sceneCB->sceneParam0.x = frac(m_sceneCB->sceneParam0.x + (float)e.ElapsedTime);
     m_sceneCB->sceneParam0.y = frac(m_sceneCB->sceneParam0.y + (float)e.ElapsedTime * 0.1f);
     m_sceneCB->raytraceFlags = raytraceFlags;
+	m_sceneCB->wipeReservoir = wipeReservoir;
+    wipeReservoir = false;
 
     static uint32 FrameIndex = 0; ++FrameIndex;
     m_sceneCB->FrameIndex = FrameIndex;
@@ -335,7 +337,12 @@ void App3::OnKeyPressed(KeyEventArgs& e)
         case KeyCode::PageDown:
             ++raytraceFlags;
             log = true;
-            break;
+			break;
+
+		case KeyCode::Space:
+            wipeReservoir = true;
+			log = true;
+			break;
     }
 
     if(log)

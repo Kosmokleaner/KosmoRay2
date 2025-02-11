@@ -33,6 +33,8 @@ private:
     // RAY_FLAG_FORCE_NON_OPAQUE | RAY_FLAG_SKIP_CLOSEST_HIT_SHADER
     uint raytraceFlags = 0x2 | 0x8;
 
+	bool wipeReservoir = false;
+
     // ray tracing ----------------------------------
 
     void CreateDeviceDependentResources();
