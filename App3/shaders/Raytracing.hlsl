@@ -9,7 +9,7 @@
 //
 //*********************************************************
 
-// 0:MyClosestHitShader barycentric triangle color
+// 0:MyClosestHitShader barycentric triangle color, visualize world normal
 // 1:MyAnyHitShader CSG boolean mesh operation
 // 2:Single bounce Indirect lighting
 #define RAY_TRACING_EXPERIMENT 2

@@ -527,6 +527,9 @@ void App3::BuildAccelerationStructures()
 
         D3D12_RAYTRACING_INSTANCE_DESC *dst = instanceDesc;
 
+        // 0: emissive quad
+        // /
+        // 4: procedural
         for(UINT i = 0; i < instanceCount; ++i)
         {
             *dst = {};
@@ -534,7 +537,7 @@ void App3::BuildAccelerationStructures()
             float size = 0.3f;
 
             // x: right, y:up (closer), z:behind
-            if (i)
+            if (i && i <= 3)
             {
                 size = 1.5f;
                 dst->Transform[i - 1][3] = (i == 2) ? 2.0f : 6.0f; 

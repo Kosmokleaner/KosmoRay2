@@ -1,5 +1,10 @@
 #define PI 3.14159265359
 
+float sqr(float x)
+{
+	return x * x;
+}
+
 float3 IndexToColor(uint Index)
 {
 	bool a = Index & (1 << 0);
@@ -107,4 +112,17 @@ float3 getCosHemisphereSample(inout uint rnd, float3 normal)
     float3 tsNormal = nextRand2CosineWeightedHemisphere(rnd);
 
     return mul(transpose(float3x3(u,v, normal)), tsNormal);
+}
+
+// Inigo Quilez sphere ray intersection https://iquilezles.org/articles/intersectors
+// sphere of size ra centered at point ce
+float2 sphIntersect(float3 ro, float3 rd, float3 ce, float ra)
+{
+    float3 oc = ro - ce;
+    float b = dot( oc, rd );
+    float c = dot( oc, oc ) - ra*ra;
+    float h = b*b - c;
+    if( h < 0 ) return float2(-1, -1); // no intersection
+    h = sqrt( h );
+    return float2( -b-h, -b+h );
 }
