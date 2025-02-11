@@ -131,6 +131,9 @@ public:
     D3DBuffer indexBuffer;
     D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
+	D3DBuffer materialBuffer;
+	D3D12_INDEX_BUFFER_VIEW materialBufferView;
+
     // for ray tracing
     ComPtr<ID3D12Resource> bottomLevelAccelerationStructure;
 

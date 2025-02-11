@@ -424,7 +424,8 @@ void Mesh::CreateRenderMesh(Renderer& renderer)
     auto device = renderer.device;
 
     AllocateUploadBuffer(device.Get(), MeshIndexData.data(), MeshIndexData.size() * sizeof(MeshIndexData[0]), &indexBuffer.resource, L"MeshIndexBuffer");
-    AllocateUploadBuffer(device.Get(), MeshVertexData.data(), MeshVertexData.size() * sizeof(MeshVertexData[0]), &vertexBuffer.resource, L"MeshVertexBuffer");
+	AllocateUploadBuffer(device.Get(), MeshVertexData.data(), MeshVertexData.size() * sizeof(MeshVertexData[0]), &vertexBuffer.resource, L"MeshVertexBuffer");
+	AllocateUploadBuffer(device.Get(), materialAttributes.data(), materialAttributes.size() * sizeof(materialAttributes[0]), &materialBuffer.resource, L"MeshMaterialBuffer");
 }
 
 UINT Mesh::CreateSRVs(Renderer& renderer, uint32 index)
