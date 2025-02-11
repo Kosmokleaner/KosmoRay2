@@ -2,6 +2,11 @@
 #include "Renderer.h"
 #include "external/DearGPU/SimpleIndexedMesh.h"
 
+#define REFLECTION_HELPER_MODE 1 // 2: implement reflection functions in one .cpp file
+#include "ReflectionHelper.h" // set defines for next line, undefine REFLECTION_HELPER_MODE
+#include "DataDefinitions.h" // your types go here
+#include "ReflectionHelper.h" // undefine all
+
 // 0:UpdateBufferResource / 1:AllocateUploadBuffer(less code complexity, no commandlist need)
 #define MESH_UPLOAD_METHOD 1
 
@@ -28,7 +33,6 @@ public:
 	D3D12_INPUT_ELEMENT_DESC* Pointer = 0;
 	uint32 Count = 0;
 };
-
 
 // vertex format
 // used for: mesh rendering
@@ -143,9 +147,12 @@ public:
     // redundant but nice for debugging
     FBVHTree BVHTree;
 
+	// vertex data
     std::vector<VFormatFull> MeshVertexData;
+	// indices into MeshVertexData, 0 based
     std::vector<INDEXBUFFER_TYPE> MeshIndexData;
-
+	// [subSetId] = materialAttributes
+	std::vector<MaterialAttributes> materialAttributes;
 
     // build bottomLevelAccelerationStructure
     void BuildAccelerationStructures(Renderer& renderer);

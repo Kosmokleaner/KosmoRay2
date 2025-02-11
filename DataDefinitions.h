@@ -23,6 +23,14 @@ STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(uint, dummy[2])
 STRUCT_END()
 
+STRUCT_BEGIN(MaterialAttributes)
+	STRUCT_ENTRY(float3, diffuseColor)
+	STRUCT_ENTRY(float, specularPower)
+	STRUCT_ENTRY(float3, specularColor)
+	STRUCT_ENTRY(float, padding1)
+	STRUCT_ENTRY(float3, emissiveColor)
+	STRUCT_ENTRY(float, padding2)
+STRUCT_END()
 
 /*
 ENUM_BEGIN(ETest2)

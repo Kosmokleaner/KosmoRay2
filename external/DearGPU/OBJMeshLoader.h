@@ -8,7 +8,7 @@
 //using namespace DirectX;
 
 // features:
-// * does not reconstruct normals, doesn't intepret smoothing groups
+// * does not reconstruct normals, doesn't interpret smoothing groups
 // * ignores content it doesn't understand
 // * supports relative and absolute indices
 
@@ -18,7 +18,8 @@ public:
 	std::string			MaterialName;
 
     glm::vec3			DiffuseColor;
-    glm::vec3			SpecularColor;
+	glm::vec3			SpecularColor;
+	glm::vec3			EmissiveColor;
 
 	std::wstring		DiffuseTexture;
 	std::wstring		SpecularTexture;
@@ -31,7 +32,7 @@ public:
 		: SpecularPower(64.0f)
 	{
 		DiffuseColor = glm::vec3(1, 1, 1);
-		SpecularColor = glm::vec3(1, 1, 0);
+		SpecularColor = glm::vec3(1, 1, 1);
 	}
 };
 

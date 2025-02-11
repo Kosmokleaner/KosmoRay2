@@ -66,11 +66,11 @@ bool Mesh::load(Renderer& renderer, const wchar_t* fileName)
 
     auto device = renderer.device;
 
-    OBJMeshLoader Loader;
+    OBJMeshLoader loader;
 
     SimpleIndexedMesh Mesh;
 
-    if (Loader.Load(fileName, Mesh, OBJMeshLoader::OLF_Default, 1.0f))
+    if (loader.Load(fileName, Mesh, OBJMeshLoader::OLF_Default, 1.0f))
     {
 //        if (AssetKey.Flags & OBJMeshLoader::OLF_Center)
 //        {
@@ -81,6 +81,23 @@ bool Mesh::load(Renderer& renderer, const wchar_t* fileName)
         vertexStride = sizeof(VFormatFull);
 
         SetSimpleIndexedMesh(Mesh);
+
+		uint32 subSetCount = loader.GetOBJMaterialCount();
+        materialAttributes.clear();
+        materialAttributes.reserve(subSetCount);
+        for (uint32 i = 0; i < subSetCount; ++i)
+		{
+            MaterialAttributes a;
+
+			COBJMeshMaterial &r = loader.GetOBJMaterial(i);
+
+            a.diffuseColor = r.DiffuseColor;
+			a.specularColor = r.SpecularColor;
+            a.emissiveColor = r.EmissiveColor;
+			a.specularPower = r.SpecularPower;
+
+            materialAttributes.push_back(a);
+		}
 
         CreateRenderMesh(renderer);
         return true;

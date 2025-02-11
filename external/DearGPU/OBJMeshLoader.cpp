@@ -610,6 +610,10 @@ bool OBJMeshLoader::LoadMTL(const wchar_t*FileName)
 				{
 					bError = ParseValue(p, OutMaterial->SpecularColor);	
 				}
+				else if (ParseName(p, "Ke"))
+				{
+					bError = ParseValue(p, OutMaterial->EmissiveColor);
+				}
 //				else if(ParseName(p, "Ka"))
 //				{
 //					bError = ParseValue(p, OutMaterial->AmbientColor);

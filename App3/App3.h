@@ -5,12 +5,6 @@
 #include "../DataBlock.h"
 #include "Splats.h"
 
-#define REFLECTION_HELPER_MODE 1 // 2: implement reflection functions in one .cpp file
-#include "ReflectionHelper.h" // set defines for next line, undefine REFLECTION_HELPER_MODE
-#include "DataDefinitions.h" // your types go here
-#include "ReflectionHelper.h" // undefine all
-
-
 class App3 : public AppBase
 {
 public:
