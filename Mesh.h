@@ -115,7 +115,7 @@ public:
         
     void end();
 
-	// @param index 0:IB, 1:VB
+	// @param index 0:IB, 1:VB, 2:Materials
 	// @return base descriptor index
 	UINT CreateSRVs(Renderer& renderer, uint32 index);
 

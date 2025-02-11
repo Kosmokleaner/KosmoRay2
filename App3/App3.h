@@ -66,6 +66,7 @@ private:
     D3D12_GPU_DESCRIPTOR_HANDLE m_allIB = {};
     D3D12_GPU_DESCRIPTOR_HANDLE m_allVB = {};
 	D3D12_GPU_DESCRIPTOR_HANDLE m_allSplats = {};
+	D3D12_GPU_DESCRIPTOR_HANDLE m_allMaterials = {};
 
     // Acceleration structure
     ComPtr<ID3D12Resource> topLevelAccelerationStructure;

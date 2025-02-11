@@ -1,14 +1,3 @@
-//*********************************************************
-//
-// Copyright (c) Microsoft. All rights reserved.
-// This code is licensed under the MIT License (MIT).
-// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-//
-//*********************************************************
-
 // 0:MyClosestHitShader barycentric triangle color, visualize world normal
 // 1:MyAnyHitShader CSG boolean mesh operation
 // 2:Single bounce Indirect lighting
@@ -70,7 +59,6 @@ ConstantBuffer<RayGenConstantBuffer> g_rayGenCB : register(b1);
 // sizeof(IndexType) 2:16bit, 4:32bit
 #define INDEX_STRIDE 4
 
-// see struct VFormatFull
 struct Splat
 {
     float3 position;
@@ -83,6 +71,7 @@ ByteAddressBuffer g_indices[] : register(t0, space101);
 StructuredBuffer<VFormatFull> g_vertices[] : register(t0, space102);
 Texture2D<float4> g_Texture : register(t0, space103);
 StructuredBuffer<Splat> g_splats[] : register(t0, space104);
+StructuredBuffer<MaterialAttributes> g_materials[] : register(t0, space105);
 
 // https://microsoft.github.io/DirectX-Specs/d3d/Raytracing.html
 // { float2 barycentrics }
@@ -509,16 +498,16 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 
     payload.materialColor = bary; // color from barycentrics
 
-    uint VBIndex = INSTANCE_ID;
+    uint instanceId = INSTANCE_ID;
 
     // position in object space
-    const float3 p0 = g_vertices[VBIndex][ii.x].position;
-    const float3 p1 = g_vertices[VBIndex][ii.y].position;
-    const float3 p2 = g_vertices[VBIndex][ii.z].position;
+    const float3 p0 = g_vertices[instanceId][ii.x].position;
+    const float3 p1 = g_vertices[instanceId][ii.y].position;
+    const float3 p2 = g_vertices[instanceId][ii.z].position;
 
-    const float3 n0 = normalize(g_vertices[VBIndex][ii.x].normal);
-    const float3 n1 = normalize(g_vertices[VBIndex][ii.y].normal);
-    const float3 n2 = normalize(g_vertices[VBIndex][ii.z].normal);
+    const float3 n0 = normalize(g_vertices[instanceId][ii.x].normal);
+    const float3 n1 = normalize(g_vertices[instanceId][ii.y].normal);
+    const float3 n2 = normalize(g_vertices[instanceId][ii.z].normal);
 
     const float3 c0 = IndexToColor(ii.x);
     const float3 c1 = IndexToColor(ii.y);
@@ -581,7 +570,7 @@ float2 raySphereIntersect(float3 r0, float3 rd, float3 s0, float sr) {
 [shader("anyhit")]
 void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 {
-    uint VBIndex = INSTANCE_ID;
+    uint instanceId = INSTANCE_ID;
 
     // [tMin..tMax]
     float t = RayTCurrent();
@@ -618,9 +607,9 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
                 float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
 
                 // position in object space
-                const float3 p0 = g_vertices[VBIndex][ii.x].position;
-                const float3 p1 = g_vertices[VBIndex][ii.y].position;
-                const float3 p2 = g_vertices[VBIndex][ii.z].position;
+                const float3 p0 = g_vertices[instanceId][ii.x].position;
+                const float3 p1 = g_vertices[instanceId][ii.y].position;
+                const float3 p2 = g_vertices[instanceId][ii.z].position;
                 // visualize position id as color, gourand shading
 //                payload.materialColor = (p0 + bary.x * (p1 - p0) + bary.y * (p2 - p0));
 

@@ -84,7 +84,7 @@ template <class T> const char* getTypeName();
 #define ENUM_END() r.enum_end(); }
 
 
-#elif REFLECTION_HELPER_MODE == 3 // declare types in HLSL (todo) ********************
+#elif REFLECTION_HELPER_MODE == 3 // declare types in HLSL ********************
 
 #define STRUCT_BEGIN(name) struct name {
 #define STRUCT_ENTRY(type, name) type name;

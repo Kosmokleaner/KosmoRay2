@@ -430,8 +430,12 @@ void Mesh::CreateRenderMesh(Renderer& renderer)
 
 UINT Mesh::CreateSRVs(Renderer& renderer, uint32 index)
 {
-    if(index == 0)
-        return renderer.CreateBufferSRV(&indexBuffer, (UINT)MeshIndexData.size(), sizeof(Mesh::IndexType));
-    
-    return renderer.CreateBufferSRV(&vertexBuffer, (UINT)MeshVertexData.size(), sizeof(MeshVertexData[0]));
+    assert(index < 3);
+
+	if (index == 0)
+		return renderer.CreateBufferSRV(&indexBuffer, (UINT)MeshIndexData.size(), sizeof(Mesh::IndexType));
+    if(index == 1)
+        renderer.CreateBufferSRV(&vertexBuffer, (UINT)MeshVertexData.size(), sizeof(MeshVertexData[0]));
+
+    return renderer.CreateBufferSRV(&materialBuffer, (UINT)materialAttributes.size(), sizeof(materialAttributes[0]));
 }

@@ -31,10 +31,11 @@ namespace GlobalRootSignatureParams {
         FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
-        IndexBuffer,                // DescriptorTable      SRV space101: t0: indices[IBIndex][]
-        VertexBuffer,               // DescriptorTable      SRV space102: t0: vertices[VBIndex][]
+        IndexBuffer,                // DescriptorTable      SRV space101: t0: g_indices[IBIndex][]
+        VertexBuffer,               // DescriptorTable      SRV space102: t0: g_vertices[VBIndex][]
         TextureSlot,                // DescriptorTable      SRV space103: t0: g_Texture[]
-		SplatBuffer,                // DescriptorTable      SRV space104: t0: splats[BIndex][]
+		SplatBuffer,                // DescriptorTable      SRV space104: t0: g_splats[BIndex][]
+        MaterialBuffer,             // DescriptorTable      SRV space105: t0: g_materials[MatId]
         // -----
         Count
     };
@@ -87,6 +88,8 @@ void App3::CreateRootSignatures()
         SRVDescriptorTex[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 103);   // space103: t0: Texture
 		CD3DX12_DESCRIPTOR_RANGE SRVDescriptorSplat[1] = {};
 		SRVDescriptorSplat[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 104); // space104: t0: SplatBuffer
+		CD3DX12_DESCRIPTOR_RANGE SRVDescriptorMaterials[1] = {};
+		SRVDescriptorMaterials[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 105); // space105: t0: Materials
 
         CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
         rootParameters[GlobalRootSignatureParams::OutputViewSlot].InitAsDescriptorTable(ARRAYSIZE(UAVDescriptors), UAVDescriptors);
@@ -97,6 +100,7 @@ void App3::CreateRootSignatures()
         rootParameters[GlobalRootSignatureParams::VertexBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorVB), SRVDescriptorVB);
         rootParameters[GlobalRootSignatureParams::TextureSlot].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorTex), SRVDescriptorTex);
 		rootParameters[GlobalRootSignatureParams::SplatBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorSplat), SRVDescriptorSplat);
+		rootParameters[GlobalRootSignatureParams::MaterialBuffer].InitAsDescriptorTable(ARRAYSIZE(SRVDescriptorMaterials), SRVDescriptorMaterials);
 
         CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
         SerializeAndCreateRaytracingRootSignature(globalRootSignatureDesc, &m_raytracingGlobalRootSignature);
@@ -199,6 +203,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::VertexBuffer, m_allVB);
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::TextureSlot, m_texture.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::SplatBuffer, m_allSplats);
+	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::MaterialBuffer, m_allMaterials);
 
     // hack
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
@@ -778,9 +783,15 @@ void App3::CreateDeviceDependentResources()
         UINT baseDescriptorIndexIB = 
             meshA.CreateSRVs(renderer, 0);
             meshB.CreateSRVs(renderer, 0);
+
         UINT baseDescriptorIndexVB =
             meshA.CreateSRVs(renderer, 1);
             meshB.CreateSRVs(renderer, 1);
+
+	    UINT baseDescriptorMaterials =
+			meshA.CreateSRVs(renderer, 2);
+			meshB.CreateSRVs(renderer, 2);
+
         UINT baseDescriptorIndexSplat =
             splatA.CreateSRVs(renderer);
 
@@ -788,10 +799,17 @@ void App3::CreateDeviceDependentResources()
             renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
             baseDescriptorIndexIB,
             renderer.descriptorHeap.maxSize);
+
         m_allVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
             renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
             baseDescriptorIndexVB,
             renderer.descriptorHeap.maxSize);
+
+		m_allMaterials = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			baseDescriptorMaterials,
+			renderer.descriptorHeap.maxSize);
+
 		m_allSplats = CD3DX12_GPU_DESCRIPTOR_HANDLE(
 			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorIndexSplat,
