@@ -414,11 +414,12 @@ void MyRaygenShader()
     else hdr = payload.materialColor;   // sky
 
 
+    hdr *= 4.0f;    // brighter
 
     float3 ldr = filmicToneMapping(hdr);
 
     if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
-        ldr = float3(0.5f, 0,0);
+        ldr = float3(0.5f, 0,0);    // red vertical line
 
     RenderTarget[DispatchRaysIndex().xy] = float4(ldr, 1);
 
@@ -518,6 +519,8 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     float3 interpolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
+    const uint materialId = g_vertices[instanceId][ii.x].materialId;
+
     // visualize indexbuffer data as color
 //    payload.materialColor = interpolIndex;
 
@@ -525,7 +528,9 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 //    payload.materialColor = frac(osPos);
 
 //    payload.materialColor = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
-    payload.materialColor = float3(0.9f, 0.8f, 0.7f);       // albedo color
+//    payload.materialColor = float3(0.9f, 0.8f, 0.7f);       // albedo color
+    payload.materialColor = g_materials[instanceId][materialId].diffuseColor;
+//    g_materials[]
 
     // visualize world space position as color
 //    payload.materialColor = frac(wsPos);

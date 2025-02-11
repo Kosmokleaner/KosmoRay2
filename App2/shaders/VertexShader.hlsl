@@ -11,6 +11,7 @@ struct VFormatFull
     float3 Position : POSITION;
     float3 Normal : TEXCOORD2;
     float2 UV    : TEXCOORD3;
+    uint materialId : TEXCOORD4;
 };
 
 struct VertexShaderOutput

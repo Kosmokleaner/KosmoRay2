@@ -198,7 +198,7 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
 
     TSCalc.CalculateTangentSpace(IndexedMesh);
 
-    std::map<MultiIndex<3>, uint32> IndexMap;		// to map from (Pos, Base, UV) to (Vertex)
+    std::map<MultiIndex<4>, uint32> IndexMap;		// to map from (Pos, Base, UV, materialId) to (Vertex)
 
     std::vector<SIndexedTriangle>::const_iterator it, end = IndexedMesh.Triangles.end();
 
@@ -218,16 +218,19 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
         uint32 BaseIndices[3];
         TSCalc.GetTriangleBaseIndices(TriangleId, BaseIndices);
 
+		const uint32 materialId = ref.MaterialId;
+
         // 3 vertices for each triangle
         for (uint32 v = 0; v < 3; ++v)
         {
-            MultiIndex<3> SrcIndex;			// [0]:Pos, [1]:Base, [2]:UV
+            MultiIndex<4> SrcIndex;			// [0]:Pos, [1]:Base, [2]:UV, [3]:materialId
 
             SrcIndex.Index[0] = ref.Vertex[v].PositionIndex;
             SrcIndex.Index[1] = BaseIndices[v];
-            SrcIndex.Index[2] = ref.Vertex[v].UVIndex;
+			SrcIndex.Index[2] = ref.Vertex[v].UVIndex;
+			SrcIndex.Index[3] = materialId;
 
-            std::map<MultiIndex<3>, uint32>::iterator it = IndexMap.find(SrcIndex);
+            std::map<MultiIndex<4>, uint32>::iterator it = IndexMap.find(SrcIndex);
 
             uint32 Index;
 
@@ -236,7 +239,7 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
                 // unknown indices create a new vertex
                 Index = (uint32)MeshVertexData.size();
 
-                IndexMap.insert(std::pair<MultiIndex<3>, uint32>(SrcIndex, Index));
+                IndexMap.insert(std::pair<MultiIndex<4>, uint32>(SrcIndex, Index));
 
                 glm::vec3 Pos = IndexedMesh.Positions[SrcIndex.Index[0]];
 
@@ -266,7 +269,7 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
                     UV = IndexedMesh.UVs[SrcIndex.Index[2]];
                 }
 
-                MeshVertexData.push_back(VFormatFull(Pos, tangentU, tangentV, normal, UV)); // later, Color));
+                MeshVertexData.push_back(VFormatFull(Pos, tangentU, tangentV, normal, UV, materialId)); // later, Color));
             }
             else
             {

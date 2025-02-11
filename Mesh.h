@@ -42,16 +42,18 @@ struct VFormatFull
 	{
 	}
 
-	VFormatFull(glm::vec3 InPos, glm::vec3 InTangentU, glm::vec3 InTangentV, glm::vec3 InTangentN, glm::vec2 InUV)
+	VFormatFull(glm::vec3 InPos, glm::vec3 InTangentU, glm::vec3 InTangentV, glm::vec3 InTangentN, glm::vec2 InUV, uint32 inMaterialId)
 		: Pos(InPos)
 		, TangentN(InTangentN)
 		, UV(InUV)
+		, materialId(inMaterialId)
 	{
 	}
 
     glm::vec3 Pos;
     glm::vec3 TangentN;
     glm::vec2 UV;
+	uint32 materialId;
 
 	// todo - hide DX at that level
 	static const CInputElementDesc& GetDesc()
@@ -63,6 +65,7 @@ struct VFormatFull
 			//			{ "TEXCOORD",	1, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD",	2, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD",	3, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	4, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			//later	{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
@@ -76,7 +79,7 @@ struct VFormatFull
 template <int Dimension>
 struct MultiIndex
 {
-	uint32 Index[Dimension];	// 0:Pos, 1:Normal 2:UV
+	uint32 Index[Dimension];	// 0:Pos, 1:Normal 2:UV, 3:Material
 
 	bool operator<(const MultiIndex& rhs) const
 	{

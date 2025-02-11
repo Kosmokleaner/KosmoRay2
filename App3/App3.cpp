@@ -782,34 +782,30 @@ void App3::CreateDeviceDependentResources()
     {
         UINT baseDescriptorIndexIB = 
             meshA.CreateSRVs(renderer, 0);
-            meshB.CreateSRVs(renderer, 0);
+        meshB.CreateSRVs(renderer, 0);
+		m_allIB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			baseDescriptorIndexIB,
+			renderer.descriptorHeap.maxSize);
 
         UINT baseDescriptorIndexVB =
             meshA.CreateSRVs(renderer, 1);
-            meshB.CreateSRVs(renderer, 1);
+        meshB.CreateSRVs(renderer, 1);
+		m_allVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			baseDescriptorIndexVB,
+			renderer.descriptorHeap.maxSize);
 
 	    UINT baseDescriptorMaterials =
 			meshA.CreateSRVs(renderer, 2);
-			meshB.CreateSRVs(renderer, 2);
-
-        UINT baseDescriptorIndexSplat =
-            splatA.CreateSRVs(renderer);
-
-        m_allIB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-            renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
-            baseDescriptorIndexIB,
-            renderer.descriptorHeap.maxSize);
-
-        m_allVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-            renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
-            baseDescriptorIndexVB,
-            renderer.descriptorHeap.maxSize);
-
+		meshB.CreateSRVs(renderer, 2);
 		m_allMaterials = CD3DX12_GPU_DESCRIPTOR_HANDLE(
 			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorMaterials,
 			renderer.descriptorHeap.maxSize);
 
+        UINT baseDescriptorIndexSplat =
+            splatA.CreateSRVs(renderer);
 		m_allSplats = CD3DX12_GPU_DESCRIPTOR_HANDLE(
 			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorIndexSplat,

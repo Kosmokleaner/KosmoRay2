@@ -17,14 +17,14 @@
 
 // todo: bad tangent and binormal, normal is smooth which looks bad for box
 static VFormatFull g_Vertices[8] = {
-    VFormatFull(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec2(0.0f, 0.0f)), // 0
-    VFormatFull(glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec2(0.0f, 1.0f)), // 1
-    VFormatFull(glm::vec3(1.0f,  1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f,  1.0f, -1.0f), glm::vec2(1.0f, 1.0f)), // 2
-    VFormatFull(glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f, -1.0f, -1.0f), glm::vec2(1.0f, 0.0f)), // 3
-    VFormatFull(glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec2(0.0f, 0.0f)), // 4
-    VFormatFull(glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec2(0.0f, 1.0f)), // 5
-    VFormatFull(glm::vec3(1.0f,  1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f,  1.0f,  1.0f), glm::vec2(1.0f, 1.0f)), // 6
-    VFormatFull(glm::vec3(1.0f, -1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f, -1.0f,  1.0f), glm::vec2(1.0f, 0.0f))  // 7
+    VFormatFull(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec2(0.0f, 0.0f), 0), // 0
+    VFormatFull(glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f,  1.0f, -1.0f), glm::vec2(0.0f, 1.0f), 0), // 1
+    VFormatFull(glm::vec3(1.0f,  1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f,  1.0f, -1.0f), glm::vec2(1.0f, 1.0f), 0), // 2
+    VFormatFull(glm::vec3(1.0f, -1.0f, -1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f, -1.0f, -1.0f), glm::vec2(1.0f, 0.0f), 0), // 3
+    VFormatFull(glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f, -1.0f,  1.0f), glm::vec2(0.0f, 0.0f), 0), // 4
+    VFormatFull(glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(-1.0f,  1.0f,  1.0f), glm::vec2(0.0f, 1.0f), 0), // 5
+    VFormatFull(glm::vec3(1.0f,  1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f,  1.0f,  1.0f), glm::vec2(1.0f, 1.0f), 0), // 6
+    VFormatFull(glm::vec3(1.0f, -1.0f,  1.0f), glm::vec3(0,0,0), glm::vec3(0,0,0), glm::vec3(1.0f, -1.0f,  1.0f), glm::vec2(1.0f, 0.0f), 0)  // 7
 };
 
 static Mesh::IndexType g_Indicies[36] =
