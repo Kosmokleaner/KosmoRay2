@@ -77,6 +77,7 @@ struct Reservoir
 		if (rnd * wSum < weight) // optimized divide
 		{
 			rndState = inRndState;
+			W = weight;					// ??
 		}
 	}
 

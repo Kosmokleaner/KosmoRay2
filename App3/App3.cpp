@@ -359,7 +359,6 @@ void App3::OnKeyPressed(KeyEventArgs& e)
 
 		case KeyCode::Space:
             wipeReservoir = true;
-			log = true;
 			break;
     }
 

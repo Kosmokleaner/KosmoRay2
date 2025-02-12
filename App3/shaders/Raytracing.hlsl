@@ -11,7 +11,7 @@
 #define FEEDBACK_FRACTION  1.0f
 // 0/1 animate TemporalAA jitter and noise seed
 #define ANIMATE_OVER_TIME 1
-// 1:very low, 8:low, 64:good
+// 1:very low, 8:low, 64:good, 256:very good
 #define SAMPLE_COUNT_AO 1
 // 0:reference path tracing / 1:less noise, 2: viewport split in half
 #define AREA_LIGHT_SAMPLING 2
@@ -229,6 +229,47 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rnd, out float3 out
     return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 11.1f * 4 *  0.08f + float3(0, yPos, 0);
 }
 
+// @param n0 normalized normal at 0
+// @param n1 normalized normal at 1
+float computeWeight(float3 delta0To1, float3 n0, float3 n1)
+{
+    float deltaLength2 = dot(delta0To1, delta0To1);
+
+    // todo: handle NaN
+    float3 delta = normalize(delta0To1);
+
+    float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
+
+    float weight = area / deltaLength2 / PI;
+    weight *= saturate(dot(delta, n0));
+    weight *= saturate(dot(delta, -n1));
+
+    return weight;
+}
+
+// @param p position
+// @param n normalized normal
+Reservoir sampleLightsForReservoir(uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
+{
+	Reservoir rez;
+    rez.init();
+
+	for (uint i = 0; i < reservoirSampleCount; i++)
+	{
+        uint rnd = rndState;
+
+        // normalized
+        float3 lightNormal;
+        float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal);
+        float weight = computeWeight(lightPos - p, surfaceNormal, lightNormal);
+        
+        rez.push(rnd, weight);
+    }
+
+    return rez;
+}
+
+
 [shader("raygeneration")]
 void MyRaygenShader()
 {
@@ -250,7 +291,7 @@ void MyRaygenShader()
     if(showDepth)
     {
         context.printTxt(' ');
-        context.printTxt('D');
+        context.printTxt('D', 'e', 'p', 't', 'h');
     }
 
     context.scale = 1;
@@ -329,7 +370,7 @@ void MyRaygenShader()
         float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal);
         if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
         {
-            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
+            RenderTarget[DispatchRaysIndex().xy] = float4(0.5f, 0.5f, 0, 1);
             return;
         }
         if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos + normal * sphereRadius, 0.03f).y > 0)    // with white dot to indicate normal direction
@@ -381,8 +422,10 @@ void MyRaygenShader()
 
 #elif RAY_TRACING_EXPERIMENT == 2
 //    float AO = 0.0f;
+    flags = RAY_FLAG_CULL_BACK_FACING_TRIANGLES;
     TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
-
+    flags = RAY_FLAG_NONE;
+    
     g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
 
     float3 hdr = 0;
@@ -425,37 +468,46 @@ void MyRaygenShader()
         bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
 
         Reservoir dstReservoir;
+        dstReservoir.init();
 
-        dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
+        if(areaLightSampling)
+        {
+            dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
 
-        if(g_sceneCB.wipeReservoir == 0)
-            rndState = dstReservoir.rndState;
+            if(g_sceneCB.wipeReservoir == 0)
+                rndState = dstReservoir.rndState;
+        }
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
             float weight = 1.0f;
-
             if(areaLightSampling)
             {
+                Reservoir rez = sampleLightsForReservoir(10, rndState, rayDesc.Origin, payload.interpolatedNormal);
+
+                weight = rez.W;
 
                 // normalized
                 float3 lightNormal;
-                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
-                float deltaLength2 = dot(delta, delta);
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rez.rndState, lightNormal) - rayDesc.Origin;
+
+//                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
+
+//                float deltaLength2 = dot(delta, delta);
 //                rayDesc.Direction = delta / (0.0001f + sqrt(deltaLength2)); // bias to avoid div by 0
-                rayDesc.Direction = normalize(delta);
+//                rayDesc.Direction = normalize(delta);
                 // lambert weight
-                float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
+//                float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
     //            addLight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal)) * 100 / area;   // 100 is hack
                 // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
     //            float pdf = deltaLength2 / (max(0.0f, dot(lightNormal, -rayDesc.Direction)) * area);
     //            weight = 1.0f / pdf / PI;
     //            weight = (max(0.0f, dot(lightNormal, -payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
-                weight = area / deltaLength2 / PI;  // wrong
+//                weight = area / deltaLength2 / PI;  // wrong
 
                 // lambert
-                weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
-                weight *= saturate(dot(rayDesc.Direction, -lightNormal));
+//                weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
+//                weight *= saturate(dot(rayDesc.Direction, -lightNormal));
             }
             else
             {
@@ -471,8 +523,12 @@ void MyRaygenShader()
 
             TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
-            if(payload2.instanceIndex == 0 && randomNext(rndState2) > 0.5f)
-                dstReservoir.push(rndState, weight);
+            if(payload2.instanceIndex != 0 && randomNext(rndState2) > 0.5f)
+            {
+                // reset
+                dstReservoir.init();
+                dstReservoir.rndState = rndState2;
+            }
 
 //            if(payload2.instanceIndex != 0 || g_sceneCB.wipeReservoir == 1)
 //            {
