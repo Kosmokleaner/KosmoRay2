@@ -21,7 +21,9 @@ STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(uint, raytraceFlags)
 	STRUCT_ENTRY(uint, FrameIndex)
 	STRUCT_ENTRY(uint, wipeReservoir)
-	STRUCT_ENTRY(uint, dummy[1])
+	STRUCT_ENTRY(uint, dummy)				// todo: dummy[1] will break next member
+	// .xy:currrentXY, zw:unused
+	STRUCT_ENTRY(int4, mouseXY)
 STRUCT_END()
 
 STRUCT_BEGIN(MaterialAttributes)

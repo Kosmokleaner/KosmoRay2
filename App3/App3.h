@@ -77,8 +77,10 @@ private:
     DataBlock m_raytracingOutput;
     // frame buffer sized
     DataBlock m_raytracingFeedback;
-    //
+	// frame buffer sized
 	DataBlock m_reservoirs;
+	// frame buffer sized
+	DataBlock m_GBufferA;
 
     // Shader tables
     ComPtr<ID3D12Resource> missShaderTable;

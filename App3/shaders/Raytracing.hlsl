@@ -10,9 +10,9 @@
 // To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
 #define FEEDBACK_FRACTION  1.0f
 // 0/1 animate TemporalAA jitter and noise seed
-#define ANIMATE_OVER_TIME 0
+#define ANIMATE_OVER_TIME 1
 // 1:very low, 8:low, 64:good
-#define SAMPLE_COUNT_AO 256
+#define SAMPLE_COUNT_AO 1
 // 0:reference path tracing / 1:less noise, 2: viewport split in half
 #define AREA_LIGHT_SAMPLING 2
 
@@ -46,6 +46,7 @@
 #include "cellular.hlsl"
 #include "Helper.hlsl"
 #include "Reservoir.hlsl"
+#include "GfxForAll.hlsl"
 
 #define NV_SHADER_EXTN_SLOT u1
 #define NV_SHADER_EXTN_REGISTER_SPACE space1
@@ -58,6 +59,9 @@ RWTexture2D<float4> RenderTarget : register(u0);
 RWTexture2D<float4> g_Feedback : register(u1);
 // frame buffer sized
 RWTexture2D<float4> g_Reservoirs : register(u2);
+// frame buffer sized
+RWTexture2D<float4> g_GBufferA : register(u3);
+
 //
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
 //
@@ -220,12 +224,15 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rnd, out float3 out
     else
         outNormal = float3(0, -1, 0);
 
-    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 4 *  0.08f + float3(0, yPos, 0);
+    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 11.1f * 4 *  0.08f + float3(0, yPos, 0);
 }
 
 [shader("raygeneration")]
 void MyRaygenShader()
 {
+    struct ContextGather context;			// pixel shader or compute shader looping through all pixels
+    context.init(DispatchRaysIndex().xy, int2(100, 100));
+
     // animate jitter offset over time for TemporalAA
     int2 move = 0;
 #if ANIMATE_OVER_TIME == 1
@@ -283,6 +290,38 @@ void MyRaygenShader()
         }
     }
 
+    // visualize getEmissiveQuadSample in reservoir under mouse cursor
+    {
+        Reservoir reservoir;
+
+        int2 currentXY = g_sceneCB.mouseXY.xy;
+
+        reservoir.loadFromRaw(g_Reservoirs[currentXY]);
+        uint rnd2 = reservoir.rndState;
+        const float sphereRadius = 0.05f;
+
+        float3 normal;
+        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal);
+        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
+        {
+            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
+            return;
+        }
+        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos + normal * sphereRadius, 0.03f).y > 0)    // with white dot to indicate normal direction
+        {
+            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 1, 1);
+            return;
+        }
+
+        context.pxLeftTop = context.pxCursor = currentXY + int2(20, -20);
+        printTxt(context, 'r', 'n', 'd', ':');
+        printHex(context, reservoir.rndState);
+        printLF(context);
+        printTxt(context, 'w', 'S', 'u', 'm', ':');
+        printFloat(context, reservoir.wSum);
+    }
+
+
 
 
     RayPayload payload = (RayPayload)0;
@@ -314,6 +353,8 @@ void MyRaygenShader()
 //    float AO = 0.0f;
     TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
 
+    g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
+
     float3 hdr = 0;
 
     if (any(payload.interpolatedNormal != float3(0, 0, 0))) // if emissive?
@@ -327,7 +368,11 @@ void MyRaygenShader()
         perFrameNoiseSeed = (uint)(g_sceneCB.sceneParam0.x * 12347);
 #endif
 
-        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
+
+        uint rndState2 = initRand(dot(DispatchRaysIndex(), uint3(8227, 2113, 1)), 0x1245678 + perFrameNoiseSeed);
+
+
+        uint rndState = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
         uint sampleCountAO = SAMPLE_COUNT_AO;
@@ -349,10 +394,12 @@ void MyRaygenShader()
 
         bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
 
-        uint rndState = randomInit(DispatchRaysIndex().x, DispatchRaysIndex().y);
+        Reservoir dstReservoir;
 
-        Reservoir reservoir;
-        reservoir.init();
+        dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
+
+        if(g_sceneCB.wipeReservoir == 0)
+            rndState = dstReservoir.rndState;
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
@@ -360,9 +407,10 @@ void MyRaygenShader()
 
             if(areaLightSampling)
             {
+
                 // normalized
                 float3 lightNormal;
-                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rnd, lightNormal) - rayDesc.Origin;
+                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
                 float deltaLength2 = dot(delta, delta);
 //                rayDesc.Direction = delta / (0.0001f + sqrt(deltaLength2)); // bias to avoid div by 0
                 rayDesc.Direction = normalize(delta);
@@ -378,19 +426,11 @@ void MyRaygenShader()
                 // lambert
                 weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
                 weight *= saturate(dot(rayDesc.Direction, -lightNormal));
-
-//                reservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
-
-                reservoir.push(rndState, weight);
-
-                randomNext(rndState);
-
-//                g_Reservoirs[DispatchRaysIndex().xy] = reservoir.storeToRaw();
             }
             else
             {
                 // reference 
-                rayDesc.Direction = getCosHemisphereSample(rnd, payload.interpolatedNormal);
+                rayDesc.Direction = getCosHemisphereSample(rndState, payload.interpolatedNormal);
             }
 
             RayPayload payload2 = (RayPayload)0;
@@ -400,6 +440,16 @@ void MyRaygenShader()
             payload2.minT = payload2.minTfront = rayDesc.TMax;
 
             TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+
+            if(payload2.instanceIndex == 0 && randomNext(rndState2) > 0.5f)
+                dstReservoir.push(rndState, weight);
+
+//            if(payload2.instanceIndex != 0 || g_sceneCB.wipeReservoir == 1)
+//            {
+//                dstReservoir.init();
+//            }
+//            dstReservoir.push(rndState, weight);
+
 
             float3 addLight = 0;
 
@@ -423,6 +473,9 @@ void MyRaygenShader()
             addLight *= weight;
             incomingLight += addLight;
         }
+
+        g_Reservoirs[DispatchRaysIndex().xy] = dstReservoir.storeToRaw();
+
         // just in case
 //        AO = saturate(AO);
 
@@ -437,6 +490,10 @@ void MyRaygenShader()
     hdr *= 4.0f;    // brighter
 
     float3 ldr = filmicToneMapping(hdr);
+
+
+    ldr = lerp(ldr, context.dstColor.rgb, context.dstColor.a);
+
 
     if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
         ldr = float3(0.5f, 0,0);    // red vertical line

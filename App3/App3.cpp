@@ -30,6 +30,7 @@ namespace GlobalRootSignatureParams {
         OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (NVidia)
         FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
 		ReservoirsSlot,             // DescriptorTable      UAV space0: u2(g_Reservoirs)
+		GBufferASlot,               // DescriptorTable      UAV space0: u3(g_GBufferA)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
         IndexBuffer,                // DescriptorTable      SRV space101: t0: g_indices[IBIndex][]
@@ -96,6 +97,12 @@ void App3::CreateRootSignatures()
             range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 2, 0);             // space0: u2
             rootParameters[GlobalRootSignatureParams::ReservoirsSlot].InitAsDescriptorTable(1, &range);
         }
+
+		{
+			CD3DX12_DESCRIPTOR_RANGE range;
+			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3, 0);             // space0: u3
+			rootParameters[GlobalRootSignatureParams::GBufferASlot].InitAsDescriptorTable(1, &range);
+		}
 
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
@@ -204,6 +211,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
         m_sceneCB->cameraPosition = glm::vec4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
         m_sceneCB->clipFromWorld = glm::transpose(clipFromWorld);
         m_sceneCB->worldFromClip = glm::transpose(glm::inverse(clipFromWorld));
+        m_sceneCB->mouseXY = glm::ivec4(mouseXY.x, mouseXY.y, 0, 0); 
     }
 }
 
@@ -226,6 +234,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutput.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::ReservoirsSlot, m_reservoirs.m_UAVGpuDescriptor);
+	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::GBufferASlot, m_GBufferA.m_UAVGpuDescriptor);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
@@ -283,6 +292,15 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 		barrier.UAV.pResource = m_reservoirs.m_resource.Get();
+		commandList->ResourceBarrier(1, &barrier);
+	}
+	// todo: combine with former barrier
+	{
+		// D3D12_RESOURCE_UAV_BARRIER 
+
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		barrier.UAV.pResource = m_GBufferA.m_resource.Get();
 		commandList->ResourceBarrier(1, &barrier);
 	}
 
@@ -601,7 +619,7 @@ void App3::BuildAccelerationStructures()
             // hack off some objects and other stuff to make Cornell box
 			{
 				if (i == 0)
-					size = 0.08f;
+					size = 11.1f * 0.08f;
                 if (i == 1 || i == 2 || i == 4)
                     size = 0.0f;
                 dst->Transform[0][3] = 0.0f;
@@ -761,6 +779,9 @@ void App3::CreateRaytracingOutputResource()
 
 	uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	m_reservoirs.CreateUAV(renderer, uavDesc);
+
+    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;    // todo: optimize
+	m_GBufferA.CreateUAV(renderer, uavDesc);
 }
 
 void App3::ReleaseDeviceDependentResources()

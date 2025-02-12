@@ -221,3 +221,8 @@ void AppBase::OnMouseWheel(MouseWheelEventArgs& e)
     OutputDebugStringA(buffer);
 */
 }
+
+void AppBase::OnMouseMoved(MouseMotionEventArgs& e)
+{
+    mouseXY = glm::ivec2(e.X, e.Y);
+}

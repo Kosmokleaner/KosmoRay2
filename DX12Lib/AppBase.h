@@ -23,7 +23,8 @@ protected:
 
     virtual void OnUpdate(UpdateEventArgs& e) override;
     virtual void OnKeyPressed(KeyEventArgs& e) override;
-    virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
+	virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
+	virtual void OnMouseMoved(MouseMotionEventArgs& e) override;
 
     // Helper functions
     
@@ -70,8 +71,10 @@ protected:
     glm::mat4 m_ViewMatrix = {};
     // eye->clip aka clipFromEye
     glm::mat4 m_ProjectionMatrix = {};
-
+    //
     CTransform camera;
+    //
+    glm::ivec2 mouseXY = glm::ivec2(-1, -1);
 
     bool m_ContentLoaded = false;
 };
