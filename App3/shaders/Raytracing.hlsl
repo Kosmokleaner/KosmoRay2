@@ -239,18 +239,18 @@ void MyRaygenShader()
     context.scale = 2;
 
     // left menu bar
-    bool showNormal = printColorDisc(context, float4(0.5f, 0.5f, 1.0f, 1.0f));
+    bool showNormal = context.printDisc(float4(0.5f, 0.5f, 1.0f, 1.0f));
     if(showNormal)
     {
-        printTxt(context, ' ');
-        printTxt(context, 'N', 'o', 'r', 'm', 'a', 'l');
+        context.printTxt(' ');
+        context.printTxt('N', 'o', 'r', 'm', 'a', 'l');
     }
-    printLF(context);
-    bool showDepth = printColorDisc(context, float4(1, 0, 0, 1));
+    context.printLF();
+    bool showDepth = context.printDisc(float4(1, 0, 0, 1));
     if(showDepth)
     {
-        printTxt(context, ' ');
-        printTxt(context, 'D');
+        context.printTxt(' ');
+        context.printTxt('D');
     }
 
     context.scale = 1;
@@ -341,12 +341,12 @@ void MyRaygenShader()
         if(!showNormal && !showDepth)
         {
             context.pxLeftTop = context.pxCursor = currentXY + int2(20, -20);
-            printTxt(context, 'r', 'n', 'd', ':');
-            printHex(context, reservoir.rndState);
-            printLF(context);
-            printTxt(context, 'w', 'S', 'u', 'm', ':');
-            printFloat(context, reservoir.wSum);
-            drawColorCrosshair(context, currentXY, 10, float4(0, 1, 0, 1));
+            context.printTxt('r', 'n', 'd', ':');
+            context.printHex(reservoir.rndState);
+            context.printLF();
+            context.printTxt('w', 'S', 'u', 'm', ':');
+            context.printFloat(reservoir.wSum);
+            context.drawCrosshair(currentXY, 10, float4(0, 1, 0, 1));
         }
     }
 #endif // GFX_FOR_ALL == 1

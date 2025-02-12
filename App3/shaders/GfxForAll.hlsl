@@ -5,26 +5,17 @@
 // API
 // 
 // {
-//   struct ContextGather context;			// pixel shader or compute shader looping through all pixels
-//   context.init(inpxPos, pxLeftTop);
-//   printTxt(context, 'A', 'B');
-//   Output[context.pxPos] = context.dstColor;
+//   struct ContextGather ui;			// pixel shader or compute shader looping through all pixels
+//   ui.init(inpxPos, pxLeftTop);
+//   ui.printTxt('A', 'B');
+//   Output[ui.pxPos] = ui.dstColor;
 // }
 //
 // {
-//   struct ContextScatter context;			// vertex shader or single thread in compute or pixel shader, onGfxForAllScatter() is used 
-//   context.init(pxLeftTop);
-//   printTxt(context, 'A', 'B');
+//   struct ContextScatter ui;			// vertex shader or single thread in compute or pixel shader, onGfxForAllScatter() is used 
+//   ui.init(pxLeftTop);
+//   ui.printTxt('A', 'B');
 // }
-//
-// void printColorBlock(inout Context context, float4 color)
-// void printColorDisc(inout Context context, float4 color)
-// void printTxt(inout Context context, uint a, uint b = 0, uint c = 0, uint d = 0, uint e = 0, uint f = 0)
-// void printLF(inout Context context)
-// void printInt(inout Context context, int value)
-// void printHex(inout Context context, uint value)
-// void printFloat(inout Context context, float value)
-
 
 
 struct ContextScatter
@@ -33,7 +24,7 @@ struct ContextScatter
 	float4 textColor;
 	// in pixels
 	int2 pxCursor;
-	// window
+	// window left top
 	int2 pxLeftTop;
 	// 1/2/3/4
 	int scale;
@@ -50,7 +41,29 @@ struct ContextScatter
 		mouseXY = int2(-100, -100);
 	}
 
-	// todo: consider member functions
+	// e.g. ui.printTxt('I', ' ', 'a', 'm');
+	// @param a ascii character or 0
+	void printTxt(uint a, uint b = 0, uint c = 0, uint d = 0, uint e = 0, uint f = 0);
+	// jump to next line
+	void printLF();
+	// @param value e.g. 123, 0
+	void printInt(int value);
+	// print hexadecimal e.g. "0000aa34"
+	// @param value 32bit e.g. 0x123, 0xff00
+	void printHex(uint value);
+	// @param output e.g. g_output from RWTexture2D<float3> g_output : register(u0, space0);
+	// @param pos in pixels from left top, left top of the printout
+	// @param value
+	void printFloat(float value);
+	// block in a 8x8 character
+	void printBlock(float4 color);
+	// circle in a 8x8 character
+	void printDisc(float4 color);
+
+	// -------------------------------------------------
+
+	// don't use directly
+	void printCharacter(uint ascii);
 };
 
 struct ContextGather : ContextScatter
@@ -68,7 +81,34 @@ struct ContextGather : ContextScatter
 		dstColor = float4(0, 0, 0, 0);
 	}
 
-	// todo: consider member functions
+	// e.g. ui.printTxt('I', ' ', 'a', 'm');
+	// @param a ascii character or 0
+	void printTxt(uint a, uint b = 0, uint c = 0, uint d = 0, uint e = 0, uint f = 0);
+	// jump to next line
+	void printLF();
+	// @param value e.g. 123, 0
+	void printInt(int value);
+	// print hexadecimal e.g. "0000aa34"
+	// @param value 32bit e.g. 0x123, 0xff00
+	void printHex(uint value);
+	// @param output e.g. g_output from RWTexture2D<float3> g_output : register(u0, space0);
+	// @param pos in pixels from left top, left top of the printout
+	// @param value
+	void printFloat(float value);
+	// block in a 8x8 character
+	void printBlock(float4 color);
+	//
+	void drawCircle(float2 center, float radius, float4 color);
+	//
+	void drawCrosshair(int2 center, int radius, float4 color);
+	// circle in a 8x8 character
+	// @return mouseOver
+	bool printDisc(float4 color);
+
+	// -------------------------------------------------
+
+	// don't use directly
+	void printCharacter(uint ascii);
 };
 
 // -------------------------------------------------------------------------------------
@@ -176,100 +216,200 @@ bool fontLookup(uint ascii, int2 pxPos)
 	return (byteValue >> (7 - bitId)) & 1;
 }
 
-// don't use directly, use printTxt() instead
-void printCharacter(inout ContextGather context, uint ascii)
+void ContextGather::printCharacter(uint ascii)
 {
-	int2 pxLocal = (uint2)(context.pxPos - context.pxCursor) / context.scale;
+	int2 pxLocal = (uint2)(pxPos - pxCursor) / scale;
 
 	if(fontLookup(ascii, pxLocal))
-		context.dstColor = context.textColor;
+		dstColor = textColor;
 
-	context.pxCursor.x += 8 * context.scale;
+	pxCursor.x += 8 * scale;
 }
 
-void printTxt(inout ContextGather context, uint a, uint b = 0, uint c = 0, uint d = 0, uint e = 0, uint f = 0)
+void ContextGather::printTxt(uint a, uint b, uint c, uint d, uint e, uint f)
 {
-	if (a) printCharacter(context, a);
-	if (b) printCharacter(context, b);
-	if (c) printCharacter(context, c);
-	if (d) printCharacter(context, d);
-	if (e) printCharacter(context, e);
-	if (f) printCharacter(context, f);
+	if (a) printCharacter(a);
+	if (b) printCharacter(b);
+	if (c) printCharacter(c);
+	if (d) printCharacter(d);
+	if (e) printCharacter(e);
+	if (f) printCharacter(f);
 }
 
-// block in a 8x8 character
-void printColorBlock(inout ContextGather context, float4 color)
+void ContextGather::printLF()
 {
-	float2 pxLocal = (float2)(context.pxPos - context.pxCursor) / context.scale - float2(3.5f, 3.5f);
+	pxCursor.x = pxLeftTop.x;
+	pxCursor.y += 8 * scale;
+}
+
+void ContextGather::printInt(int value)
+{
+	// leading '-'
+	if (value < 0)
+	{
+		printCharacter('-');
+		value = -value;
+	}
+	if (value == 0)
+	{
+		printCharacter('0');
+		return;
+	}
+	// move to right depending on number length
+	{
+		uint tmp = (uint)value;
+		while (tmp)
+		{
+			pxCursor.x += 8 * scale;
+			tmp /= 10;
+		}
+	}
+	// digits
+	{
+		int backup = pxCursor.x;
+		uint tmp = (uint)value;
+		while (tmp)
+		{
+			// 0..9
+			uint digit = tmp % 10;
+			tmp /= 10;
+			// go backwards
+			pxCursor.x -= 8 * scale;
+			printCharacter('0' + digit);
+			// counter +=8 from printCharacter ()
+			pxCursor.x -= 8 * scale;
+		}
+		pxCursor.x = backup;
+	}
+}
+
+void ContextGather::printHex(uint value)
+{
+	// 8 nibbles
+	for(int i = 7; i >= 0; --i)
+	{
+		// 0..15
+		uint nibble = (value >> (i * 4)) & 0xf;
+		uint start = (nibble < 10) ? '0' : ('A' - 10);
+		printCharacter(start + nibble);
+	}
+}
+
+void ContextGather::printFloat(float value)
+{
+	printInt((int)value);
+	float fractional = frac(abs(value));
+
+	printCharacter('.');
+
+	uint digitCount = 3;
+
+	// todo: unit tests, this is likely wrong at lower precision
+
+	// fractional digits
+	for(uint i = 0; i < digitCount; ++i)
+	{
+		fractional *= 10;
+		// 0..9
+		uint digit = (uint)(fractional);
+		fractional = frac(fractional);
+		printCharacter('0' + digit);
+	}
+}
+
+void ContextGather::printBlock(float4 color)
+{
+	float2 pxLocal = (float2)(pxPos - pxCursor) / scale - float2(3.5f, 3.5f);
 
 	float mask = saturate(4 - max(abs(pxLocal.x), abs(pxLocal.y)));
 
-//	context.dstColor = lerp(context.dstColor, float4(color.rgb, 1), color.a * mask);
+//	dstColor = lerp(dstColor, float4(color.rgb, 1), color.a * mask);
 	if(mask)
-		context.dstColor = color;
+		dstColor = color;
 
-
-	context.pxCursor.x += 8 * context.scale;
+	pxCursor.x += 8 * scale;
 }
 
-void drawColorCircle(inout ContextGather context, float2 center, float radius, float4 color)
+void ContextGather::drawCircle(float2 center, float radius, float4 color)
 {
-	float2 pxLocal = (float2)(context.pxPos - center);
+	float2 pxLocal = (float2)(pxPos - center);
 
 	float d = radius - length(pxLocal);
 	float mask = saturate(d + 1) - saturate(d);
 
-//	context.dstColor = lerp(context.dstColor, float4(color.rgb, 1), color.a * mask);
+//	dstColor = lerp(dstColor, float4(color.rgb, 1), color.a * mask);
 	if(mask > 0.5f)
-		context.dstColor = color;
+		dstColor = color;
 }
 
-void drawColorCrosshair(inout ContextGather context, int2 center, int radius, float4 color)
+void ContextGather::drawCrosshair(int2 center, int radius, float4 color)
 {
-	int2 pxLocal = abs(context.pxPos - center);
+	int2 pxLocal = abs(pxPos - center);
 	int dist = max(pxLocal.x, pxLocal.y);
 
 	if((pxLocal.x == 0 || pxLocal.y == 0) && dist <= radius)
-		context.dstColor = color;
+		dstColor = color;
 }
 
-// circle in a 8x8 character
-// @return mouseOver
-bool printColorDisc(inout ContextGather context, float4 color)
+bool ContextGather::printDisc(float4 color)
 {
-	float2 pxLocal = (float2)(context.pxPos - context.pxCursor) / context.scale - float2(3.5f, 3.5f);
+	float2 pxLocal = (float2)(pxPos - pxCursor) / scale - float2(3.5f, 3.5f);
 
 	float mask = saturate(4 - length(pxLocal));
 
-//	context.dstColor = lerp(context.dstColor, float4(color.rgb, 1), color.a * mask);
+//	dstColor = lerp(stColor, float4(color.rgb, 1), color.a * mask);
 	if(mask)
-		context.dstColor = color;
+		dstColor = color;
 
-	bool mouseOver = length((float2)(context.mouseXY - context.pxCursor) / context.scale - float2(3.5f, 3.5f)) < 4;
+	bool mouseOver = length((float2)(mouseXY - pxCursor) / scale - float2(3.5f, 3.5f)) < 4;
 
-	context.pxCursor.x += 8 * context.scale;
+	pxCursor.x += 8 * scale;
 
 	return mouseOver;
 }
 
-void printLF(inout ContextGather context)
+// -------------------------------------------------------------------------------------
+
+// implement this in your code
+void onGfxForAllScatter(int2 pxPos, float4 color);
+
+void ContextScatter::printCharacter(uint ascii)
 {
-	context.pxCursor.x = context.pxLeftTop.x;
-	context.pxCursor.y += 8 * context.scale;
+	[loop] for(int y = 0; y < 8 * scale; ++y)
+	[loop] for(int x = 0; x < 8 * scale; ++x)
+		if(fontLookup(ascii, int2(x, y) / scale))
+			onGfxForAllScatter(pxCursor + int2(x, y), textColor);
+
+	pxCursor.x += 8 * scale;
 }
 
-// @param value e.g. 123, 0
-void printInt(inout ContextGather context, int value)
+void ContextScatter::printTxt(uint a, uint b, uint c, uint d, uint e, uint f)
+{
+	if (a) printCharacter(a);
+	if (b) printCharacter(b);
+	if (c) printCharacter(c);
+	if (d) printCharacter(d);
+	if (e) printCharacter(e);
+	if (f) printCharacter(f);
+}
+
+void ContextScatter::printLF()
+{
+	pxCursor.x = pxLeftTop.x;
+	pxCursor.y += 8 * scale;
+}
+
+void ContextScatter::printInt(int value)
 {
 	// leading '-'
 	if (value < 0)
 	{
-		printCharacter(context, '-');
+		printCharacter('-');
 		value = -value;
 	}
 	if (value == 0)
 	{
-		printCharacter(context, '0');
+		printCharacter('0');
 		return;
 	}
 	// move to right depending on number length
@@ -277,13 +417,12 @@ void printInt(inout ContextGather context, int value)
 		uint tmp = (uint)value;
 		while (tmp)
 		{
-			context.pxCursor.x += 8 * context.scale;
+			pxCursor.x += 8 * scale;
 			tmp /= 10;
 		}
 	}
 	// digits
 	{
-		int backup = context.pxCursor.x;
 		uint tmp = (uint)value;
 		while (tmp)
 		{
@@ -291,18 +430,15 @@ void printInt(inout ContextGather context, int value)
 			uint digit = tmp % 10;
 			tmp /= 10;
 			// go backwards
-			context.pxCursor.x -= 8 * context.scale;
-			printCharacter(context, '0' + digit);
+			pxCursor.x -= 8 * scale;
+			printCharacter('0' + digit);
 			// counter +=8 from printCharacter ()
-			context.pxCursor.x -= 8 * context.scale;
+			pxCursor.x -= 8 * scale;
 		}
-		context.pxCursor.x = backup;
 	}
 }
 
-// print hexadecimal e.g. "0000aa34"
-// @param value 32bit e.g. 0x123, 0xff00
-void printHex(inout ContextGather context, uint value)
+void ContextScatter::printHex(uint value)
 {
 	// 8 nibbles
 	for(int i = 7; i >= 0; --i)
@@ -310,19 +446,16 @@ void printHex(inout ContextGather context, uint value)
 		// 0..15
 		uint nibble = (value >> (i * 4)) & 0xf;
 		uint start = (nibble < 10) ? '0' : ('A' - 10);
-		printCharacter(context, start + nibble);
+		printCharacter(start + nibble);
 	}
 }
 
-// @param output e.g. g_output from RWTexture2D<float3> g_output : register(u0, space0);
-// @param pos in pixels from left top, left top of the printout
-// @param value
-void printFloat(inout ContextGather context, float value)
+void ContextScatter::printFloat(float value)
 {
-	printInt(context, (int)value);
+	printInt((int)value);
 	float fractional = frac(abs(value));
 
-	printCharacter(context, '.');
+	printCharacter('.');
 
 	uint digitCount = 3;
 
@@ -335,150 +468,38 @@ void printFloat(inout ContextGather context, float value)
 		// 0..9
 		uint digit = (uint)(fractional);
 		fractional = frac(fractional);
-		printCharacter(context, '0' + digit);
+		printCharacter('0' + digit);
 	}
 }
 
-// -------------------------------------------------------------------------------------
-
-// 
-void onGfxForAllScatter(int2 pxPos, float4 color);
-
-void printCharacter(inout ContextScatter context, uint ascii)
+void ContextScatter::printBlock(float4 color)
 {
-	[loop] for(int y = 0; y < 8 * context.scale; ++y)
-	[loop] for(int x = 0; x < 8 * context.scale; ++x)
-		if(fontLookup(ascii, int2(x, y) / context.scale))
-			onGfxForAllScatter(context.pxCursor + int2(x, y), context.textColor);
-
-	context.pxCursor.x += 8 * context.scale;
-}
-
-void printTxt(inout ContextScatter context, uint a, uint b = 0, uint c = 0, uint d = 0, uint e = 0, uint f = 0)
-{
-	if (a) printCharacter(context, a);
-	if (b) printCharacter(context, b);
-	if (c) printCharacter(context, c);
-	if (d) printCharacter(context, d);
-	if (e) printCharacter(context, e);
-	if (f) printCharacter(context, f);
-}
-
-// block in a 8x8 character
-void printColorBlock(inout ContextScatter context, float4 color)
-{
-	[loop] for(int y = 0; y < 8 * context.scale; ++y)
-	[loop] for(int x = 0; x < 8 * context.scale; ++x)
+	[loop] for(int y = 0; y < 8 * scale; ++y)
+	[loop] for(int x = 0; x < 8 * scale; ++x)
 	{
-		float2 pxLocal = (float2(x, y) ) / context.scale - float2(3.5f, 3.5f);
+		float2 pxLocal = (float2(x, y) ) / scale - float2(3.5f, 3.5f);
 
 		float mask = saturate(4 - max(abs(pxLocal.x), abs(pxLocal.y)));
 
 		if(mask)
-			onGfxForAllScatter(context.pxCursor + int2(x,y), color);
+			onGfxForAllScatter(pxCursor + int2(x,y), color);
 	}
 
-	context.pxCursor.x += 8 * context.scale;
+	pxCursor.x += 8 * scale;
 }
 
-// circle in a 8x8 character
-void printColorDisc(inout ContextScatter context, float4 color)
+void ContextScatter::printDisc(float4 color)
 {
-	[loop] for(int y = 0; y < 8 * context.scale; ++y)
-	[loop] for(int x = 0; x < 8 * context.scale; ++x)
+	[loop] for(int y = 0; y < 8 * scale; ++y)
+	[loop] for(int x = 0; x < 8 * scale; ++x)
 	{
-		float2 pxLocal = (float2(x, y) ) / context.scale - float2(3.5f, 3.5f);
+		float2 pxLocal = (float2(x, y) ) / scale - float2(3.5f, 3.5f);
 
 		float mask = saturate(4 - length(pxLocal));
 
 		if(mask)
-			onGfxForAllScatter(context.pxCursor + int2(x,y), color);
+			onGfxForAllScatter(pxCursor + int2(x,y), color);
 	}
 
-	context.pxCursor.x += 8 * context.scale;
-}
-
-void printLF(inout ContextScatter context)
-{
-	context.pxCursor.x = context.pxLeftTop.x;
-	context.pxCursor.y += 8 * context.scale;
-}
-
-// @param value e.g. 123, 0
-void printInt(inout ContextScatter context, int value)
-{
-	// leading '-'
-	if (value < 0)
-	{
-		printCharacter(context, '-');
-		value = -value;
-	}
-	if (value == 0)
-	{
-		printCharacter(context, '0');
-		return;
-	}
-	// move to right depending on number length
-	{
-		uint tmp = (uint)value;
-		while (tmp)
-		{
-			context.pxCursor.x += 8 * context.scale;
-			tmp /= 10;
-		}
-	}
-	// digits
-	{
-		uint tmp = (uint)value;
-		while (tmp)
-		{
-			// 0..9
-			uint digit = tmp % 10;
-			tmp /= 10;
-			// go backwards
-			context.pxCursor.x -= 8 * context.scale;
-			printCharacter(context, '0' + digit);
-			// counter +=8 from printCharacter ()
-			context.pxCursor.x -= 8 * context.scale;
-		}
-	}
-}
-
-// print hexadecimal e.g. "0000aa34"
-// @param value 32bit e.g. 0x123, 0xff00
-void printHex(inout ContextScatter context, uint value)
-{
-	// 8 nibbles
-	for(int i = 7; i >= 0; --i)
-	{
-		// 0..15
-		uint nibble = (value >> (i * 4)) & 0xf;
-		uint start = (nibble < 10) ? '0' : ('A' - 10);
-		printCharacter(context, start + nibble);
-	}
-}
-
-// @param output e.g. g_output from RWTexture2D<float3> g_output : register(u0, space0);
-// @param pos in pixels from left top, left top of the printout
-// @param value
-void printFloat(inout ContextScatter context, float value)
-{
-	printInt(context, (int)value);
-	float fractional = frac(abs(value));
-
-	printCharacter(context, '.');
-
-	uint digitCount = 3;
-
-	// todo: unit tests, this is likely wrong at lower precision
-
-	// fractional digits
-	for(uint i = 0; i < digitCount; ++i)
-	{
-		fractional *= 10;
-		// 0..9
-		uint digit = (uint)(fractional);
-		fractional = frac(fractional);
-		printCharacter(context, '0' + digit);
-	}
+	pxCursor.x += 8 * scale;
 }
