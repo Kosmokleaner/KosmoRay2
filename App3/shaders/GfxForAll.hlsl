@@ -37,6 +37,8 @@ struct ContextScatter
 	int2 pxLeftTop;
 	// 1/2/3/4
 	int scale;
+	// -100 if not yet set
+	int2 mouseXY;
 
 	void init(int2 inpxLeftTop = int2(0, 0))
 	{
@@ -45,6 +47,7 @@ struct ContextScatter
 		pxLeftTop = inpxLeftTop;
 		pxCursor = pxLeftTop;
 		scale = 1;
+		mouseXY = int2(-100, -100);
 	}
 
 	// todo: consider member functions
@@ -231,7 +234,8 @@ void drawColorCrosshair(inout ContextGather context, int2 center, int radius, fl
 }
 
 // circle in a 8x8 character
-void printColorDisc(inout ContextGather context, float4 color)
+// @return mouseOver
+bool printColorDisc(inout ContextGather context, float4 color)
 {
 	float2 pxLocal = (float2)(context.pxPos - context.pxCursor) / context.scale - float2(3.5f, 3.5f);
 
@@ -241,7 +245,11 @@ void printColorDisc(inout ContextGather context, float4 color)
 	if(mask)
 		context.dstColor = color;
 
+	bool mouseOver = length((float2)(context.mouseXY - context.pxCursor) / context.scale - float2(3.5f, 3.5f)) < 4;
+
 	context.pxCursor.x += 8 * context.scale;
+
+	return mouseOver;
 }
 
 void printLF(inout ContextGather context)

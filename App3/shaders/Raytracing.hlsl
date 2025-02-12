@@ -15,6 +15,8 @@
 #define SAMPLE_COUNT_AO 1
 // 0:reference path tracing / 1:less noise, 2: viewport split in half
 #define AREA_LIGHT_SAMPLING 2
+// 0:off, 1:on (slow but good for debugging)
+#define GFX_FOR_ALL 1
 
 
 
@@ -230,8 +232,30 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rnd, out float3 out
 [shader("raygeneration")]
 void MyRaygenShader()
 {
+#if GFX_FOR_ALL == 1
     struct ContextGather context;			// pixel shader or compute shader looping through all pixels
-    context.init(DispatchRaysIndex().xy, int2(100, 100));
+    context.init(DispatchRaysIndex().xy, int2(10, 10));
+    context.mouseXY = g_sceneCB.mouseXY.xy;
+    context.scale = 2;
+
+    // left menu bar
+    bool showNormal = printColorDisc(context, float4(0.5f, 0.5f, 1.0f, 1.0f));
+    if(showNormal)
+    {
+        printTxt(context, ' ');
+        printTxt(context, 'N', 'o', 'r', 'm', 'a', 'l');
+    }
+    printLF(context);
+    bool showDepth = printColorDisc(context, float4(1, 0, 0, 1));
+    if(showDepth)
+    {
+        printTxt(context, ' ');
+        printTxt(context, 'D');
+    }
+
+    context.scale = 1;
+#endif // GFX_FOR_ALL == 1
+
 
     // animate jitter offset over time for TemporalAA
     int2 move = 0;
@@ -290,6 +314,7 @@ void MyRaygenShader()
         }
     }
 
+#if GFX_FOR_ALL == 1
     // visualize getEmissiveQuadSample in reservoir under mouse cursor
     {
         Reservoir reservoir;
@@ -313,14 +338,18 @@ void MyRaygenShader()
             return;
         }
 
-        context.pxLeftTop = context.pxCursor = currentXY + int2(20, -20);
-        printTxt(context, 'r', 'n', 'd', ':');
-        printHex(context, reservoir.rndState);
-        printLF(context);
-        printTxt(context, 'w', 'S', 'u', 'm', ':');
-        printFloat(context, reservoir.wSum);
-        drawColorCrosshair(context, currentXY, 10, float4(0, 1, 0, 1));
+        if(!showNormal && !showDepth)
+        {
+            context.pxLeftTop = context.pxCursor = currentXY + int2(20, -20);
+            printTxt(context, 'r', 'n', 'd', ':');
+            printHex(context, reservoir.rndState);
+            printLF(context);
+            printTxt(context, 'w', 'S', 'u', 'm', ':');
+            printFloat(context, reservoir.wSum);
+            drawColorCrosshair(context, currentXY, 10, float4(0, 1, 0, 1));
+        }
     }
+#endif // GFX_FOR_ALL == 1
 
 
 
@@ -492,10 +521,14 @@ void MyRaygenShader()
 
     float3 ldr = filmicToneMapping(hdr);
 
-    // uncomment to visualize GBufferA
-//    ldr = g_GBufferA[DispatchRaysIndex().xy].xyz * 0.5f + 0.5f;
+#if GFX_FOR_ALL == 1
+    if(showNormal)
+        ldr = g_GBufferA[DispatchRaysIndex().xy].xyz * 0.5f + 0.5f;
+    if(showDepth)
+        ldr = saturate(float3(g_GBufferA[DispatchRaysIndex().xy].w * 0.05f, 0, 0)) * 0.7f;
 
     ldr = lerp(ldr, context.dstColor.rgb, context.dstColor.a);
+#endif //GFX_FOR_ALL == 1
 
 
     if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
