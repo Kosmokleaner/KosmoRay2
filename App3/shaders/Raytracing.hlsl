@@ -213,12 +213,12 @@ float3 getSkyColor(float3 worldRayDirection)
 
 // hard coded to work with Quad.obj
 // @param outNormal will be normalized
-float3 getEmissiveQuadSample(float3 rayDirection, inout uint rnd, out float3 outNormal)
+float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal)
 {
     float yPos = 2.95f; // pretty close to the area light in the original Cornell box
 
 	// 0..1
-	float2 uv = nextRand2(rnd);
+	float2 uv = nextRand2(rndState);
 
     // todo: flip if needed
     if(rayDirection.y > yPos)
@@ -249,24 +249,19 @@ float computeWeight(float3 delta0To1, float3 n0, float3 n1)
 
 // @param p position
 // @param n normalized normal
-Reservoir sampleLightsForReservoir(uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
+void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
 {
-	Reservoir rez;
-    rez.init();
-
 	for (uint i = 0; i < reservoirSampleCount; i++)
 	{
-        uint rnd = rndState;
+        uint rndStateBefore = rndState;
 
         // normalized
         float3 lightNormal;
         float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal);
         float weight = computeWeight(lightPos - p, surfaceNormal, lightNormal);
         
-        rez.push(rnd, weight);
+        rez.push(rndStateBefore, weight);
     }
-
-    return rez;
 }
 
 
@@ -311,8 +306,6 @@ void MyRaygenShader()
 //    uint startTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
 
     float2 lerpValues = (float2)DispatchRaysIndex() / (float2)DispatchRaysDimensions();
-
-    float fracTime = g_sceneCB.sceneParam0.x;
 
     uint section = DispatchRaysIndex().x / 8;
 
@@ -428,6 +421,8 @@ void MyRaygenShader()
     
     g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
 
+    bool highlightPixel = false;
+
     float3 hdr = 0;
 
     if (any(payload.interpolatedNormal != float3(0, 0, 0))) // if emissive?
@@ -474,22 +469,31 @@ void MyRaygenShader()
         {
             dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
 
-            if(g_sceneCB.wipeReservoir == 0)
-                rndState = dstReservoir.rndState;
+//            if(g_sceneCB.updateReservoir == 1)
+//                rndState = dstReservoir.rndState;
         }
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
+            RayPayload payload2 = (RayPayload)0;
+            payload2.primitiveIndex = -1;
+            payload2.instanceIndex = -1;
+            payload2.materialColor = float3(0.2f, 0.2f, 0.2f);        // ???? what is this ?
+            payload2.minT = payload2.minTfront = rayDesc.TMax;
+
             float weight = 1.0f;
             if(areaLightSampling)
             {
-                Reservoir rez = sampleLightsForReservoir(10, rndState, rayDesc.Origin, payload.interpolatedNormal);
+                if(g_sceneCB.updateReservoir == 1)
+                    sampleLightsForReservoir(dstReservoir, 1, rndState, rayDesc.Origin, payload.interpolatedNormal);
 
-                weight = rez.W;
+                weight = dstReservoir.W;
+
+                uint rndStateCopy = dstReservoir.rndState;
 
                 // normalized
                 float3 lightNormal;
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rez.rndState, lightNormal) - rayDesc.Origin;
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal) - rayDesc.Origin;
 
 //                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
 
@@ -508,26 +512,28 @@ void MyRaygenShader()
                 // lambert
 //                weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
 //                weight *= saturate(dot(rayDesc.Direction, -lightNormal));
+
+                TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+
+                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
+                {
+                    // reset
+//                    dstReservoir.W = 0;
+                    dstReservoir.init();
+                    highlightPixel = true;
+ //                   dstReservoir.rndState = rndState2;
+                }
+                else
+                {
+//                    dstReservoir.push(rez.rndState, rez.W);
+                }
             }
             else
             {
                 // reference 
                 rayDesc.Direction = getCosHemisphereSample(rndState, payload.interpolatedNormal);
-            }
 
-            RayPayload payload2 = (RayPayload)0;
-            payload2.primitiveIndex = -1;
-            payload2.instanceIndex = -1;
-            payload2.materialColor = float3(0.2f, 0.2f, 0.2f);        // ???? what is this ?
-            payload2.minT = payload2.minTfront = rayDesc.TMax;
-
-            TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
-
-            if(payload2.instanceIndex != 0 && randomNext(rndState2) > 0.5f)
-            {
-                // reset
-                dstReservoir.init();
-                dstReservoir.rndState = rndState2;
+                TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
             }
 
 //            if(payload2.instanceIndex != 0 || g_sceneCB.wipeReservoir == 1)
@@ -577,6 +583,9 @@ void MyRaygenShader()
 
     float3 ldr = filmicToneMapping(hdr);
 
+    if(highlightPixel)
+        ldr = float3(1, 0, 0);
+
 #if GFX_FOR_ALL == 1
     if(showNormal)
         ldr = g_GBufferA[DispatchRaysIndex().xy].xyz * 0.5f + 0.5f;
@@ -585,7 +594,6 @@ void MyRaygenShader()
 
     ldr = lerp(ldr, context.dstColor.rgb, context.dstColor.a);
 #endif //GFX_FOR_ALL == 1
-
 
     if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
         ldr = float3(0.5f, 0,0);    // red vertical line

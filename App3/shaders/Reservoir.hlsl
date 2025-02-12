@@ -64,7 +64,7 @@ struct Reservoir
 //		float depth = splatZ.x;
 		// todo: improve
 
-		wSum = wSum + weight;
+		wSum += weight;
 
 		// make a copy as we don't want to change rndState
 		float rnd;
