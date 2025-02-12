@@ -319,6 +319,7 @@ void MyRaygenShader()
         printLF(context);
         printTxt(context, 'w', 'S', 'u', 'm', ':');
         printFloat(context, reservoir.wSum);
+        drawColorCrosshair(context, currentXY, 10, float4(0, 1, 0, 1));
     }
 
 
@@ -491,6 +492,8 @@ void MyRaygenShader()
 
     float3 ldr = filmicToneMapping(hdr);
 
+    // uncomment to visualize GBufferA
+//    ldr = g_GBufferA[DispatchRaysIndex().xy].xyz * 0.5f + 0.5f;
 
     ldr = lerp(ldr, context.dstColor.rgb, context.dstColor.a);
 

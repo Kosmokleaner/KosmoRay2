@@ -209,6 +209,27 @@ void printColorBlock(inout ContextGather context, float4 color)
 	context.pxCursor.x += 8 * context.scale;
 }
 
+void drawColorCircle(inout ContextGather context, float2 center, float radius, float4 color)
+{
+	float2 pxLocal = (float2)(context.pxPos - center);
+
+	float d = radius - length(pxLocal);
+	float mask = saturate(d + 1) - saturate(d);
+
+//	context.dstColor = lerp(context.dstColor, float4(color.rgb, 1), color.a * mask);
+	if(mask > 0.5f)
+		context.dstColor = color;
+}
+
+void drawColorCrosshair(inout ContextGather context, int2 center, int radius, float4 color)
+{
+	int2 pxLocal = abs(context.pxPos - center);
+	int dist = max(pxLocal.x, pxLocal.y);
+
+	if((pxLocal.x == 0 || pxLocal.y == 0) && dist <= radius)
+		context.dstColor = color;
+}
+
 // circle in a 8x8 character
 void printColorDisc(inout ContextGather context, float4 color)
 {
