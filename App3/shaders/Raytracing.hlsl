@@ -247,6 +247,7 @@ float computeWeight(float3 delta0To1, float3 n0, float3 n1)
     return weight;
 }
 
+// @param reservoirSampleCount >=1, how many times we try to find a better sample (shadows not taken into account for performance)
 // @param p position
 // @param n normalized normal
 void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
@@ -374,12 +375,18 @@ void MyRaygenShader()
 
         if(!showNormal && !showDepth)
         {
-            context.pxLeftTop = context.pxCursor = currentXY + int2(20, -20);
+            context.pxLeftTop = context.pxCursor = currentXY + int2(20, -50);
             context.printTxt('r', 'n', 'd', ':');
             context.printHex(reservoir.rndState);
             context.printLF();
+            context.printTxt('w', ':');
+            context.printFloat(reservoir.W);
+            context.printLF();
             context.printTxt('w', 'S', 'u', 'm', ':');
             context.printFloat(reservoir.wSum);
+            context.printLF();
+            context.printTxt('m', ':');
+            context.printInt((int)reservoir.M);
             context.drawCrosshair(currentXY, 10, float4(0, 1, 0, 1));
         }
     }
@@ -562,6 +569,11 @@ void MyRaygenShader()
 //                unoccludedAreaDirection += rayDesc.Direction;
 //            }
 
+//            if(dstReservoir.M)
+//                addLight *= dstReservoir.wSum / dstReservoir.M;
+//                addLight *= dstReservoir.wSum / dstReservoir.M;
+//            addLight *= dstReservoir.wSum / dstReservoir.M;
+
             addLight *= weight;
             incomingLight += addLight;
         }
@@ -614,24 +626,6 @@ void MyRaygenShader()
  
 //       float f = endTime * 0.1f;
 //      RenderTarget[DispatchRaysIndex().xy] = float4(f,f,f, 1.0f);
-
-    if(0)
-    {
-        float col = 0;
-
-        if(payload.count)
-        {
-            // world space position
-            float3 pos = rayDesc.Origin + rayDesc.Direction * payload.minT;
-
-            float2 cel = cellular(pos * 10.0f);
-            col = 1.0f - cel.x;
-        }
-
-
-
-        RenderTarget[DispatchRaysIndex().xy] = float4(col, 0, 0, 1);
-    }
 
 //    float4 feedback = g_Feedback[DispatchRaysIndex().xy];
 
