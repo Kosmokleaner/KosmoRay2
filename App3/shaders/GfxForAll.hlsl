@@ -97,13 +97,16 @@ struct ContextGather : ContextScatter
 	void printFloat(float value);
 	// block in a 8x8 character
 	void printBlock(float4 color);
-	//
-	void drawCircle(float2 center, float radius, float4 color);
-	//
-	void drawCrosshair(int2 center, int radius, float4 color);
 	// circle in a 8x8 character
 	// @return mouseOver
 	bool printDisc(float4 color);
+
+	//
+	void drawCircle(float2 pxCenter, float pxRadius, float4 color, float pxThickness = 1.0f);
+	//
+	void drawCrosshair(int2 pxCenter, int pxRadius, float4 color);
+	//
+	void drawLine(float2 pxBegin, float2 pxEnd, float4 color, float pxThickness = 1.0f);
 
 	// -------------------------------------------------
 
@@ -330,26 +333,43 @@ void ContextGather::printBlock(float4 color)
 	pxCursor.x += 8 * scale;
 }
 
-void ContextGather::drawCircle(float2 center, float radius, float4 color)
+void ContextGather::drawCircle(float2 pxCenter, float pxRadius, float4 color, float pxThickness)
 {
-	float2 pxLocal = (float2)(pxPos - center);
+	float r = pxThickness * 0.5f;
+	float2 pxLocal = (float2)(pxPos - pxCenter);
 
-	float d = radius - length(pxLocal);
-	float mask = saturate(d + 1) - saturate(d);
+	float len = length(pxLocal);
 
-//	dstColor = lerp(dstColor, float4(color.rgb, 1), color.a * mask);
-	if(mask > 0.5f)
+	if(len > pxRadius - r && len < pxRadius + r)
 		dstColor = color;
 }
 
-void ContextGather::drawCrosshair(int2 center, int radius, float4 color)
+void ContextGather::drawCrosshair(int2 pxCenter, int pxRadius, float4 color)
 {
-	int2 pxLocal = abs(pxPos - center);
+	int2 pxLocal = abs(pxPos - pxCenter);
 	int dist = max(pxLocal.x, pxLocal.y);
 
-	if((pxLocal.x == 0 || pxLocal.y == 0) && dist <= radius)
+	if((pxLocal.x == 0 || pxLocal.y == 0) && dist <= pxRadius)
 		dstColor = color;
 }
+
+void ContextGather::drawLine(float2 pxBegin, float2 pxEnd, float4 color, float pxThickness)
+{
+	float r = pxThickness * 0.5f;
+	float2 delta = pxEnd - pxBegin;
+	float len = length(delta);
+	if(len > 0.01f)
+	{
+		float2 tangent = delta / len;
+		float2 normal = float2(tangent.y, -tangent.x);
+		float2 local = pxPos - pxBegin;
+		float2 uv = float2(dot(local, tangent), dot(local, normal));
+
+		if(abs(uv.y) < r && uv.x > -r && uv.x < len + r)
+			dstColor = color;
+	}
+}
+
 
 bool ContextGather::printDisc(float4 color)
 {

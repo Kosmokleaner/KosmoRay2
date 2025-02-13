@@ -5,6 +5,11 @@ float sqr(float x)
 	return x * x;
 }
 
+float3 homAway(float4 p)
+{
+	return p.xyz / p.w;
+}
+
 float3 IndexToColor(uint Index)
 {
 	bool a = Index & (1 << 0);

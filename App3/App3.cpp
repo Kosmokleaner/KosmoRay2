@@ -55,7 +55,7 @@ namespace LocalRootSignatureParams {
 App3::App3(const std::wstring& name, int width, int height, bool vSync)
     : super(name, width, height, vSync)
 {
-    rayGenCB.viewport = { -1.0f, -1.0f, 1.0f, 1.0f };
+    rayGenCB.csViewport = { -1.0f, -1.0f, 1.0f, 1.0f };
     UpdateForSizeChange(width, height);
 
     CreateDeviceDependentResources();
@@ -211,6 +211,8 @@ void App3::OnUpdate(UpdateEventArgs& e)
         m_sceneCB->cameraPosition = glm::vec4(camera.GetPos().x, camera.GetPos().y, camera.GetPos().z, 0.0f);
         m_sceneCB->clipFromWorld = glm::transpose(clipFromWorld);
         m_sceneCB->worldFromClip = glm::transpose(glm::inverse(clipFromWorld));
+        glm::vec2 size(GetClientWidth(), GetClientHeight());
+        m_sceneCB->frameBufferSize = glm::vec4((glm::vec2)size, 1.0f / (glm::vec2)size);
         m_sceneCB->mouseXY = glm::ivec4(mouseXY.x, mouseXY.y, 0, 0); 
     }
 }

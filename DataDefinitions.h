@@ -7,11 +7,14 @@ STRUCT_BEGIN(Viewport)
 	STRUCT_ENTRY(float, bottom)
 STRUCT_END()
 
+// g_rayGenCB
 STRUCT_BEGIN(RayGenConstantBuffer)
-	STRUCT_ENTRY(Viewport, viewport)
+	// usually -1..1 -1..1
+	STRUCT_ENTRY(Viewport, csViewport)
 	STRUCT_ENTRY(Viewport, stencil)
 STRUCT_END()
 
+// g_sceneCB
 STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(float4x4, clipFromWorld)
 	STRUCT_ENTRY(float4x4, worldFromClip)
@@ -24,6 +27,8 @@ STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(uint, dummy)				// todo: dummy[1] will break next member
 	// .xy:currrentXY, zw:unused
 	STRUCT_ENTRY(int4, mouseXY)
+	// .xy:size in pixels, .zw:1/size
+	STRUCT_ENTRY(float4, frameBufferSize)
 STRUCT_END()
 
 STRUCT_BEGIN(MaterialAttributes)

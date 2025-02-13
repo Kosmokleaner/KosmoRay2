@@ -15,7 +15,7 @@
 #define SAMPLE_COUNT_AO 1
 // 0:reference path tracing / 1:less noise, 2: viewport split in half
 #define AREA_LIGHT_SAMPLING 2
-// 0:off, 1:on (slow but good for debugging)
+// 0:off, 1:on (slow but useful for debugging)
 #define GFX_FOR_ALL 1
 
 
@@ -265,32 +265,41 @@ void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, ui
     }
 }
 
+float2 PxFromWS(float3 wsPos)
+{
+    float3 csPos = homAway(mul(g_sceneCB.clipFromWorld, float4(wsPos, 1)));
+    float2 uv = csPos.xy * float2(0.5f, -0.5f) + 0.5f;
+    float2 pxPos = g_sceneCB.frameBufferSize.xy * uv;
+
+    return pxPos;
+}
+
 
 [shader("raygeneration")]
 void MyRaygenShader()
 {
 #if GFX_FOR_ALL == 1
-    struct ContextGather context;			// pixel shader or compute shader looping through all pixels
-    context.init(DispatchRaysIndex().xy, int2(10, 10));
-    context.mouseXY = g_sceneCB.mouseXY.xy;
-    context.scale = 2;
+    struct ContextGather ui;			// pixel shader or compute shader looping through all pixels
+    ui.init(DispatchRaysIndex().xy, int2(10, 10));
+    ui.mouseXY = g_sceneCB.mouseXY.xy;
+    ui.scale = 2;
 
     // left menu bar
-    bool showNormal = context.printDisc(float4(0.5f, 0.5f, 1.0f, 1.0f));
+    bool showNormal = ui.printDisc(float4(0.5f, 0.5f, 1.0f, 1.0f));
     if(showNormal)
     {
-        context.printTxt(' ');
-        context.printTxt('N', 'o', 'r', 'm', 'a', 'l');
+        ui.printTxt(' ');
+        ui.printTxt('N', 'o', 'r', 'm', 'a', 'l');
     }
-    context.printLF();
-    bool showDepth = context.printDisc(float4(1, 0, 0, 1));
+    ui.printLF();
+    bool showDepth = ui.printDisc(float4(1, 0, 0, 1));
     if(showDepth)
     {
-        context.printTxt(' ');
-        context.printTxt('D', 'e', 'p', 't', 'h');
+        ui.printTxt(' ');
+        ui.printTxt('D', 'e', 'p', 't', 'h');
     }
 
-    context.scale = 1;
+    ui.scale = 1;
 #endif // GFX_FOR_ALL == 1
 
 
@@ -362,7 +371,7 @@ void MyRaygenShader()
 
         float3 normal;
         float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal);
-        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
+/*        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
         {
             RenderTarget[DispatchRaysIndex().xy] = float4(0.5f, 0.5f, 0, 1);
             return;
@@ -372,22 +381,27 @@ void MyRaygenShader()
             RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 1, 1);
             return;
         }
+*/
+        float2 pxSample = PxFromWS(samplePos);
+        ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
+//        ui.drawLine(pxSample, currentXY + 0.5f, float4(0.5f, 0.5f, 0.5f, 1), 2);
+        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
 
         if(!showNormal && !showDepth)
         {
-            context.pxLeftTop = context.pxCursor = currentXY + int2(20, -50);
-            context.printTxt('r', 'n', 'd', ':');
-            context.printHex(reservoir.rndState);
-            context.printLF();
-            context.printTxt('w', ':');
-            context.printFloat(reservoir.W);
-            context.printLF();
-            context.printTxt('w', 'S', 'u', 'm', ':');
-            context.printFloat(reservoir.wSum);
-            context.printLF();
-            context.printTxt('m', ':');
-            context.printInt((int)reservoir.M);
-            context.drawCrosshair(currentXY, 10, float4(0, 1, 0, 1));
+            ui.pxLeftTop = ui.pxCursor = currentXY + int2(20, -50);
+            ui.printTxt('r', 'n', 'd', ':');
+            ui.printHex(reservoir.rndState);
+            ui.printLF();
+//            ui.printTxt('w', ':');
+//            ui.printFloat(reservoir.W);
+//            ui.printLF();
+            ui.printTxt('w', 'S', 'u', 'm', ':');
+            ui.printFloat(reservoir.wSum);
+            ui.printLF();
+            ui.printTxt('m', ':');
+            ui.printInt((int)reservoir.M);
+            ui.drawCrosshair(currentXY, 10, float4(0, 1, 0, 1));
         }
     }
 #endif // GFX_FOR_ALL == 1
@@ -604,7 +618,7 @@ void MyRaygenShader()
     if(showDepth)
         ldr = saturate(float3(g_GBufferA[DispatchRaysIndex().xy].w * 0.05f, 0, 0)) * 0.7f;
 
-    ldr = lerp(ldr, context.dstColor.rgb, context.dstColor.a);
+    ldr = lerp(ldr, ui.dstColor.rgb, ui.dstColor.a);
 #endif //GFX_FOR_ALL == 1
 
     if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
