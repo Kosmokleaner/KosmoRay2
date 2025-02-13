@@ -104,7 +104,7 @@ struct ContextGather : ContextScatter
 	//
 	void drawCircle(float2 pxCenter, float pxRadius, float4 color, float pxThickness = 1.0f);
 	//
-	void drawCrosshair(int2 pxCenter, int pxRadius, float4 color);
+	void drawCrosshair(float2 pxCenter, float pxRadius, float4 color, float pxThickness = 1.0f);
 	//
 	void drawLine(float2 pxBegin, float2 pxEnd, float4 color, float pxThickness = 1.0f);
 
@@ -344,13 +344,18 @@ void ContextGather::drawCircle(float2 pxCenter, float pxRadius, float4 color, fl
 		dstColor = color;
 }
 
-void ContextGather::drawCrosshair(int2 pxCenter, int pxRadius, float4 color)
+void ContextGather::drawCrosshair(float2 pxCenter, float pxRadius, float4 color, float pxThickness)
 {
-	int2 pxLocal = abs(pxPos - pxCenter);
-	int dist = max(pxLocal.x, pxLocal.y);
+	float2 h = float2(pxRadius, 0);
+	float2 v = float2(0, pxRadius);
 
-	if((pxLocal.x == 0 || pxLocal.y == 0) && dist <= pxRadius)
-		dstColor = color;
+	drawLine(pxCenter - h , pxCenter + h, color, pxThickness);
+	drawLine(pxCenter - v, pxCenter + v, color, pxThickness);
+
+//	int2 pxLocal = abs(pxPos - pxCenter);
+//	int dist = max(pxLocal.x, pxLocal.y);
+//	if((pxLocal.x == 0 || pxLocal.y == 0) && dist <= pxRadius)
+//		dstColor = color;
 }
 
 void ContextGather::drawLine(float2 pxBegin, float2 pxEnd, float4 color, float pxThickness)
