@@ -111,22 +111,29 @@ public:
     // @param filename e.g. L"../../data/monkey.obj", must not be 0
 	// @return success
     bool load(Renderer& renderer, const wchar_t* fileName);
-	//
-    void startUpload(Renderer& renderer, VFormatFull* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount);
 
-    void SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh);
-        
-    void end();
+	// see endUpload()
+    void startUpload(Renderer& renderer, VFormatFull* vertices, UINT inVertexCount, IndexType* indices, UINT inIndexCount);
+    // see startUpload()
+    void endUpload();
+
+	void SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh);
+
+	uint32 getTriangleCount() const { return indexCount / 3;  }
+
+	glm::vec3 getVertexAtIndex(uint32 indexId) const;
 
 	// @param index 0:IB, 1:VB, 2:Materials
 	// @return base descriptor index
-	UINT CreateSRVs(Renderer& renderer, uint32 index);
+	uint32 CreateSRVs(Renderer& renderer, uint32 index);
 
     // like FreeData / ReleaseDeviceDependentResources
     void Reset();
 
-    UINT vertexCount = 0;
-    UINT indexCount = 0;
+	// only valid after calling startUpload(), load() or SetSimpleIndexedMesh(), might be more than positions in source mesh
+    uint32 vertexCount = 0;
+	// only valid after calling startUpload(), load() or SetSimpleIndexedMesh()
+    uint32 indexCount = 0;
 
     D3DBuffer vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;

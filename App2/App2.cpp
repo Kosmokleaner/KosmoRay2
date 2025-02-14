@@ -128,7 +128,7 @@ bool App2::LoadContent()
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
     commandQueue->WaitForFenceValue(fenceValue);
 
-    mesh.end();
+    mesh.endUpload();
 
     m_ContentLoaded = true;
 

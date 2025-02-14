@@ -52,14 +52,18 @@
 #include "../../external/nv-api/nvHLSLExtns.h"
 
 RaytracingAccelerationStructure Scene : register(t0, space0);
-// frame buffer sized
+// [xy]= frame buffer sized
 RWTexture2D<float4> RenderTarget : register(u0);
-// frame buffer sized
+// [xy]= frame buffer sized
 RWTexture2D<float4> g_Feedback : register(u1);
-// frame buffer sized
+// [xy]= frame buffer sized
 RWTexture2D<float4> g_Reservoirs : register(u2);
-// frame buffer sized
+// [xy]=float4(normal,depth) frame buffer sized
 RWTexture2D<float4> g_GBufferA : register(u3);
+// [emissiveTriangleId] = EmissiveAreaValue
+RWBuffer<float> g_EmissiveSATValue : register(u4);
+// [emissiveTriangleId] = EmissiveAreaIndex uint4(sceneObjectId, meshInstanceId, triangleId,0) in this instance
+RWBuffer<uint4> g_EmissiveSATIndex : register(u5);
 
 //
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
@@ -75,7 +79,7 @@ struct Splat
     float radius;
 };
 
-// index buffer (element size is INDEX_STRIDE)
+// index buffer (element size is INDEX_STRIDE), use LoadIndexBuffer() to access
 ByteAddressBuffer g_indices[] : register(t0, space101);
 // vertex buffer
 StructuredBuffer<VFormatFull> g_vertices[] : register(t0, space102);
@@ -114,9 +118,10 @@ struct Ray
     float3 direction;
 };
 
+// @param IBIndex e.g. INSTANCE_ID
 // @param primitiveIndex from PrimitiveIndex()
 // @return triangle corner vertex indices
-uint3 LoadIndexBuffer( uint primitiveIndex )
+uint3 LoadIndexBuffer(uint IBIndex, uint primitiveIndex )
 {
     const uint indexOffsetBytes = 0;    // for now
     // triangle corner vertex indices
@@ -126,8 +131,6 @@ uint3 LoadIndexBuffer( uint primitiveIndex )
     const uint dwordAlignedOffset = offsetBytes & ~3;
 
     uint3 indices;
-
-    uint IBIndex = INSTANCE_ID;
 
     if(INDEX_STRIDE == 2)
     {
@@ -209,11 +212,133 @@ float3 getSkyColor(float3 worldRayDirection)
 
     return skyColor;
 }
+/*
+
+// https://en.wikipedia.org/wiki/Binary_search
+// find first occurrence of searchKey in buffer
+uint binary_search_findIndex(float searchValue, uint elementCount, RWBuffer<float> buffer)
+{
+	uint l = 0;
+	uint r = elementCount;
+
+	while (l < r)
+	{
+		uint m = (l + r) / 2;
+		uint valueHere = buffer[m];
+
+		if (valueHere < searchValue)
+			l = m + 1;
+		else
+			r = m;
+	}
+
+	return l;
+}
+*/
+
+
+// https://en.wikipedia.org/wiki/Binary_search
+uint binary_search_findIndex(float searchValue, uint elementCount, RWBuffer<float> buffer)
+{
+	uint l = 0;
+	uint r = elementCount;
+
+	while (l < r)
+	{
+		uint m = (l + r) / 2;
+		uint valueHere = buffer[m];
+
+		if (valueHere > searchValue)
+			r = m;
+		else
+			l = m + 1;
+	}
+
+	return r - 1;
+}
+
+
+
+// @param meshInstanceId e.g. 0:meshA, 1:meshB
+// @param outNormal normalized
+void getGlobalTriangle(uint meshInstanceId, uint meshTriangleId, out float3 wsPosCorners[3], out uint materialId, out float3 outNormal)
+{
+    uint3 vertexIndices = LoadIndexBuffer(meshInstanceId, meshTriangleId);
+    for(int i = 0; i < 3; ++i)
+    {
+        uint vertexIndex = vertexIndices[i];
+        float3 osPos = g_vertices[meshInstanceId][vertexIndex].position;
+
+        // todo
+//        wsPos[i] = mul(, float4(osPos, 1));
+        wsPosCorners[i] = osPos;
+
+        // hacky: materialid is per triangle but stored per vertex
+        materialId = g_vertices[meshInstanceId][vertexIndex].materialId;
+    }
+    float3 u = wsPosCorners[1] - wsPosCorners[0];
+    float3 v = wsPosCorners[2] - wsPosCorners[0];
+    outNormal = normalize(cross(u,v));
+}
+
+float3 getRandomPointInTriangle(inout uint rndState, float3 pos[3])
+{
+    // 0..1, 0..1
+    float2 uv = nextRand2(rndState);
+
+    // flip along diagonal if outside of triangle
+    if(uv.x + uv.y > 1)
+    {
+        uv.x = 1.0f - uv.x;
+        uv.y = 1.0f - uv.y;
+    }
+
+    // sums up to 1
+    float3 bary = float3(uv, 1.0f - uv.x - uv.y);
+
+    return pos[0] * bary.x + pos[1] * bary.y + pos[2] * bary.z;
+}
+
+struct Globals
+{
+    uint debug;
+    float rnd;
+    float3 pos;
+};
 
 // hard coded to work with Quad.obj
 // @param outNormal will be normalized
-float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal)
+float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal, inout Globals globals, out float3 emissiveColor)
 {
+    // 0..1
+	float rnd = nextRand(rndState);
+
+    globals.rnd = rnd;
+
+    // 0..g_sceneCB.emissiveSATSize-1
+//todo    uint emissiveTriangleId = binary_search_findIndex(rnd, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
+    uint emissiveTriangleId = uint(rnd * 48);
+
+    uint4 packedIndex = g_EmissiveSATIndex[emissiveTriangleId];
+    uint meshInstanceId = packedIndex.y;
+    uint meshTriangleId = packedIndex.z;
+
+    globals.debug = emissiveTriangleId;
+
+    float3 wsPosCorners[3];
+
+    uint materialId;
+    getGlobalTriangle(meshInstanceId, meshTriangleId, wsPosCorners, materialId, outNormal);
+
+
+    emissiveColor = g_materials[meshInstanceId][materialId].emissiveColor;
+
+    return getRandomPointInTriangle(rndState, wsPosCorners);
+
+//    g_EmissiveSAT[];
+/*
+
+
     float yPos = 2.95f; // pretty close to the area light in the original Cornell box
 
 	// 0..1
@@ -225,7 +350,8 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float
     else
         outNormal = float3(0, -1, 0);
 
-    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 11.1f * 4 *  0.08f + float3(0, yPos, 0);
+    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 11.1f * 4 *  0.08f + float3(0, yPos, 0);*/
+
 }
 
 // @param n0 normalized normal at 0
@@ -257,7 +383,9 @@ void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, ui
 
         // normalized
         float3 lightNormal;
-        float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal);
+        Globals globals = (Globals)0;
+        float3 emissiveColor;
+        float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal, globals, emissiveColor);
         float weight = computeWeight(lightPos - p, surfaceNormal, lightNormal);
         
         rez.stream(rndStateBefore, weight, randomNext(rndState));
@@ -297,6 +425,13 @@ void MyRaygenShader()
         ui.printTxt(' ');
         ui.printTxt('D', 'e', 'p', 't', 'h');
     }
+    ui.printLF();
+    bool showMaterial = ui.printDisc(float4(1, 1, 1, 1));
+    if(showMaterial)
+    {
+        ui.printTxt(' ');
+        ui.printTxt('M', 'a', 't');
+    }
 
     ui.scale = 1;
 #endif // GFX_FOR_ALL == 1
@@ -334,7 +469,7 @@ void MyRaygenShader()
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
 
-
+/*
     // ugly visualize getEmissiveQuadSample
     if(0)
     for(int i = 0; i < 50; ++i)
@@ -356,6 +491,8 @@ void MyRaygenShader()
             return;
         }
     }
+*/
+    Globals globals = (Globals)0;
 
 #if GFX_FOR_ALL == 1
     // visualize getEmissiveQuadSample in reservoir under mouse cursor
@@ -365,11 +502,15 @@ void MyRaygenShader()
         int2 currentXY = g_sceneCB.mouseXY.xy;
 
         reservoir.loadFromRaw(g_Reservoirs[currentXY]);
-        uint rnd2 = reservoir.rndState;
+//        uint rnd2 = reservoir.rndState;
+        uint rnd2 = initRand(currentXY.x, currentXY.y);
         const float sphereRadius = 0.05f;
 
         float3 normal;
-        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal);
+        float3 emissiveColor;
+        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal, globals, emissiveColor);
+
+
 /*        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
         {
             RenderTarget[DispatchRaysIndex().xy] = float4(0.5f, 0.5f, 0, 1);
@@ -382,12 +523,34 @@ void MyRaygenShader()
         }
 */
         float2 pxSample = PxFromWS(samplePos);
+//        float2 pxSample = PxFromWS(globals.pos);
         ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
 //        ui.drawLine(pxSample, currentXY + 0.5f, float4(0.5f, 0.5f, 0.5f, 1), 2);
-        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
+//        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
+        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(emissiveColor, 1), 2);
 
-        if(!showNormal && !showDepth)
+        if(!showNormal && !showDepth && !showMaterial)
         {
+            ui.printFloat(globals.rnd);
+            ui.printTxt(' ');
+            ui.printInt(globals.debug);
+            ui.printTxt(' ');
+            ui.printLF();
+/*            ui.printFloat(g_EmissiveSATValue[currentXY.x]);
+            ui.printLF();
+            ui.printFloat(globals.pos.x);
+            ui.printTxt(' ');
+            ui.printFloat(globals.pos.y);
+            ui.printTxt(' ');
+            ui.printFloat(globals.pos.z);
+            ui.printLF();
+            ui.printFloat(emissiveColor.x);
+            ui.printTxt(' ');
+            ui.printFloat(emissiveColor.y);
+            ui.printTxt(' ');
+            ui.printFloat(emissiveColor.z);
+            ui.printLF();
+*/
             ui.pxLeftTop = ui.pxCursor = currentXY + int2(20, -50);
             ui.printTxt('r', 'n', 'd', ':');
             ui.printHex(reservoir.rndState);
@@ -525,7 +688,8 @@ void MyRaygenShader()
 
                 // normalized
                 float3 lightNormal;
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal) - rayDesc.Origin;
+                float3 emissiveColor;
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, globals, emissiveColor) - rayDesc.Origin;
 
 //                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
 
@@ -626,6 +790,11 @@ void MyRaygenShader()
         ldr = g_GBufferA[DispatchRaysIndex().xy].xyz * 0.5f + 0.5f;
     if(showDepth)
         ldr = saturate(float3(g_GBufferA[DispatchRaysIndex().xy].w * 0.05f, 0, 0)) * 0.7f;
+    if(showMaterial)
+    {
+        ldr = saturate(payload.emissiveColor);    // works
+//        ldr = saturate(payload.materialColor);  // works
+    }
 
     ldr = lerp(ldr, ui.dstColor.rgb, ui.dstColor.a);
 #endif //GFX_FOR_ALL == 1
@@ -685,24 +854,25 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     }
 
 
+    // e.g. 0:meshA, 1:meshB
+    uint meshInstanceId = INSTANCE_ID;
 
     // triangle corner vertex indices
-    const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
+    const uint3 ii = LoadIndexBuffer(meshInstanceId, PrimitiveIndex());
 
     float3 bary = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
 
     payload.materialColor = bary; // color from barycentrics
 
-    uint instanceId = INSTANCE_ID;
 
     // position in object space
-    const float3 p0 = g_vertices[instanceId][ii.x].position;
-    const float3 p1 = g_vertices[instanceId][ii.y].position;
-    const float3 p2 = g_vertices[instanceId][ii.z].position;
+    const float3 p0 = g_vertices[meshInstanceId][ii.x].position;
+    const float3 p1 = g_vertices[meshInstanceId][ii.y].position;
+    const float3 p2 = g_vertices[meshInstanceId][ii.z].position;
 
-    const float3 n0 = normalize(g_vertices[instanceId][ii.x].normal);
-    const float3 n1 = normalize(g_vertices[instanceId][ii.y].normal);
-    const float3 n2 = normalize(g_vertices[instanceId][ii.z].normal);
+    const float3 n0 = normalize(g_vertices[meshInstanceId][ii.x].normal);
+    const float3 n1 = normalize(g_vertices[meshInstanceId][ii.y].normal);
+    const float3 n2 = normalize(g_vertices[meshInstanceId][ii.z].normal);
 
     const float3 c0 = IndexToColor(ii.x);
     const float3 c1 = IndexToColor(ii.y);
@@ -713,7 +883,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     float3 wsPos = WorldRayOrigin() + WorldRayDirection() * RayTCurrent();
     float3 interpolIndex = c0 * bary.x + c1 * bary.y + c2 * bary.z;
 
-    const uint materialId = g_vertices[instanceId][ii.x].materialId;
+    const uint materialId = g_vertices[meshInstanceId][ii.x].materialId;
 
     // visualize indexbuffer data as color
 //    payload.materialColor = interpolIndex;
@@ -723,8 +893,8 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 
 //    payload.materialColor = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
 //    payload.materialColor = float3(0.9f, 0.8f, 0.7f);       // albedo color
-    payload.materialColor = g_materials[instanceId][materialId].diffuseColor;
-    payload.emissiveColor = g_materials[instanceId][materialId].emissiveColor;
+    payload.materialColor = g_materials[meshInstanceId][materialId].diffuseColor;
+    payload.emissiveColor = g_materials[meshInstanceId][materialId].emissiveColor;
 //    g_materials[]
 
     // visualize world space position as color
@@ -814,7 +984,7 @@ void MyAnyHitShader(inout RayPayload payload, in MyAttributes attr)
 
                 payload.interpolatedNormal = float3(0, 1, 0);
 
-                const uint3 ii = LoadIndexBuffer(PrimitiveIndex());
+                const uint3 ii = LoadIndexBuffer(instanceId, PrimitiveIndex());
 
                 float3 bary = float3(attr.barycentrics.x, attr.barycentrics.y, 1.0 - attr.barycentrics.x - attr.barycentrics.y);
 

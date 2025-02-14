@@ -24,7 +24,8 @@ STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(uint, raytraceFlags)
 	STRUCT_ENTRY(uint, FrameIndex)
 	STRUCT_ENTRY(uint, updateReservoir)
-	STRUCT_ENTRY(uint, dummy)				// todo: dummy[1] will break next member
+	STRUCT_ENTRY(uint, emissiveSATSize)
+//	STRUCT_ENTRY(uint, dummy)				// todo: dummy[1] will break next member
 	// .xy:currrentXY, zw:unused
 	STRUCT_ENTRY(int4, mouseXY)
 	// .xy:size in pixels, .zw:1/size
@@ -38,7 +39,7 @@ STRUCT_BEGIN(MaterialAttributes)
 	STRUCT_ENTRY(float, padding1)
 	STRUCT_ENTRY(float3, emissiveColor)
 	STRUCT_ENTRY(float, padding2)
-	CPP_STRUCT_ENTRY(std::string, debugName)	// only for C++
+//todo HLSL need right padding 	CPP_STRUCT_ENTRY(std::string, debugName)	// only for C++
 STRUCT_END()
 
 /*

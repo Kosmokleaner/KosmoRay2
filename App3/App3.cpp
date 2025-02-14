@@ -31,6 +31,8 @@ namespace GlobalRootSignatureParams {
         FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
 		ReservoirsSlot,             // DescriptorTable      UAV space0: u2(g_Reservoirs)
 		GBufferASlot,               // DescriptorTable      UAV space0: u3(g_GBufferA)
+        EmissiveSATValueSlot,       // DescriptorTable      UAV space0: u4(g_EmissiveSATValue)
+		EmissiveSATIndexSlot,       // DescriptorTable      UAV space0: u5(g_EmissiveSATIndex)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
         IndexBuffer,                // DescriptorTable      SRV space101: t0: g_indices[IBIndex][]
@@ -102,6 +104,18 @@ void App3::CreateRootSignatures()
 			CD3DX12_DESCRIPTOR_RANGE range;
 			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3, 0);             // space0: u3
 			rootParameters[GlobalRootSignatureParams::GBufferASlot].InitAsDescriptorTable(1, &range);
+		}
+
+		{
+			CD3DX12_DESCRIPTOR_RANGE range;
+			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 4, 0);             // space0: u4
+			rootParameters[GlobalRootSignatureParams::EmissiveSATValueSlot].InitAsDescriptorTable(1, &range);
+		}
+
+        {
+			CD3DX12_DESCRIPTOR_RANGE range;
+			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 5, 0);             // space0: u5
+			rootParameters[GlobalRootSignatureParams::EmissiveSATIndexSlot].InitAsDescriptorTable(1, &range);
 		}
 
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
@@ -200,6 +214,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_sceneCB->sceneParam0.y = frac(m_sceneCB->sceneParam0.y + (float)e.ElapsedTime * 0.1f);
     m_sceneCB->raytraceFlags = raytraceFlags;
 	m_sceneCB->updateReservoir = updateReservoir;
+    m_sceneCB->emissiveSATSize = (uint32)m_emissiveSATValueData.size();
     updateReservoir = false;
 
     static uint32 FrameIndex = 0; ++FrameIndex;
@@ -237,6 +252,8 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::ReservoirsSlot, m_reservoirs.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::GBufferASlot, m_GBufferA.m_UAVGpuDescriptor);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::EmissiveSATValueSlot, m_EmissiveSATValue.gpuDescriptorHandle);
+	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::EmissiveSATIndexSlot, m_EmissiveSATIndex.gpuDescriptorHandle);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
 
     // Set index and successive vertex buffer decriptor tables
@@ -427,6 +444,11 @@ void App3::CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* raytrac
     }
 }
 
+float computeLumianceFromLinearRGB(glm::vec3 color)
+{
+    return dot(glm::vec3(0.2126f, 0.7152f, 0.0722f), color);
+}
+
 // Create a raytracing pipeline state object (RTPSO).
 // An RTPSO represents a full set of shaders reachable by a DispatchRays() call,
 // with all configuration options resolved, such as local signatures and other state.
@@ -547,7 +569,8 @@ void App3::BuildAccelerationStructures()
     meshB.BuildAccelerationStructures(Application::Get().renderer);
     splatA.BuildAccelerationStructures(Application::Get().renderer);
 
-    auto device = Application::Get().renderer.device;
+	auto& renderer = Application::Get().renderer;
+    auto device = renderer.device;
 
     auto commandQueue = Application::Get().renderer.directCommandQueue;
     assert(commandQueue);
@@ -589,7 +612,11 @@ void App3::BuildAccelerationStructures()
     }
 
     // Create an instance desc for the bottom-level acceleration structure.
-    ComPtr<ID3D12Resource> instanceDescs;
+	ComPtr<ID3D12Resource> instanceDescs;
+
+    float sumArea = 0.0f;
+    m_emissiveSATValueData.clear();
+	m_emissiveSATIndexData.clear();
 
     uint32 instanceCount;
     {
@@ -602,40 +629,40 @@ void App3::BuildAccelerationStructures()
         // 0: emissive quad
         // /
         // 4: procedural
-        for(UINT i = 0; i < instanceCount; ++i)
+        for(UINT sceneObjectId = 0; sceneObjectId < instanceCount; ++sceneObjectId)
         {
             *dst = {};
 
             float size = 0.3f;
 
             // x: right, y:up (closer), z:behind
-            if (i && i <= 3)
+            if (sceneObjectId && sceneObjectId <= 3)
             {
                 size = 1.5f;
-                dst->Transform[i - 1][3] = (i == 2) ? 2.0f : 6.0f; 
+                dst->Transform[sceneObjectId - 1][3] = (sceneObjectId == 2) ? 2.0f : 6.0f; 
             }
 			
-            if (i == 4)
+            if (sceneObjectId == 4)
 				size = 1.0f;
 
             // hack off some objects and other stuff to make Cornell box
 			{
-				if (i == 0)
+				if (sceneObjectId == 0)
 					size = 11.1f * 0.08f;
-                if (i == 1 || i == 2 || i == 4)
+                if (sceneObjectId == 1 || sceneObjectId == 2 || sceneObjectId == 4)
                     size = 0.0f;
                 dst->Transform[0][3] = 0.0f;
 				dst->Transform[1][3] = 0.0f;
 				dst->Transform[2][3] = 0.0f;
 
-                if (i == 0)
+                if (sceneObjectId == 0)
 					dst->Transform[1][3] = 2.95f;   // pretty close to the area light in the original Cornell box
             }
 
             dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = size;
             dst->InstanceMask = 1;
 
-            if (i == 4)
+            if (sceneObjectId == 4)
             {
                 // AABB procedural
 
@@ -650,7 +677,7 @@ void App3::BuildAccelerationStructures()
             }
             else
             {
-                const uint32 meshIndex = (i == 0) ? 0 : 1;
+                const uint32 meshIndex = (sceneObjectId == 0) ? 0 : 1;
 
                 Mesh& ref = meshIndex ? meshB : meshA;
 
@@ -658,15 +685,90 @@ void App3::BuildAccelerationStructures()
                 // will go to HLSL InstanceID()
                 dst->InstanceID = meshIndex;
             }
-			dst->InstanceContributionToHitGroupIndex = i;
+
+			dst->InstanceContributionToHitGroupIndex = sceneObjectId;
 //            dst->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 			dst->Flags = D3D12_RAYTRACING_INSTANCE_FLAG_FORCE_OPAQUE;
+
+            // hack, we fix transform later
+            if (sceneObjectId == 1)
+            {
+                dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = 1.0f;
+                dst->Transform[0][3] = 0.0f;
+                dst->Transform[1][3] = 0.0f;
+                dst->Transform[2][3] = 0.0f;
+                dst->InstanceID = 1;
+            }
+            else
+            {
+                // don't show
+				dst->Transform[0][0] = dst->Transform[1][1] = dst->Transform[2][2] = 0.0f;
+				dst->Transform[0][3] = 0.0f;
+				dst->Transform[1][3] = 0.0f;
+				dst->Transform[2][3] = 0.0f;
+				dst->InstanceID = 0;
+            }
+
+			// build emissiveSAT
+            const Mesh* mesh = getMesh(dst->InstanceID);
+            if(dst->InstanceID == 1) // hack, for now only meshB is emissive
+            if(mesh)
+			{
+                uint32 triangleCount = mesh->getTriangleCount();
+                assert(triangleCount);
+                for (uint32 triangleId = 0; triangleId < triangleCount; ++triangleId)
+                {
+                    // all corner have the same value
+                    uint32 materialid = mesh->MeshVertexData[mesh->MeshIndexData[triangleId * 3]].materialId;
+                    glm::vec3 emissiveColor = mesh->materialAttributes[materialid].emissiveColor;
+                    
+                    if (emissiveColor == glm::vec3(0, 0, 0))
+                        continue;
+
+                    // https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+                    float sumEmissiveAmount = computeLumianceFromLinearRGB(emissiveColor);
+
+                    glm::vec3 p[3];
+
+                    for (int e = 0; e < 3; ++e)
+                    {
+                        glm::vec3 osPos = mesh->getVertexAtIndex(triangleId * 3 + e); 
+
+                        // todo  dst->Transform
+                        glm::vec3 wsPos = osPos;
+						p[e] = wsPos;
+                    }
+
+                    glm::vec3 u = p[2] - p[0];
+					glm::vec3 v = p[1] - p[0];
+
+                    float triAreaMul2 = length(cross(u, v));
+
+                    sumArea += sumEmissiveAmount * triAreaMul2;
+
+					m_emissiveSATValueData.push_back(sumArea);
+                    m_emissiveSATIndexData.push_back(glm::uvec4(sceneObjectId, dst->InstanceID, triangleId, 0));
+                }
+			}
 
             ++dst;
         }
 
         AllocateUploadBuffer(device.Get(), instanceDesc, sizeof(instanceDesc), &instanceDescs, L"InstanceDescs");
+	}
+
+    // normalize emissiveSAT
+    {
+        float inv = 1.0f / sumArea;
+
+        for (auto& el : m_emissiveSATValueData)
+            el *= inv;
     }
+	AllocateUploadBuffer(device.Get(), m_emissiveSATValueData.data(), m_emissiveSATValueData.size() * sizeof(m_emissiveSATValueData[0]), &m_EmissiveSATValue.resource, L"EmissiveSATValue");
+    renderer.CreateBufferSRV(&m_EmissiveSATValue, (uint32)m_emissiveSATValueData.size(), sizeof(m_emissiveSATValueData[0]));
+
+    AllocateUploadBuffer(device.Get(), m_emissiveSATIndexData.data(), m_emissiveSATIndexData.size() * sizeof(m_emissiveSATIndexData[0]), &m_EmissiveSATIndex.resource, L"EmissiveSATIndex");
+	renderer.CreateBufferSRV(&m_EmissiveSATIndex, (uint32)m_emissiveSATIndexData.size(), sizeof(m_emissiveSATIndexData[0]));
 
     // Top Level Acceleration Structure desc
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
@@ -804,6 +906,17 @@ void App3::ReleaseDeviceDependentResources()
 	splatA.Reset();
 
     topLevelAccelerationStructure.Reset();
+}
+
+const Mesh* App3::getMesh(uint32 meshInstanceId) const
+{
+	if (meshInstanceId == 0)
+		return &meshA;
+	if (meshInstanceId == 1)
+		return &meshB;
+
+	assert(0);
+	return 0;
 }
 
 void App3::CreateDeviceDependentResources()

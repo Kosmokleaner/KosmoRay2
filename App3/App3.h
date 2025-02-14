@@ -51,6 +51,7 @@ private:
     void CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> commandList);
     void CreateWindowSizeDependentResources();
     void UpdateForSizeChange(UINT width, UINT height);
+    const Mesh* getMesh(uint32 meshInstanceId) const;
 
     // DirectX Raytracing (DXR) attributes
     ComPtr<ID3D12StateObject> dxrStateObject;
@@ -81,6 +82,16 @@ private:
 	DataBlock m_reservoirs;
 	// frame buffer sized
 	DataBlock m_GBufferA;
+
+    // Summed Area Table to find points on emissive surfaces, normalized so last value is 1.0f, same size as m_emissiveSATIndexData
+	std::vector<float> m_emissiveSATValueData;
+	// GPU buffer for m_emissiveSATValueData
+	D3DBuffer m_EmissiveSATValue;
+
+    // (sceneObjectId, meshInstanceid, triangleId, 0) in this instance, same size as m_emissiveSATValueData
+	std::vector<glm::uvec4> m_emissiveSATIndexData;
+    // GPU buffer for m_emissiveSATIndexData
+	D3DBuffer m_EmissiveSATIndex;
 
     // Shader tables
     ComPtr<ID3D12Resource> missShaderTable;

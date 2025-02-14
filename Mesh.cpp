@@ -27,7 +27,14 @@ void Mesh::startUpload(Renderer& renderer, VFormatFull* vertices, UINT inVertexC
     init();
 }
 
-void Mesh::end()
+glm::vec3 Mesh::getVertexAtIndex(uint32 indexId) const
+{
+    uint32 vertexId = MeshIndexData[indexId];
+
+    return MeshVertexData[vertexId].Pos;
+}
+
+void Mesh::endUpload()
 {
 #if MESH_UPLOAD_METHOD == 0
     intermediateVertexBuffer.Detach();
@@ -95,6 +102,7 @@ bool Mesh::load(Renderer& renderer, const wchar_t* fileName)
 			a.specularColor = r.SpecularColor;
             a.emissiveColor = r.EmissiveColor;
 			a.specularPower = r.SpecularPower;
+//            a.debugName = r.MaterialName;
 
             materialAttributes.push_back(a);
 		}
@@ -295,8 +303,8 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
     }
 
 
-    uint32 VertexCount = (uint32)MeshVertexData.size();
-    uint32 IndexCount = (uint32)MeshIndexData.size();
+    vertexCount = (uint32)MeshVertexData.size();
+    indexCount = (uint32)MeshIndexData.size();
 
 //    if (AssetKey.Flags & OBJMeshLoader::OLF_NoVertexCacheOptimize) // hack
 	if (false)
@@ -309,30 +317,30 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
         // can be optimized (wasteful memory copy)
 
         // vertex cache optimization
-        INDEXBUFFER_TYPE* IndexData = reorderForsyth(&MeshIndexData[0], IndexCount / 3, VertexCount);
+        INDEXBUFFER_TYPE* IndexData = reorderForsyth(&MeshIndexData[0], indexCount / 3, vertexCount);
         //	uint32 Test1 = ComputeCacheHits<VERTEX_CACHE_SIZE>(IndexData, inIndexCount);
 
-        void* VertexData = (void*)new uint8[VertexCount * vertexStride];
+        void* VertexData = (void*)new uint8[vertexCount * vertexStride];
 
         // sort by new index order to get better cache locality
         {
-            INDEXBUFFER_TYPE* RemapBuffer = new INDEXBUFFER_TYPE[VertexCount];
+            INDEXBUFFER_TYPE* RemapBuffer = new INDEXBUFFER_TYPE[vertexCount];
 
             uint32 FillState = 0;
 
-            memset(RemapBuffer, 0xff, VertexCount * sizeof(INDEXBUFFER_TYPE));
+            memset(RemapBuffer, 0xff, vertexCount * sizeof(INDEXBUFFER_TYPE));
 
-            for (uint32 i = 0; i < IndexCount; ++i)
+            for (uint32 i = 0; i < indexCount; ++i)
             {
                 INDEXBUFFER_TYPE& Val = IndexData[i];
 
-                assert(Val < VertexCount);
+                assert(Val < vertexCount);
 
                 INDEXBUFFER_TYPE& Remap = RemapBuffer[Val];
 
                 if (Remap == (INDEXBUFFER_TYPE)-1)
                 {
-                    assert(FillState < VertexCount);
+                    assert(FillState < vertexCount);
 
                     memcpy((uint8*)VertexData + FillState * vertexStride, (uint8*)&MeshVertexData[0] + Val * vertexStride, vertexStride);
 
@@ -353,11 +361,11 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
         MeshIndexData.clear();
         MeshIndexData.shrink_to_fit();
 
-        MeshVertexData.resize(VertexCount);
-        MeshIndexData.resize(IndexCount);
+        MeshVertexData.resize(vertexCount);
+        MeshIndexData.resize(indexCount);
 
-        memcpy(&MeshVertexData[0], VertexData, VertexCount * vertexStride);
-        memcpy(&MeshIndexData[0], IndexData, IndexCount * sizeof(INDEXBUFFER_TYPE));
+        memcpy(&MeshVertexData[0], VertexData, vertexCount * vertexStride);
+        memcpy(&MeshIndexData[0], IndexData, indexCount * sizeof(INDEXBUFFER_TYPE));
 
         // vertex cache optimization
         delete[] IndexData; IndexData = 0;
@@ -374,9 +382,9 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
     {
         std::vector<glm::vec3> VertexDataVec;
 
-        VertexDataVec.reserve(VertexCount);
+        VertexDataVec.reserve(vertexCount);
 
-        for (uint32 i = 0; i < VertexCount; ++i)
+        for (uint32 i = 0; i < vertexCount; ++i)
         {
             glm::vec3 Pos = *(glm::vec3*)((uint8*)&MeshVertexData[0] + i * vertexStride);
 
@@ -385,9 +393,9 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
 
         std::vector<UINT> IndexDataVec;
 
-        IndexDataVec.reserve(IndexCount);
+        IndexDataVec.reserve(indexCount);
 
-        for (uint32 i = 0; i < IndexCount; ++i)
+        for (uint32 i = 0; i < indexCount; ++i)
         {
             IndexDataVec.push_back(MeshIndexData[i]);
         }
