@@ -28,33 +28,46 @@ float randomNext(inout uint s)
 	return float(s & 0x00FFFFFF) / float(0x01000000);
 }
 
-
-
 struct Reservoir
 {
-	//
+	// aka lightSeed 
 	uint rndState;
-	// weight sum
+	// aka weightSum
 	float wSum;
-	//
-	float W;	// Algorithm 3
+	// aka W, weight
+	float targetPdf;	// Algorithm 3
 	// count
 	float M;	// Algorithm 3
+	//todo: 3 bits might be enough, todo: could be replaced by stochastic exponential
+//	float age;
 
 	void init()
 	{
 		// >0 to avoid div by 0, needed?
 //		wSum = 0.00001f;
 		wSum = 0;
-		W = 0;
+		targetPdf = 0;
 		M = 0;
 		rndState = 0;
+//		age = 0;
 	}
 
 	// @param inRndState randomInit(randomSeed.x, randomSeed.y) with some frame contribution
-	void push(uint inRndState, float weight)
+	// @param random 0..1
+	void stream(uint inRndState, float risWeight, float random)
 	{
-		++M;
+//		float risWeight = targetPdf * invSourcePdf;
+		M += 1;
+		wSum += risWeight;
+
+		bool selectSample = (random * wSum < risWeight);
+		if (selectSample)
+		{
+			rndState = inRndState;
+			targetPdf = targetPdf;
+		}
+
+/*		++M;
 
 		// WeightedReserviour Sampling Algorithm 2 (plus a depth test)
 		// Min-Te Chao. 1982. A General Purpose Unequal Probability Sampling Plan. Biometrika 69, 3 (Dec. 1982), 653?656. https://doi.org/10/fd87zs
@@ -64,7 +77,10 @@ struct Reservoir
 //		float depth = splatZ.x;
 		// todo: improve
 
-		wSum += weight;
+		float invSourcePdf = 1.0f;
+	    float risWeight = inTargetPdf * invSourcePdf;
+
+		wSum += risWeight;
 
 		// make a copy as we don't want to change rndState
 		float rnd;
@@ -74,23 +90,52 @@ struct Reservoir
 		}
 
 //		if (rnd < weight / wSum)
-		if (rnd * wSum < weight) // optimized divide
+		if (rnd * wSum < risWeight) // optimized divide
 		{
 			rndState = inRndState;
-			W = weight;					// ??
+//			targetPdf = inTargetPdf;					// ??
 		}
+*/
+	}
+
+	// @param random 0..1
+	void combine(Reservoir other, float random)
+	{
+		float risWeight = targetPdf * other.wSum * other.M;
+
+		M += other.M;
+		wSum += risWeight;
+
+		bool selectSample = (random * wSum < risWeight);
+		if (selectSample)
+		{
+			rndState = other.rndState;
+			targetPdf = targetPdf;
+		}
+	}
+
+	//  Equation (6) from the ReSTIR paper.
+	void finalize()
+	{
+//		float denominator = reservoir.targetPdf * normalizationDenominator;
+		float denominator = M;
+
+		wSum = (denominator == 0.0f) ? 0.0f : wSum / denominator;
+		M = 1;
 	}
 
 	void loadFromRaw(float4 rawData)
 	{
 		rndState = asuint(rawData.x);
 		wSum = rawData.y;
-		W = rawData.z;
+		targetPdf = rawData.z;
+//		age = rawData.z;
 		M = rawData.w;
 	}
 
 	float4 storeToRaw()
 	{
-		return float4(asfloat(rndState), wSum, W, M);
+		return float4(asfloat(rndState), wSum, targetPdf, M);
+//		return float4(asfloat(rndState), wSum, age, M);
 	}
 };

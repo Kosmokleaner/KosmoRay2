@@ -2,9 +2,6 @@
 // 1:MyAnyHitShader CSG boolean mesh operation
 // 2:Single bounce Indirect lighting
 #define RAY_TRACING_EXPERIMENT 2
-
-// 0/1
-#define INSTANCE_1_IS_EMISSIVE 1
 // 0/1
 #define SKY_IS_EMISSIVE 0
 // To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
@@ -93,8 +90,10 @@ typedef BuiltInTriangleIntersectionAttributes MyAttributes;
 // update App3.cpp if this gets larger
 struct RayPayload
 {
-    // skycolor or material color
+    //
     float3 materialColor;
+    //
+    float3 emissiveColor;
     // in world space, normalized, (0,0,0) means emissive
     float3 interpolatedNormal;
     // -1 if not set
@@ -261,7 +260,7 @@ void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, ui
         float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal);
         float weight = computeWeight(lightPos - p, surfaceNormal, lightNormal);
         
-        rez.push(rndStateBefore, weight);
+        rez.stream(rndStateBefore, weight, randomNext(rndState));
     }
 }
 
@@ -393,12 +392,19 @@ void MyRaygenShader()
             ui.printTxt('r', 'n', 'd', ':');
             ui.printHex(reservoir.rndState);
             ui.printLF();
+
 //            ui.printTxt('w', ':');
 //            ui.printFloat(reservoir.W);
 //            ui.printLF();
+
             ui.printTxt('w', 'S', 'u', 'm', ':');
             ui.printFloat(reservoir.wSum);
             ui.printLF();
+
+//            ui.printTxt('a', 'g', 'e', ':');
+//            ui.printFloat(reservoir.age);
+//            ui.printLF();
+
             ui.printTxt('m', ':');
             ui.printInt((int)reservoir.M);
             ui.drawCrosshair(currentXY, 10, float4(0, 1, 0, 1));
@@ -475,11 +481,7 @@ void MyRaygenShader()
 
         float3 incomingLight = 0;
 
-#if INSTANCE_1_IS_EMISSIVE == 1
-        // emissive object shows it's own emissiveness
-        if (payload.instanceIndex == 0)
-            incomingLight = payload.materialColor * 2 * sampleCountAO;
-#endif
+        incomingLight = payload.emissiveColor * sampleCountAO;
 
         bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
 
@@ -489,9 +491,6 @@ void MyRaygenShader()
         if(areaLightSampling)
         {
             dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
-
-//            if(g_sceneCB.updateReservoir == 1)
-//                rndState = dstReservoir.rndState;
         }
 
         for(int i = 0; i < sampleCountAO; ++i)
@@ -505,10 +504,22 @@ void MyRaygenShader()
             float weight = 1.0f;
             if(areaLightSampling)
             {
-                if(g_sceneCB.updateReservoir == 1)
-                    sampleLightsForReservoir(dstReservoir, 1, rndState, rayDesc.Origin, payload.interpolatedNormal);
+                Reservoir oldReservoir = dstReservoir;
 
-                weight = dstReservoir.W;
+                if(g_sceneCB.updateReservoir == 1)
+                {
+//                    if(dstReservoir.age >= 8)
+                    if(randomNext(rndState2) < 0.25f)
+                    {
+                        dstReservoir.init();
+                    }
+
+                    sampleLightsForReservoir(dstReservoir, 1, rndState, rayDesc.Origin, payload.interpolatedNormal);
+                }
+
+//                dstReservoir.finalize();
+
+                weight = dstReservoir.wSum;
 
                 uint rndStateCopy = dstReservoir.rndState;
 
@@ -538,15 +549,16 @@ void MyRaygenShader()
 
                 if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
                 {
+                    dstReservoir = oldReservoir;
+//                    ++dstReservoir.age;
                     // reset
-//                    dstReservoir.W = 0;
-                    dstReservoir.init();
+//                    dstReservoir.init();
                     highlightPixel = true;
  //                   dstReservoir.rndState = rndState2;
                 }
                 else
                 {
-//                    dstReservoir.push(rez.rndState, rez.W);
+//                    dstReservoir.stream(rez.rndState, rez.W);
                 }
             }
             else
@@ -561,21 +573,16 @@ void MyRaygenShader()
 //            {
 //                dstReservoir.init();
 //            }
-//            dstReservoir.push(rndState, weight);
+//            dstReservoir.stream(rndState, weight);
 
 
             float3 addLight = 0;
 
 //            incomingLight = addLight;
 
-#if INSTANCE_1_IS_EMISSIVE == 1
-            // effect of emissive object onto others objects
-            if(payload2.instanceIndex == 0)
-                addLight = payload2.materialColor*2;
-#endif
             // effect of sky onto others objects
-            if(payload2.instanceIndex == -1)
-                addLight = payload2.materialColor*2;
+//            if(payload2.instanceIndex == -1)
+                addLight = payload2.emissiveColor;
 
 //            if(all(payload2.interpolatedNormal != float3(0, 0, 0)))
 //            {
@@ -588,6 +595,8 @@ void MyRaygenShader()
 //                addLight *= dstReservoir.wSum / dstReservoir.M;
 //            addLight *= dstReservoir.wSum / dstReservoir.M;
 
+//            if(dstReservoir.age > 0)
+//                addLight *= weight / (dstReservoir.age+1);
             addLight *= weight;
             incomingLight += addLight;
         }
@@ -609,8 +618,8 @@ void MyRaygenShader()
 
     float3 ldr = filmicToneMapping(hdr);
 
-    if(highlightPixel)
-        ldr = float3(1, 0, 0);
+//    if(highlightPixel)
+//        ldr = float3(1, 0, 0);
 
 #if GFX_FOR_ALL == 1
     if(showNormal)
@@ -715,6 +724,7 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 //    payload.materialColor = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
 //    payload.materialColor = float3(0.9f, 0.8f, 0.7f);       // albedo color
     payload.materialColor = g_materials[instanceId][materialId].diffuseColor;
+    payload.emissiveColor = g_materials[instanceId][materialId].emissiveColor;
 //    g_materials[]
 
     // visualize world space position as color

@@ -490,7 +490,8 @@ void App3::CreateRaytracingPipelineStateObject()
     // Defines the maximum sizes in bytes for the ray payload and attribute structure.
     auto shaderConfig = raytracingPipeline.CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
     // see struct RayPayload
-    UINT payloadSize = 4 * sizeof(float) + 3 * sizeof(float) + 4 + 4 + 4 + 4 + 4; // color + normal + prim + instance + minT + minTfront
+	// color + emissive + normal + prim + instance + minT + minTfront
+    UINT payloadSize = 4 * sizeof(float) + 4 * sizeof(float) + 3 * sizeof(float) + 4 + 4 + 4 + 4 + 4;
 
     UINT attributeSize = 2 * sizeof(float); // float2 barycentrics
     shaderConfig->Config(payloadSize, attributeSize);
@@ -830,7 +831,8 @@ void App3::CreateDeviceDependentResources()
 
 //    ok = meshB.load(renderer, L"../../data/monkey.obj");
 //    ok = meshB.load(renderer, L"../../data/monkey2.obj");
-	ok = meshB.load(renderer, L"../../data/CornellBox.obj");
+//	ok = meshB.load(renderer, L"../../data/CornellBox.obj");
+	ok = meshB.load(renderer, L"../../data/CornellBox2.obj");
     assert(ok);
 
     {
