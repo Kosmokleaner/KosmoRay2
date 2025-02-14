@@ -33,6 +33,7 @@ public:
 	{
 		DiffuseColor = glm::vec3(1, 1, 1);
 		SpecularColor = glm::vec3(1, 1, 1);
+		EmissiveColor = glm::vec3(0, 0, 0);
 	}
 };
 

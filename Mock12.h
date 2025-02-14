@@ -1087,6 +1087,7 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_  void** ppCommandQueue)
     {
+        assert(ppCommandQueue);
         HRESULT ret = redirect->CreateCommandQueue(pDesc, riid, ppCommandQueue);
 
         IUnknown* unk = *(IUnknown**)ppCommandQueue;
@@ -1132,7 +1133,9 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  ID3D12PipelineState* pInitialState,
         REFIID riid,
         _COM_Outptr_  void** ppCommandList)
-    {
+	{
+		assert(ppCommandList);
+
         HRESULT ret = redirect->CreateCommandList(nodeMask, type, pCommandAllocator, pInitialState, riid, ppCommandList);
 
         IUnknown* unk = *(IUnknown**)ppCommandList;
@@ -1297,6 +1300,8 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riidResource,
         _COM_Outptr_opt_  void** ppvResource)
     {
+		assert(ppvResource);
+
         HRESULT ret = redirect->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
 
         IUnknown* unk = *(IUnknown**)ppvResource;
@@ -1315,7 +1320,9 @@ struct Mock12Device2 : public ID3D12Device2
         _In_  const D3D12_HEAP_DESC* pDesc,
         REFIID riid,
         _COM_Outptr_opt_  void** ppvHeap)
-    {
+	{
+		assert(ppvHeap);
+
         HRESULT ret = redirect->CreateHeap(pDesc, riid, ppvHeap);
 
         IUnknown* unk = *(IUnknown**)ppvHeap;
@@ -1335,7 +1342,9 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_CLEAR_VALUE* pOptimizedClearValue,
         REFIID riid,
         _COM_Outptr_opt_  void** ppvResource)
-    {
+	{
+		assert(ppvResource);
+
         HRESULT ret = redirect->CreatePlacedResource(pHeap, HeapOffset, pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
 
         IUnknown* unk = *(IUnknown**)ppvResource;
@@ -1356,7 +1365,9 @@ struct Mock12Device2 : public ID3D12Device2
         _In_opt_  const D3D12_CLEAR_VALUE* pOptimizedClearValue,
         REFIID riid,
         _COM_Outptr_opt_  void** ppvResource)
-    {
+	{
+		assert(ppvResource);
+
         HRESULT ret = redirect->CreateReservedResource(pDesc, InitialState, pOptimizedClearValue, riid, ppvResource);
 
         IUnknown* unk = *(IUnknown**)ppvResource;
@@ -1385,7 +1396,9 @@ struct Mock12Device2 : public ID3D12Device2
         _In_  HANDLE NTHandle,
         REFIID riid,
         _COM_Outptr_opt_  void** ppvObj)
-    {
+	{
+		assert(ppvObj);
+
         HRESULT ret = redirect->OpenSharedHandle(NTHandle, riid, ppvObj);
 
         IUnknown* unk = *(IUnknown**)ppvObj;
@@ -1452,6 +1465,8 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvHeap)
     {
+        assert(ppvHeap);
+
         HRESULT ret = redirect->CreateQueryHeap(pDesc, riid, ppvHeap);
 
         IUnknown* unk = *(IUnknown**)ppvHeap;
@@ -1475,6 +1490,8 @@ struct Mock12Device2 : public ID3D12Device2
         REFIID riid,
         _COM_Outptr_opt_  void** ppvCommandSignature)
     {
+		assert(ppvCommandSignature);
+
         HRESULT ret = redirect->CreateCommandSignature(pDesc, pRootSignature, riid, ppvCommandSignature);
 
         IUnknown* unk = *(IUnknown**)ppvCommandSignature;

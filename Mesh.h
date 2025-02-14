@@ -132,10 +132,10 @@ public:
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 
     D3DBuffer indexBuffer;
-    D3D12_INDEX_BUFFER_VIEW indexBufferView;
+	D3D12_INDEX_BUFFER_VIEW indexBufferView = {};
 
 	D3DBuffer materialBuffer;
-	D3D12_INDEX_BUFFER_VIEW materialBufferView;
+	D3D12_INDEX_BUFFER_VIEW materialBufferView = {};
 
     // for ray tracing
     ComPtr<ID3D12Resource> bottomLevelAccelerationStructure;
@@ -145,10 +145,11 @@ public:
     uint32 vertexStride = 0;
 
     // call UpdateLocalMinMax() to recompute
-    glm::vec3 LocalMin, LocalMax;
+	glm::vec3 LocalMin = {};
+	glm::vec3 LocalMax = {};
 
     // -1 if not set, index into CBVHTreeData.dataBVHTree0[]
-    uint32 BVHRootNodeId;
+    uint32 BVHRootNodeId = -1;
 
     // redundant but nice for debugging
     FBVHTree BVHTree;

@@ -77,7 +77,7 @@ void App3::CreateRootSignatures()
     // Global Root Signature
     // This is a root signature that is shared across all raytracing shaders invoked during a DispatchRays() call.
     {
-		CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count];
+        CD3DX12_ROOT_PARAMETER rootParameters[GlobalRootSignatureParams::Count] = {};
 
         {
             CD3DX12_DESCRIPTOR_RANGE UAVDescriptors[2] = {};

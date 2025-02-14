@@ -202,6 +202,8 @@ const char* LoadTextFile(const wchar_t* FileName, uint32& OutFileSize)
 		return 0;
 	}
 
+	assert(in);
+
 	// todo: check to fit in 32bit
 	OutFileSize = IO_GetFileSize(FileName);
 

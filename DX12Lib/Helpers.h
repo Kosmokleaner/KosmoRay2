@@ -158,7 +158,7 @@ public:
     }
 
     // Accessors
-    T staging;
+    T staging = {};
     T* operator->() { return &staging; }
     UINT NumInstances() { return m_numInstances; }
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress(UINT instanceIndex = 0)

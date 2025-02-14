@@ -299,12 +299,12 @@ void Mesh::SetSimpleIndexedMesh(const SimpleIndexedMesh& IndexedMesh)
     uint32 IndexCount = (uint32)MeshIndexData.size();
 
 //    if (AssetKey.Flags & OBJMeshLoader::OLF_NoVertexCacheOptimize) // hack
-    if(false)
-    {
-        void* VertexData = &MeshVertexData[0];
-        INDEXBUFFER_TYPE* IndexData = (INDEXBUFFER_TYPE*)&MeshIndexData[0];
-    }
-    else
+	if (false)
+	{
+//		void* VertexData = &MeshVertexData[0];
+//		INDEXBUFFER_TYPE* IndexData = (INDEXBUFFER_TYPE*)&MeshIndexData[0];
+	}
+	else
     {
         // can be optimized (wasteful memory copy)
 
