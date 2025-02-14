@@ -502,26 +502,14 @@ void MyRaygenShader()
         int2 currentXY = g_sceneCB.mouseXY.xy;
 
         reservoir.loadFromRaw(g_Reservoirs[currentXY]);
-//        uint rnd2 = reservoir.rndState;
-        uint rnd2 = initRand(currentXY.x, currentXY.y);
+        uint rnd2 = reservoir.rndState;
+//        uint rnd2 = initRand(currentXY.x, currentXY.y);
         const float sphereRadius = 0.05f;
 
         float3 normal;
         float3 emissiveColor;
         float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal, globals, emissiveColor);
 
-
-/*        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
-        {
-            RenderTarget[DispatchRaysIndex().xy] = float4(0.5f, 0.5f, 0, 1);
-            return;
-        }
-        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos + normal * sphereRadius, 0.03f).y > 0)    // with white dot to indicate normal direction
-        {
-            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 1, 1);
-            return;
-        }
-*/
         float2 pxSample = PxFromWS(samplePos);
 //        float2 pxSample = PxFromWS(globals.pos);
         ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
@@ -691,6 +679,7 @@ void MyRaygenShader()
                 float3 emissiveColor;
                 rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, globals, emissiveColor) - rayDesc.Origin;
 
+
 //                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
 
 //                float deltaLength2 = dot(delta, delta);
@@ -711,7 +700,8 @@ void MyRaygenShader()
 
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
-                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
+//                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
+                if(!all(payload2.emissiveColor == emissiveColor))
                 {
                     dstReservoir = oldReservoir;
 //                    ++dstReservoir.age;
