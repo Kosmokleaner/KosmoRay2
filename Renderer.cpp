@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "DX12Lib/Helpers.h"
+#include "Mock12.h"
 
 Renderer::~Renderer()
 {

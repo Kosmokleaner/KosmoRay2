@@ -38,6 +38,7 @@ STRUCT_BEGIN(MaterialAttributes)
 	STRUCT_ENTRY(float, padding1)
 	STRUCT_ENTRY(float3, emissiveColor)
 	STRUCT_ENTRY(float, padding2)
+	CPP_STRUCT_ENTRY(std::string, debugName)	// only for C++
 STRUCT_END()
 
 /*

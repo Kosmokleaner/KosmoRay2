@@ -60,6 +60,7 @@
 
 #define STRUCT_ENTRY(type, name) type name;
 #define STRUCT_END() };
+#define CPP_STRUCT_ENTRY(type, name) STRUCT_ENTRY(type, name)
 
 #define ENUM_BEGIN(name) struct name { \
 	static void Reflection(IReflection& r);\
@@ -80,6 +81,8 @@ template <class T> const char* getTypeName();
 #define STRUCT_ENTRY(type, name) \
 	r.struct_entry(#type, #name);
 
+#define CPP_STRUCT_ENTRY(type, name) STRUCT_ENTRY(type, name)
+
 #define STRUCT_END() \
 	r.struct_end(); }
 
@@ -94,6 +97,7 @@ template <class T> const char* getTypeName();
 
 #define STRUCT_BEGIN(name) struct name {
 #define STRUCT_ENTRY(type, name) type name;
+#define CPP_STRUCT_ENTRY(type, name)
 #define STRUCT_END() };
 #define ENUM_BEGIN(name)
 #define ENUM_ENTRY(name)

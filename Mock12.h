@@ -457,6 +457,8 @@ struct Mock12CommandList : public ID3D12GraphicsCommandList4
         _In_  UINT RootParameterIndex,
         _In_  D3D12_GPU_DESCRIPTOR_HANDLE BaseDescriptor)
     {
+        assert(BaseDescriptor.ptr);
+
         redirect->SetComputeRootDescriptorTable(RootParameterIndex, BaseDescriptor);
     }
 
