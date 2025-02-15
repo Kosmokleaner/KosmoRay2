@@ -301,22 +301,13 @@ float3 getRandomPointInTriangle(inout uint rndState, float3 pos[3])
     return pos[0] * bary.x + pos[1] * bary.y + pos[2] * bary.z;
 }
 
-struct Globals
-{
-    uint debug;
-    float rnd;
-    float3 pos;
-};
-
 // hard coded to work with Quad.obj
 // @param outNormal will be normalized
 // @return light sample wsPos
-float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal, inout Globals globals, out float3 emissiveColor)
+float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal, out float3 emissiveColor)
 {
     // 0..1
 	float rnd = nextRand(rndState);
-
-    globals.rnd = rnd;
 
     // 0..g_sceneCB.emissiveSATSize-1
 //todo    uint emissiveTriangleId = binary_search_findIndex(rnd, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
@@ -325,8 +316,6 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float
     uint4 packedIndex = g_EmissiveSATIndex[emissiveTriangleId];
     uint meshInstanceId = packedIndex.y;
     uint meshTriangleId = packedIndex.z;
-
-    globals.debug = emissiveTriangleId;
 
     float3 wsPosCorners[3];
 
@@ -386,9 +375,8 @@ void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, ui
 
         // normalized
         float3 lightNormal;
-        Globals globals = (Globals)0;
         float3 emissiveColor;
-        float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal, globals, emissiveColor);
+        float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal, emissiveColor);
         float weight = computeWeight(lightPos - p, surfaceNormal, lightNormal);
         
         rez.stream(rndStateBefore, weight, randomNext(rndState));
@@ -502,7 +490,6 @@ void MyRaygenShader()
         }
     }
 */
-    Globals globals = (Globals)0;
 
 #if GFX_FOR_ALL == 1 && RESERVOIR == 1
     // visualize getEmissiveQuadSample in reservoir under mouse cursor
@@ -518,10 +505,9 @@ void MyRaygenShader()
 
         float3 normal;
         float3 emissiveColor;
-        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal, globals, emissiveColor);
+        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal, emissiveColor);
 
         float2 pxSample = PxFromWS(samplePos);
-//        float2 pxSample = PxFromWS(globals.pos);
         ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
 //        ui.drawLine(pxSample, currentXY + 0.5f, float4(0.5f, 0.5f, 0.5f, 1), 2);
 //        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
@@ -529,26 +515,6 @@ void MyRaygenShader()
 
         if(!showNormal && !showDepth && !showEmissive && !showAlbedo)
         {
-            ui.printFloat(globals.rnd);
-            ui.printTxt(' ');
-            ui.printInt(globals.debug);
-            ui.printTxt(' ');
-            ui.printLF();
-/*            ui.printFloat(g_EmissiveSATValue[currentXY.x]);
-            ui.printLF();
-            ui.printFloat(globals.pos.x);
-            ui.printTxt(' ');
-            ui.printFloat(globals.pos.y);
-            ui.printTxt(' ');
-            ui.printFloat(globals.pos.z);
-            ui.printLF();
-            ui.printFloat(emissiveColor.x);
-            ui.printTxt(' ');
-            ui.printFloat(emissiveColor.y);
-            ui.printTxt(' ');
-            ui.printFloat(emissiveColor.z);
-            ui.printLF();
-*/
             ui.pxLeftTop = ui.pxCursor = currentXY + int2(20, -50);
             ui.printTxt('r', 'n', 'd', ':');
             ui.printHex(reservoir.rndState);
@@ -690,13 +656,13 @@ void MyRaygenShader()
                 float3 lightNormal;
                 float3 emissiveColor;
                 // todo: rayDesc.Direction should be normalized?
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, globals, emissiveColor) - rayDesc.Origin;
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, emissiveColor) - rayDesc.Origin;
 #else  // #if RESERVOIR == 1
                 // normalized
                 float3 lightNormal;
                 float3 emissiveColor;
                 // todo: rayDesc.Direction should be normalized?
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, globals, emissiveColor) - rayDesc.Origin;
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, emissiveColor) - rayDesc.Origin;
                 weight = computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
 
 #endif // #if RESERVOIR == 1
