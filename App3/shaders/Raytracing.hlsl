@@ -9,9 +9,11 @@
 // 0/1 animate TemporalAA jitter and noise seed
 #define ANIMATE_OVER_TIME 1
 // 1:very low, 8:low, 64:good, 256:very good
-#define SAMPLE_COUNT_AO 1
-// 0:reference path tracing / 1:less noise, 2: viewport split in half
+#define SAMPLE_COUNT 100
+// 0:reference path tracing, 1:less noise, 2: viewport split in half
 #define AREA_LIGHT_SAMPLING 2
+// 0:ImportanceSampling, 1: Reservoir, depends on AREA_LIGHT_SAMPLING
+#define RESERVOIR 1
 // 0:off, 1:on (slow but useful for debugging)
 #define GFX_FOR_ALL 1
 
@@ -273,7 +275,7 @@ void getGlobalTriangle(uint meshInstanceId, uint meshTriangleId, out float3 wsPo
 //        wsPos[i] = mul(, float4(osPos, 1));
         wsPosCorners[i] = osPos;
 
-        // hacky: materialid is per triangle but stored per vertex
+        //  materialid is per triangle but stored per vertex
         materialId = g_vertices[meshInstanceId][vertexIndex].materialId;
     }
     float3 u = wsPosCorners[1] - wsPosCorners[0];
@@ -308,6 +310,7 @@ struct Globals
 
 // hard coded to work with Quad.obj
 // @param outNormal will be normalized
+// @return light sample wsPos
 float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal, inout Globals globals, out float3 emissiveColor)
 {
     // 0..1
@@ -426,11 +429,18 @@ void MyRaygenShader()
         ui.printTxt('D', 'e', 'p', 't', 'h');
     }
     ui.printLF();
-    bool showMaterial = ui.printDisc(float4(1, 1, 1, 1));
-    if(showMaterial)
+    bool showEmissive = ui.printDisc(float4(1, 1, 1, 1));
+    if(showEmissive)
     {
         ui.printTxt(' ');
-        ui.printTxt('M', 'a', 't');
+        ui.printTxt('E', 'm', 'i', 't');
+    }
+    ui.printLF();
+    bool showAlbedo = ui.printDisc(float4(0, 1, 0, 1));
+    if(showAlbedo)
+    {
+        ui.printTxt(' ');
+        ui.printTxt('A', 'l', 'b', 'e', 'd', 'o');
     }
 
     ui.scale = 1;
@@ -494,7 +504,7 @@ void MyRaygenShader()
 */
     Globals globals = (Globals)0;
 
-#if GFX_FOR_ALL == 1
+#if GFX_FOR_ALL == 1 && RESERVOIR == 1
     // visualize getEmissiveQuadSample in reservoir under mouse cursor
     {
         Reservoir reservoir;
@@ -517,7 +527,7 @@ void MyRaygenShader()
 //        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
         ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(emissiveColor, 1), 2);
 
-        if(!showNormal && !showDepth && !showMaterial)
+        if(!showNormal && !showDepth && !showEmissive && !showAlbedo)
         {
             ui.printFloat(globals.rnd);
             ui.printTxt(' ');
@@ -621,7 +631,7 @@ void MyRaygenShader()
         uint rndState = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
-        uint sampleCountAO = SAMPLE_COUNT_AO;
+        uint sampleCountAO = SAMPLE_COUNT;
 
 //        AO = 1;
 
@@ -636,6 +646,7 @@ void MyRaygenShader()
 
         bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
 
+#if RESERVOIR == 1
         Reservoir dstReservoir;
         dstReservoir.init();
 
@@ -643,6 +654,7 @@ void MyRaygenShader()
         {
             dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
         }
+#endif // #if RESERVOIR == 1
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
@@ -655,12 +667,12 @@ void MyRaygenShader()
             float weight = 1.0f;
             if(areaLightSampling)
             {
+#if RESERVOIR == 1
                 Reservoir oldReservoir = dstReservoir;
 
                 if(g_sceneCB.updateReservoir == 1)
                 {
-//                    if(dstReservoir.age >= 8)
-                    if(randomNext(rndState2) < 0.25f)
+                    if(randomNext(rndState2) < 0.025f)
                     {
                         dstReservoir.init();
                     }
@@ -668,7 +680,7 @@ void MyRaygenShader()
                     sampleLightsForReservoir(dstReservoir, 1, rndState, rayDesc.Origin, payload.interpolatedNormal);
                 }
 
-//                dstReservoir.finalize();
+                dstReservoir.finalize();
 
                 weight = dstReservoir.wSum;
 
@@ -677,8 +689,17 @@ void MyRaygenShader()
                 // normalized
                 float3 lightNormal;
                 float3 emissiveColor;
+                // todo: rayDesc.Direction should be normalized?
                 rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, globals, emissiveColor) - rayDesc.Origin;
+#else  // #if RESERVOIR == 1
+                // normalized
+                float3 lightNormal;
+                float3 emissiveColor;
+                // todo: rayDesc.Direction should be normalized?
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, globals, emissiveColor) - rayDesc.Origin;
+                weight = computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
 
+#endif // #if RESERVOIR == 1
 
 //                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
 
@@ -703,7 +724,9 @@ void MyRaygenShader()
 //                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
                 if(!all(payload2.emissiveColor == emissiveColor))
                 {
+#if RESERVOIR == 1
                     dstReservoir = oldReservoir;
+#endif // RESERVOIR == 1
 //                    ++dstReservoir.age;
                     // reset
 //                    dstReservoir.init();
@@ -755,7 +778,9 @@ void MyRaygenShader()
             incomingLight += addLight;
         }
 
+#if RESERVOIR == 1
         g_Reservoirs[DispatchRaysIndex().xy] = dstReservoir.storeToRaw();
+#endif // RESERVOIR == 1
 
         // just in case
 //        AO = saturate(AO);
@@ -780,11 +805,10 @@ void MyRaygenShader()
         ldr = g_GBufferA[DispatchRaysIndex().xy].xyz * 0.5f + 0.5f;
     if(showDepth)
         ldr = saturate(float3(g_GBufferA[DispatchRaysIndex().xy].w * 0.05f, 0, 0)) * 0.7f;
-    if(showMaterial)
-    {
-        ldr = saturate(payload.emissiveColor);    // works
-//        ldr = saturate(payload.materialColor);  // works
-    }
+    if(showAlbedo)
+        ldr = saturate(payload.materialColor);
+    if(showEmissive)
+        ldr = saturate(payload.emissiveColor);
 
     ldr = lerp(ldr, ui.dstColor.rgb, ui.dstColor.a);
 #endif //GFX_FOR_ALL == 1
