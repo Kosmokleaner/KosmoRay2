@@ -25,6 +25,11 @@ STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(uint, FrameIndex)
 	STRUCT_ENTRY(uint, updateReservoir)
 	STRUCT_ENTRY(uint, emissiveSATSize)
+    STRUCT_ENTRY(float, emissiveSumArea)
+    STRUCT_ENTRY(float, dummyA)
+    STRUCT_ENTRY(float, dummyB)
+    STRUCT_ENTRY(float, dummyC)
+
 //	STRUCT_ENTRY(uint, dummy)				// todo: dummy[1] will break next member
 	// .xy:currrentXY, zw:unused
 	STRUCT_ENTRY(int4, mouseXY)

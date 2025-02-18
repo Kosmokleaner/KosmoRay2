@@ -87,6 +87,7 @@ private:
 	std::vector<float> m_emissiveSATValueData;
 	// GPU buffer for m_emissiveSATValueData
 	D3DBuffer m_EmissiveSATValue;
+    float m_emissiveSumArea = {};
 
     // (sceneObjectId, meshInstanceid, triangleId, 0) in this instance, same size as m_emissiveSATValueData
 	std::vector<glm::uvec4> m_emissiveSATIndexData;

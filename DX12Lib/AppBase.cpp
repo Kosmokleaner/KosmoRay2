@@ -128,7 +128,7 @@ void AppBase::OnUpdate(UpdateEventArgs& e)
 //        camera.SetPos(glm::vec3(0, 2, -10));
 //        camera.SetRotation(glm::vec2(3.1415f, 0.0f));
         // look at cornell box
-		camera.SetPos(glm::vec3(0, 2, 10));
+		camera.SetPos(glm::vec3(0, 1, 3.5f));
 		camera.SetRotation(glm::vec2(0, 0.0f));
         first = false;
     }

@@ -108,7 +108,7 @@ void getOtherBaseVec(out float3 outA, out float3 outB, float3 normal)
     outA = normalize(cross(outB, v));
 }
 
-// @return normal must be normalized
+// @return normal not normalized
 float3 getCosHemisphereSample(inout uint rnd, float3 normal)
 {
     float3 u, v;

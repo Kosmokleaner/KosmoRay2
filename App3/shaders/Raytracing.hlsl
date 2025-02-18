@@ -13,7 +13,7 @@
 // 0:reference path tracing, 1:less noise, 2: viewport split in half
 #define AREA_LIGHT_SAMPLING 2
 // 0:ImportanceSampling, 1: Reservoir, depends on AREA_LIGHT_SAMPLING
-#define RESERVOIR 1
+#define RESERVOIR 0
 // 0:off, 1:on (slow but useful for debugging)
 #define GFX_FOR_ALL 1
 
@@ -346,8 +346,8 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float
 
 }
 
-// @param n0 normalized normal at 0
-// @param n1 normalized normal at 1
+// @param n0 normalized normal at 0, as surface
+// @param n1 normalized normal at 1, at light
 float computeWeight(float3 delta0To1, float3 n0, float3 n1)
 {
     float deltaLength2 = dot(delta0To1, delta0To1);
@@ -355,18 +355,25 @@ float computeWeight(float3 delta0To1, float3 n0, float3 n1)
     // todo: handle NaN
     float3 delta = normalize(delta0To1);
 
-    float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
+//    float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
+//    float area = 3.14159265f;
+    float area = g_sceneCB.emissiveSumArea;
 
-    float weight = area / deltaLength2 / PI;
-    weight *= saturate(dot(delta, n0));
-    weight *= saturate(dot(delta, -n1));
+    // / deltaLength2: Inverse Square Law
+    // + small number to avoid div by 0
+    float weight = area / (deltaLength2 + 0.00001f) * PI * PI;    // "Physical Based Rendering" page 620
+//    float weight = area / PI;
+    weight *= saturate(dot(delta, n0)); // 
+//    weight *= abs(dot(delta, n0));
+    weight *= saturate(dot(delta, -n1));    // if area light source position represent disks we need this
+//    weight *= abs(dot(delta, n1));
 
     return weight;
 }
 
 // @param reservoirSampleCount >=1, how many times we try to find a better sample (shadows not taken into account for performance)
 // @param p position
-// @param n normalized normal
+// @param surfaceNormal normalized normal
 void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
 {
 	for (uint i = 0; i < reservoirSampleCount; i++)
@@ -710,6 +717,9 @@ void MyRaygenShader()
                 rayDesc.Direction = getCosHemisphereSample(rndState, payload.interpolatedNormal);
 
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+
+//                weight = saturate(dot(normalize(rayDesc.Direction), payload.interpolatedNormal));
+//                weight *= saturate(dot(rayDesc.Direction, -payload2.interpolatedNormal));
             }
 
 //            if(payload2.instanceIndex != 0 || g_sceneCB.wipeReservoir == 1)
@@ -760,8 +770,10 @@ void MyRaygenShader()
 
 
     hdr *= 4.0f;    // brighter
+//    hdr *= 0.25f;    // darker
 
-    float3 ldr = filmicToneMapping(hdr);
+//    float3 ldr = filmicToneMapping(hdr);
+    float3 ldr = pow(hdr, 1/2.2f);  // no tone mapping
 
 //    if(highlightPixel)
 //        ldr = float3(1, 0, 0);
@@ -874,7 +886,9 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
 //    payload.materialColor = IndexToColor(InstanceIndex() + 3) * 0.8f + 0.2f;
 //    payload.materialColor = float3(0.9f, 0.8f, 0.7f);       // albedo color
     payload.materialColor = g_materials[meshInstanceId][materialId].diffuseColor;
+//    payload.emissiveColor = g_materials[meshInstanceId][materialId].emissiveColor;
     payload.emissiveColor = g_materials[meshInstanceId][materialId].emissiveColor;
+
 //    g_materials[]
 
     // visualize world space position as color
@@ -884,6 +898,10 @@ void MyClosestHitShader(inout RayPayload payload, in MyAttributes attr)
     
 //    float3 worldNormal = mul(osNormal, (float3x3)ObjectToWorld3x4());           // todo: account for non uniform scale, some .obj have no normals stored
     float3 worldNormal = mul(triangleNormal, (float3x3)ObjectToWorld3x4());
+
+    // only front should be emissive otherwise the math needs adjustment in various places
+    if(dot(WorldRayDirection(), -worldNormal) <= 0.0f)
+        payload.emissiveColor = 0;
 
 //    if(dot(worldNormal, WorldRayDirection()) < 0)
 //        worldNormal = -worldNormal;

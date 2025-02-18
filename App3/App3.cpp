@@ -215,6 +215,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_sceneCB->raytraceFlags = raytraceFlags;
 	m_sceneCB->updateReservoir = updateReservoir;
     m_sceneCB->emissiveSATSize = (uint32)m_emissiveSATValueData.size();
+    m_sceneCB->emissiveSumArea = m_emissiveSumArea;
     updateReservoir = false;
 
     static uint32 FrameIndex = 0; ++FrameIndex;
@@ -726,7 +727,7 @@ void App3::BuildAccelerationStructures()
                         continue;
 
                     // https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
-                    float sumEmissiveAmount = computeLumianceFromLinearRGB(emissiveColor);
+                    float emissiveAmount = computeLumianceFromLinearRGB(emissiveColor);
 
                     glm::vec3 p[3];
 
@@ -742,9 +743,10 @@ void App3::BuildAccelerationStructures()
                     glm::vec3 u = p[2] - p[0];
 					glm::vec3 v = p[1] - p[0];
 
-                    float triAreaMul2 = length(cross(u, v));
+                    float triArea = length(cross(u, v)) / 2.0f;
 
-                    sumArea += sumEmissiveAmount * triAreaMul2;
+//                    sumArea += emissiveAmount * triArea;
+                    sumArea += triArea;                     // keep it simple
 
 					m_emissiveSATValueData.push_back(sumArea);
                     m_emissiveSATIndexData.push_back(glm::uvec4(sceneObjectId, dst->InstanceID, triangleId, 0));
@@ -756,6 +758,8 @@ void App3::BuildAccelerationStructures()
 
         AllocateUploadBuffer(device.Get(), instanceDesc, sizeof(instanceDesc), &instanceDescs, L"InstanceDescs");
 	}
+
+    m_emissiveSumArea = sumArea;
 
     // normalize emissiveSAT
     {
@@ -944,8 +948,8 @@ void App3::CreateDeviceDependentResources()
 
 //    ok = meshB.load(renderer, L"../../data/monkey.obj");
 //    ok = meshB.load(renderer, L"../../data/monkey2.obj");
-//	ok = meshB.load(renderer, L"../../data/CornellBox.obj");
-	ok = meshB.load(renderer, L"../../data/CornellBox2.obj");
+	ok = meshB.load(renderer, L"../../data/CornellBox.obj");
+//	ok = meshB.load(renderer, L"../../data/CornellBox2.obj");
     assert(ok);
 
     {
