@@ -5,16 +5,16 @@
 // 0/1
 #define SKY_IS_EMISSIVE 0
 // To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
-#define FEEDBACK_FRACTION  1.0f
+#define FEEDBACK_FRACTION  0.1f
 // 0/1 animate TemporalAA jitter and noise seed
 #define ANIMATE_OVER_TIME 1
 // 1:very low, 8:low, 64:good, 256:very good
-#define SAMPLE_COUNT 100
-// 0:reference path tracing, 1:less noise, 2: viewport split in half
-#define AREA_LIGHT_SAMPLING 2
-// 0:ImportanceSampling, 1: Reservoir, depends on AREA_LIGHT_SAMPLING
-#define RESERVOIR 0
-// 0:off, 1:on (slow but useful for debugging)
+#define SAMPLE_COUNT 1
+// 0:reference path tracing, 1:area light sample, 2:reservoir
+#define LEFT_METHOD 1
+// 0:reference path tracing, 1:area light sample, 2:reservoir
+#define RIGHT_METHOD 2
+// 0:off, 1:on (slow compile and shader but useful for debugging)
 #define GFX_FOR_ALL 1
 
 
@@ -497,9 +497,15 @@ void MyRaygenShader()
         }
     }
 */
+    bool right = DispatchRaysIndex().x > 1280/2;
 
-#if GFX_FOR_ALL == 1 && RESERVOIR == 1
+    // see LEFT_METHOD or RIGHT_METHOD
+    uint localMethod = right ? RIGHT_METHOD : LEFT_METHOD;
+
+
+#if GFX_FOR_ALL == 1
     // visualize getEmissiveQuadSample in reservoir under mouse cursor
+    if(localMethod == 2)
     {
         Reservoir reservoir;
 
@@ -617,17 +623,16 @@ void MyRaygenShader()
 
         incomingLight = payload.emissiveColor * sampleCountAO;
 
-        bool areaLightSampling = AREA_LIGHT_SAMPLING == 1 || (AREA_LIGHT_SAMPLING == 2  && DispatchRaysIndex().x > 1280/2);
-
-#if RESERVOIR == 1
         Reservoir dstReservoir;
-        dstReservoir.init();
-
-        if(areaLightSampling)
+        if(localMethod == 2)
         {
-            dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
+            dstReservoir.init();
+
+            if(localMethod == 2)
+            {
+                dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
+            }
         }
-#endif // #if RESERVOIR == 1
 
         for(int i = 0; i < sampleCountAO; ++i)
         {
@@ -638,9 +643,22 @@ void MyRaygenShader()
             payload2.minT = payload2.minTfront = rayDesc.TMax;
 
             float weight = 1.0f;
-            if(areaLightSampling)
+            if(localMethod == 1)
             {
-#if RESERVOIR == 1
+                // normalized
+                float3 lightNormal;
+                float3 emissiveColor;
+                // todo: rayDesc.Direction should be normalized?
+                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, emissiveColor) - rayDesc.Origin;
+                weight = computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
+
+                uint rndStateCopy = dstReservoir.rndState;
+
+                // normalized
+                TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+            }
+            else if(localMethod == 2)
+            {
                 Reservoir oldReservoir = dstReservoir;
 
                 if(g_sceneCB.updateReservoir == 1)
@@ -664,42 +682,15 @@ void MyRaygenShader()
                 float3 emissiveColor;
                 // todo: rayDesc.Direction should be normalized?
                 rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, emissiveColor) - rayDesc.Origin;
-#else  // #if RESERVOIR == 1
-                // normalized
-                float3 lightNormal;
-                float3 emissiveColor;
-                // todo: rayDesc.Direction should be normalized?
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, emissiveColor) - rayDesc.Origin;
-                weight = computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
-
-#endif // #if RESERVOIR == 1
-
-//                float3 delta = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal) - rayDesc.Origin;
-
-//                float deltaLength2 = dot(delta, delta);
-//                rayDesc.Direction = delta / (0.0001f + sqrt(deltaLength2)); // bias to avoid div by 0
-//                rayDesc.Direction = normalize(delta);
-                // lambert weight
-//                float area = 64.0f * sqr(0.08f); // -4..4 * 0.08f => 8x8 * 0.08f * 0.08f
-    //            addLight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal)) * 100 / area;   // 100 is hack
-                // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources
-    //            float pdf = deltaLength2 / (max(0.0f, dot(lightNormal, -rayDesc.Direction)) * area);
-    //            weight = 1.0f / pdf / PI;
-    //            weight = (max(0.0f, dot(lightNormal, -payload.interpolatedNormal)) * area) / deltaLength2 / PI;  // wrong
-//                weight = area / deltaLength2 / PI;  // wrong
-
-                // lambert
-//                weight *= saturate(dot(rayDesc.Direction, payload.interpolatedNormal));
-//                weight *= saturate(dot(rayDesc.Direction, -lightNormal));
 
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
 //                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
                 if(!all(payload2.emissiveColor == emissiveColor))
                 {
-#if RESERVOIR == 1
-                    dstReservoir = oldReservoir;
-#endif // RESERVOIR == 1
+                    if(localMethod == 2)
+                        dstReservoir = oldReservoir;
+
 //                    ++dstReservoir.age;
                     // reset
 //                    dstReservoir.init();
@@ -754,9 +745,8 @@ void MyRaygenShader()
             incomingLight += addLight;
         }
 
-#if RESERVOIR == 1
-        g_Reservoirs[DispatchRaysIndex().xy] = dstReservoir.storeToRaw();
-#endif // RESERVOIR == 1
+        if(localMethod == 2)
+            g_Reservoirs[DispatchRaysIndex().xy] = dstReservoir.storeToRaw();
 
         // just in case
 //        AO = saturate(AO);
@@ -791,7 +781,7 @@ void MyRaygenShader()
     ldr = lerp(ldr, ui.dstColor.rgb, ui.dstColor.a);
 #endif //GFX_FOR_ALL == 1
 
-    if(AREA_LIGHT_SAMPLING == 2 && DispatchRaysIndex().x == 1280/2)
+    if(RIGHT_METHOD != LEFT_METHOD && DispatchRaysIndex().x == 1280/2)
         ldr = float3(0.5f, 0,0);    // red vertical line
 
     RenderTarget[DispatchRaysIndex().xy] = float4(ldr, 1);
