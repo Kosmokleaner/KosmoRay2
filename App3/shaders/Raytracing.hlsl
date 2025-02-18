@@ -758,9 +758,12 @@ void MyRaygenShader()
     }
     else hdr = payload.materialColor;   // sky
 
-
     hdr *= 4.0f;    // brighter
 //    hdr *= 0.25f;    // darker
+
+    // feedback is in linear space
+    g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], float4(hdr, 0), FEEDBACK_FRACTION);
+    hdr = g_Feedback[DispatchRaysIndex().xy].rgb;
 
 //    float3 ldr = filmicToneMapping(hdr);
     float3 ldr = pow(hdr, 1/2.2f);  // no tone mapping
@@ -803,8 +806,8 @@ void MyRaygenShader()
 
 //    float4 feedback = g_Feedback[DispatchRaysIndex().xy];
 
-    g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], FEEDBACK_FRACTION);
-    RenderTarget[DispatchRaysIndex().xy] = g_Feedback[DispatchRaysIndex().xy];
+//    g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], RenderTarget[DispatchRaysIndex().xy], FEEDBACK_FRACTION);
+//    RenderTarget[DispatchRaysIndex().xy] = g_Feedback[DispatchRaysIndex().xy];
 
 
     // hack
