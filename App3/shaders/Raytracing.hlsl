@@ -5,15 +5,17 @@
 // 0/1
 #define SKY_IS_EMISSIVE 0
 // To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
-#define FEEDBACK_FRACTION  0.1f
+#define FEEDBACK_FRACTION  1.0f
 // 0/1 animate TemporalAA jitter and noise seed
-#define ANIMATE_OVER_TIME 1
-// 1:very low, 8:low, 64:good, 256:very good
-#define SAMPLE_COUNT 1
+#define ANIMATE_OVER_TIME 0
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define LEFT_METHOD 1
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
+// 1:very low, 8:low, 64:good, 256:very good
+#define LEFT_SAMPLE_COUNT 10
+// 1:very low, 8:low, 64:good, 256:very good
+#define RIGHT_SAMPLE_COUNT 1
 // 0:off, 1:on (slow compile and shader but useful for debugging)
 #define GFX_FOR_ALL 1
 
@@ -441,12 +443,20 @@ void MyRaygenShader()
     ui.scale = 1;
 #endif // GFX_FOR_ALL == 1
 
+    bool right = DispatchRaysIndex().x > 1280/2;
 
-    // animate jitter offset over time for TemporalAA
+    // see LEFT_METHOD or RIGHT_METHOD
+    uint localMethod = right ? RIGHT_METHOD : LEFT_METHOD;
+
+    bool perFrameNoise = ANIMATE_OVER_TIME == 1 || localMethod == 2;
+
+    // animate jitter offset over time for TemporalAA and GI
     int2 move = 0;
-#if ANIMATE_OVER_TIME == 1
-    move = g_sceneCB.FrameIndex * int2(13, 7);
-#endif
+
+    if(perFrameNoise)
+    {
+        move = g_sceneCB.FrameIndex * int2(13, 7);
+    }
 
     // float2(0..1, 0..1) Blue Noise
     float2 jitterXY = g_Texture.Load(int3((DispatchRaysIndex().xy + move) % 256, 0)).rg;
@@ -497,10 +507,6 @@ void MyRaygenShader()
         }
     }
 */
-    bool right = DispatchRaysIndex().x > 1280/2;
-
-    // see LEFT_METHOD or RIGHT_METHOD
-    uint localMethod = right ? RIGHT_METHOD : LEFT_METHOD;
 
 
 #if GFX_FOR_ALL == 1
@@ -599,9 +605,10 @@ void MyRaygenShader()
         //
         // animate random over time for monte carlo integration 
         uint perFrameNoiseSeed = 0;
-#if ANIMATE_OVER_TIME == 1
-        perFrameNoiseSeed = (uint)(g_sceneCB.sceneParam0.x * 12347);
-#endif
+
+
+        if(perFrameNoise)
+            perFrameNoiseSeed = (uint)(g_sceneCB.sceneParam0.x * 12347);
 
 
         uint rndState2 = initRand(dot(DispatchRaysIndex(), uint3(8227, 2113, 1)), 0x1245678 + perFrameNoiseSeed);
@@ -610,7 +617,7 @@ void MyRaygenShader()
         uint rndState = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
-        uint sampleCountAO = SAMPLE_COUNT;
+        uint sampleCountAO = right ? RIGHT_SAMPLE_COUNT : LEFT_SAMPLE_COUNT;
 
 //        AO = 1;
 
@@ -630,6 +637,10 @@ void MyRaygenShader()
 
             if(localMethod == 2)
             {
+                // todo: spatial reuse
+                //
+                //
+
                 dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
             }
         }
