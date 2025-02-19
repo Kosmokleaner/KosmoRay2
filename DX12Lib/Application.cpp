@@ -232,6 +232,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     // retreave mouse movement
     g_MouseInput.WndProc(hwnd, message, wParam, lParam);
 
+    bool active = GetActiveWindow() == hwnd;
+
     WindowPtr pWindow;
     {
         WindowMap::iterator iter = gs_Windows.find(hwnd);
@@ -269,13 +271,16 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
                 GetMessage(&charMsg, hwnd, 0, 0);
                 c = static_cast<unsigned int>( charMsg.wParam );
             }
-            bool shift = ( GetAsyncKeyState(VK_SHIFT) & 0x8000 ) != 0;
-            bool control = ( GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-            bool alt = ( GetAsyncKeyState(VK_MENU) & 0x8000 ) != 0;
-            KeyCode::Key key = (KeyCode::Key)wParam;
-            unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
-            KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Pressed, shift, control, alt);
-            pWindow->OnKeyPressed(keyEventArgs);
+            if (active)
+            {
+                bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+                bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+                bool alt = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+                KeyCode::Key key = (KeyCode::Key)wParam;
+                unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
+                KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Pressed, shift, control, alt);
+                pWindow->OnKeyPressed(keyEventArgs);
+            }
         }
         break;
         case WM_SYSKEYUP:
