@@ -544,7 +544,7 @@ void MyRaygenShader()
 //            ui.printLF();
 
             ui.printTxt('w', 'S', 'u', 'm', ':');
-            ui.printFloat(reservoir.wSum);
+            ui.printFloat(reservoir.weightSum);
             ui.printLF();
 
 //            ui.printTxt('a', 'g', 'e', ':');
@@ -684,7 +684,7 @@ void MyRaygenShader()
 
                 dstReservoir.finalize();
 
-                weight = dstReservoir.wSum;
+                weight = dstReservoir.weightSum;
 
                 uint rndStateCopy = dstReservoir.rndState;
 

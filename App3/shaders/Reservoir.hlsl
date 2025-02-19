@@ -32,8 +32,11 @@ struct Reservoir
 {
 	// aka lightSeed 
 	uint rndState;
-	// aka weightSum
-	float wSum;
+
+    // Overloaded: represents RIS weight sum during streaming,
+    // then reservoir weight (inverse PDF) after FinalizeResampling
+	float weightSum;
+
 	// aka W, weight
 	float targetPdf;	// Algorithm 3
 	// count
@@ -44,8 +47,8 @@ struct Reservoir
 	void init()
 	{
 		// >0 to avoid div by 0, needed?
-//		wSum = 0.00001f;
-		wSum = 0;
+//		weightSum = 0.00001f;
+		weightSum = 0;
 		targetPdf = 0;
 		M = 0;
 		rndState = 0;
@@ -58,9 +61,9 @@ struct Reservoir
 	{
 //		float risWeight = targetPdf * invSourcePdf;
 		M += 1;
-		wSum += risWeight;
+		weightSum += risWeight;
 
-		bool selectSample = (random * wSum < risWeight);
+		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
 		{
 			rndState = inRndState;
@@ -80,7 +83,7 @@ struct Reservoir
 		float invSourcePdf = 1.0f;
 	    float risWeight = inTargetPdf * invSourcePdf;
 
-		wSum += risWeight;
+		weightSum += risWeight;
 
 		// make a copy as we don't want to change rndState
 		float rnd;
@@ -89,8 +92,8 @@ struct Reservoir
 			rnd = randomNext(copy);
 		}
 
-//		if (rnd < weight / wSum)
-		if (rnd * wSum < risWeight) // optimized divide
+//		if (rnd < weight / weightSum)
+		if (rnd * weightSum < risWeight) // optimized divide
 		{
 			rndState = inRndState;
 //			targetPdf = inTargetPdf;					// ??
@@ -101,12 +104,12 @@ struct Reservoir
 	// @param random 0..1
 	void combine(Reservoir other, float random)
 	{
-		float risWeight = targetPdf * other.wSum * other.M;
+		float risWeight = targetPdf * other.weightSum * other.M;
 
 		M += other.M;
-		wSum += risWeight;
+		weightSum += risWeight;
 
-		bool selectSample = (random * wSum < risWeight);
+		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
 		{
 			rndState = other.rndState;
@@ -120,14 +123,14 @@ struct Reservoir
 //		float denominator = reservoir.targetPdf * normalizationDenominator;
 		float denominator = M;
 
-		wSum = (denominator == 0.0f) ? 0.0f : wSum / denominator;
+		weightSum = (denominator == 0.0f) ? 0.0f : weightSum / denominator;
 		M = 1;
 	}
 
 	void loadFromRaw(float4 rawData)
 	{
 		rndState = asuint(rawData.x);
-		wSum = rawData.y;
+		weightSum = rawData.y;
 		targetPdf = rawData.z;
 //		age = rawData.z;
 		M = rawData.w;
@@ -135,7 +138,7 @@ struct Reservoir
 
 	float4 storeToRaw()
 	{
-		return float4(asfloat(rndState), wSum, targetPdf, M);
-//		return float4(asfloat(rndState), wSum, age, M);
+		return float4(asfloat(rndState), weightSum, targetPdf, M);
+//		return float4(asfloat(rndState), weightSum, age, M);
 	}
 };
