@@ -885,11 +885,12 @@ void App3::CreateRaytracingOutputResource()
     uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
     m_raytracingFeedback.CreateUAV(renderer, uavDesc);
 
-	uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	m_reservoirs.CreateUAV(renderer, uavDesc);
-
     uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;    // todo: optimize
 	m_GBufferA.CreateUAV(renderer, uavDesc);
+
+    uavDesc.Width *= 2; // 8 floats per pixel
+    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    m_reservoirs.CreateUAV(renderer, uavDesc);
 }
 
 void App3::ReleaseDeviceDependentResources()

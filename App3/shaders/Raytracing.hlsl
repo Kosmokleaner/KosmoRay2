@@ -517,7 +517,11 @@ void MyRaygenShader()
 
         int2 currentXY = g_sceneCB.mouseXY.xy;
 
-        reservoir.loadFromRaw(g_Reservoirs[currentXY]);
+        ReservoirPacked packed;
+        packed.raw[0] = g_Reservoirs[currentXY * uint2(2, 1) + uint2(0, 0)];
+        packed.raw[1] = g_Reservoirs[currentXY * uint2(2, 1) + uint2(1, 0)];
+        reservoir.loadFromRaw(packed);
+
         uint rnd2 = reservoir.rndState;
 //        uint rnd2 = initRand(currentXY.x, currentXY.y);
         const float sphereRadius = 0.05f;
@@ -641,7 +645,10 @@ void MyRaygenShader()
                 //
                 //
 
-                dstReservoir.loadFromRaw(g_Reservoirs[DispatchRaysIndex().xy]);
+                ReservoirPacked packed;
+                packed.raw[0] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(0, 0)];
+                packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
+                dstReservoir.loadFromRaw(packed);
             }
         }
 
@@ -757,7 +764,12 @@ void MyRaygenShader()
         }
 
         if(localMethod == 2)
-            g_Reservoirs[DispatchRaysIndex().xy] = dstReservoir.storeToRaw();
+        {
+            ReservoirPacked packed = dstReservoir.storeToRaw();
+
+            g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + int2(0, 0)] = packed.raw[0];
+            g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + int2(1, 0)] = packed.raw[1];
+        }
 
         // just in case
 //        AO = saturate(AO);

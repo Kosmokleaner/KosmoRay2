@@ -28,9 +28,14 @@ float randomNext(inout uint s)
 	return float(s & 0x00FFFFFF) / float(0x01000000);
 }
 
+struct ReservoirPacked
+{
+	float4 raw[2];
+};
+
 struct Reservoir
 {
-	// aka lightSeed 
+	// aka lightSeed, lightData (Light index (bits 0..30) and validity bit (31))
 	uint rndState;
 
     // Overloaded: represents RIS weight sum during streaming,
@@ -42,7 +47,10 @@ struct Reservoir
 	// count
 	float M;	// Algorithm 3
 	//todo: 3 bits might be enough, todo: could be replaced by stochastic exponential
-//	float age;
+	float age;
+
+    // Visibility information stored in the reservoir for reuse 0..1
+    float visibility;
 
 	void init()
 	{
@@ -52,7 +60,8 @@ struct Reservoir
 		targetPdf = 0;
 		M = 0;
 		rndState = 0;
-//		age = 0;
+		age = 0;
+		visibility = 0;
 	}
 
 	// @param inRndState randomInit(randomSeed.x, randomSeed.y) with some frame contribution
@@ -127,18 +136,27 @@ struct Reservoir
 		M = 1;
 	}
 
-	void loadFromRaw(float4 rawData)
+	void loadFromRaw(ReservoirPacked rawData)
 	{
-		rndState = asuint(rawData.x);
-		weightSum = rawData.y;
-		targetPdf = rawData.z;
-//		age = rawData.z;
-		M = rawData.w;
+		rndState = asuint(rawData.raw[0].x);
+		weightSum = rawData.raw[0].y;
+		targetPdf = rawData.raw[0].z;
+		M = rawData.raw[0].w;
+		age = rawData.raw[1].x;
+		visibility = rawData.raw[1].y;
 	}
 
-	float4 storeToRaw()
+	ReservoirPacked storeToRaw()
 	{
-		return float4(asfloat(rndState), weightSum, targetPdf, M);
-//		return float4(asfloat(rndState), weightSum, age, M);
+		ReservoirPacked ret;
+
+		ret.raw[0].x = asfloat(rndState);
+		ret.raw[0].y = weightSum;
+		ret.raw[0].z = targetPdf;
+		ret.raw[0].w = M;
+		ret.raw[1].x = age;
+		ret.raw[1].y = visibility;
+
+		return ret;
 	}
 };
