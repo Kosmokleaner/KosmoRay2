@@ -64,66 +64,62 @@ struct Reservoir
 		visibility = 0;
 	}
 
+	// aka RTXDI_StreamSample
+	// Adds a new, non-reservoir light sample into the reservoir
+	// Algorithm (3) from the ReSTIR paper, Streaming RIS using weighted reservoir sampling.
 	// @param inRndState randomInit(randomSeed.x, randomSeed.y) with some frame contribution
 	// @param random 0..1
-	void stream(uint inRndState, float risWeight, float random)
+	bool stream(uint inRndState, float random, float inTargetPdf, float invSourcePdf)
 	{
-//		float risWeight = targetPdf * invSourcePdf;
+		float risWeight = inTargetPdf * invSourcePdf;
+
+		// Add one sample to the counter
 		M += 1;
+		
+		// Update the weight sum
 		weightSum += risWeight;
 
 		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
 		{
 			rndState = inRndState;
-			targetPdf = targetPdf;
+			targetPdf = inTargetPdf;
 		}
-
-/*		++M;
-
+/*
 		// WeightedReserviour Sampling Algorithm 2 (plus a depth test)
 		// Min-Te Chao. 1982. A General Purpose Unequal Probability Sampling Plan. Biometrika 69, 3 (Dec. 1982), 653?656. https://doi.org/10/fd87zs
 		// https://research.nvidia.com/sites/default/files/pubs/2020-07_Spatiotemporal-reservoir-resampling/ReSTIR.pdf
-
-
-//		float depth = splatZ.x;
-		// todo: improve
-
-		float invSourcePdf = 1.0f;
-	    float risWeight = inTargetPdf * invSourcePdf;
-
-		weightSum += risWeight;
-
-		// make a copy as we don't want to change rndState
-		float rnd;
-		{
-			uint copy = rndState;
-			rnd = randomNext(copy);
-		}
-
-//		if (rnd < weight / weightSum)
-		if (rnd * weightSum < risWeight) // optimized divide
-		{
-			rndState = inRndState;
-//			targetPdf = inTargetPdf;					// ??
-		}
 */
+		return selectSample;
 	}
 
+	// aka RTXDI_InternalSimpleResample
 	// @param random 0..1
-	void combine(Reservoir other, float random)
+	bool simple(Reservoir other, float random, float inTargetPdf, float sampleNormalization, float inM)
 	{
-		float risWeight = targetPdf * other.weightSum * other.M;
+		// What's the current weight (times any prior-step RIS normalization factor)
+		float risWeight = inTargetPdf * sampleNormalization;
 
-		M += other.M;
+		// Our *effective* candidate pool is the sum of our candidates plus those of our neighbors
+		M += inM;
+
 		weightSum += risWeight;
 
 		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
 		{
 			rndState = other.rndState;
-			targetPdf = targetPdf;
+			targetPdf = inTargetPdf;
+			age = other.age;
 		}
+		return selectSample;
+	}
+
+	// aka RTXDI_CombineDIReservoirs
+	// @param random 0..1
+	bool combine(Reservoir other, float random, float inTargetPdf)
+	{
+		return simple(other, random, inTargetPdf, other.weightSum * other.M, other.M);
 	}
 
 	//  Equation (6) from the ReSTIR paper.

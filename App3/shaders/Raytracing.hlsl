@@ -376,8 +376,12 @@ float computeWeight(float3 delta0To1, float3 n0, float3 n1)
 // @param reservoirSampleCount >=1, how many times we try to find a better sample (shadows not taken into account for performance)
 // @param p position
 // @param surfaceNormal normalized normal
-void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
+Reservoir sampleLightsForReservoir(uint reservoirSampleCount, uint rndState, float3 p, float3 surfaceNormal)
 {
+    Reservoir ret;
+
+    ret.init();
+
 	for (uint i = 0; i < reservoirSampleCount; i++)
 	{
         uint rndStateBefore = rndState;
@@ -388,8 +392,10 @@ void sampleLightsForReservoir(inout Reservoir rez, uint reservoirSampleCount, ui
         float3 lightPos = getEmissiveQuadSample(p, rndState, lightNormal, emissiveColor);
         float weight = computeWeight(lightPos - p, surfaceNormal, lightNormal);
         
-        rez.stream(rndStateBefore, weight, randomNext(rndState));
+        ret.stream(rndStateBefore, randomNext(rndState), weight, 1.0f);
     }
+
+    return ret;
 }
 
 float2 PxFromWS(float3 wsPos)
@@ -686,7 +692,8 @@ void MyRaygenShader()
                         dstReservoir.init();
                     }
 
-                    sampleLightsForReservoir(dstReservoir, 1, rndState, rayDesc.Origin, payload.interpolatedNormal);
+                    Reservoir localReservoir = sampleLightsForReservoir(1, rndState, rayDesc.Origin, payload.interpolatedNormal);
+                    dstReservoir.combine(localReservoir, 0.5f, localReservoir.targetPdf);
                 }
 
                 dstReservoir.finalize();
