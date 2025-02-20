@@ -29,16 +29,17 @@ namespace GlobalRootSignatureParams {
     enum Value {
         OutputViewSlot,             // DescriptorTable      UAV space0: u0(RenderTarget) space1: u0, u1 (NVidia)
         FeedbackSlot,               // DescriptorTable      UAV space0: u1(g_Feedback)
-		ReservoirsSlot,             // DescriptorTable      UAV space0: u2(g_Reservoirs)
-		GBufferASlot,               // DescriptorTable      UAV space0: u3(g_GBufferA)
-        EmissiveSATValueSlot,       // DescriptorTable      UAV space0: u4(g_EmissiveSATValue)
-		EmissiveSATIndexSlot,       // DescriptorTable      UAV space0: u5(g_EmissiveSATIndex)
+        ReservoirsSlot,             // DescriptorTable      UAV space0: u2(g_Reservoirs)
+        GBufferASlot,               // DescriptorTable      UAV space0: u3(g_GBufferA)
+        GBufferBSlot,               // DescriptorTable      UAV space0: u4(g_GBufferB)
+        EmissiveSATValueSlot,       // DescriptorTable      UAV space0: u5(g_EmissiveSATValue)
+        EmissiveSATIndexSlot,       // DescriptorTable      UAV space0: u6(g_EmissiveSATIndex)
         AccelerationStructureSlot,  // ShaderResourceView   SRV t0
         SceneConstant,              // ConstantBufferView   CBV b0
         IndexBuffer,                // DescriptorTable      SRV space101: t0: g_indices[IBIndex][]
         VertexBuffer,               // DescriptorTable      SRV space102: t0: g_vertices[VBIndex][]
         TextureSlot,                // DescriptorTable      SRV space103: t0: g_Texture[]
-		SplatBuffer,                // DescriptorTable      SRV space104: t0: g_splats[BIndex][]
+        SplatBuffer,                // DescriptorTable      SRV space104: t0: g_splats[BIndex][]
         MaterialBuffer,             // DescriptorTable      SRV space105: t0: g_materials[MatId]
         // -----
         Count
@@ -100,23 +101,29 @@ void App3::CreateRootSignatures()
             rootParameters[GlobalRootSignatureParams::ReservoirsSlot].InitAsDescriptorTable(1, &range);
         }
 
-		{
-			CD3DX12_DESCRIPTOR_RANGE range;
-			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3, 0);             // space0: u3
-			rootParameters[GlobalRootSignatureParams::GBufferASlot].InitAsDescriptorTable(1, &range);
-		}
-
-		{
-			CD3DX12_DESCRIPTOR_RANGE range;
-			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 4, 0);             // space0: u4
-			rootParameters[GlobalRootSignatureParams::EmissiveSATValueSlot].InitAsDescriptorTable(1, &range);
-		}
+        {
+            CD3DX12_DESCRIPTOR_RANGE range;
+            range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3, 0);             // space0: u3
+            rootParameters[GlobalRootSignatureParams::GBufferASlot].InitAsDescriptorTable(1, &range);
+        }
 
         {
-			CD3DX12_DESCRIPTOR_RANGE range;
-			range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 5, 0);             // space0: u5
-			rootParameters[GlobalRootSignatureParams::EmissiveSATIndexSlot].InitAsDescriptorTable(1, &range);
-		}
+            CD3DX12_DESCRIPTOR_RANGE range;
+            range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 4, 0);             // space0: u4
+            rootParameters[GlobalRootSignatureParams::GBufferBSlot].InitAsDescriptorTable(1, &range);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE range;
+            range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 5, 0);             // space0: u5
+            rootParameters[GlobalRootSignatureParams::EmissiveSATValueSlot].InitAsDescriptorTable(1, &range);
+        }
+
+        {
+            CD3DX12_DESCRIPTOR_RANGE range;
+            range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 6, 0);             // space0: u6
+            rootParameters[GlobalRootSignatureParams::EmissiveSATIndexSlot].InitAsDescriptorTable(1, &range);
+        }
 
         rootParameters[GlobalRootSignatureParams::AccelerationStructureSlot].InitAsShaderResourceView(0);   // 0 -> t0
         rootParameters[GlobalRootSignatureParams::SceneConstant].InitAsConstantBufferView(0);   // 0 -> b0
@@ -252,7 +259,8 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutput.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::ReservoirsSlot, m_reservoirs.m_UAVGpuDescriptor);
-	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::GBufferASlot, m_GBufferA.m_UAVGpuDescriptor);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::GBufferASlot, m_GBufferA.m_UAVGpuDescriptor);
+    commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::GBufferBSlot, m_GBufferB.m_UAVGpuDescriptor);
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::EmissiveSATValueSlot, m_EmissiveSATValue.gpuDescriptorHandle);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::EmissiveSATIndexSlot, m_EmissiveSATIndex.gpuDescriptorHandle);
     commandList->SetComputeRootShaderResourceView(GlobalRootSignatureParams::AccelerationStructureSlot, topLevelAccelerationStructure->GetGPUVirtualAddress());
@@ -322,7 +330,16 @@ void App3::CopyRaytracingOutputToBackbuffer(ComPtr<ID3D12GraphicsCommandList2> c
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 		barrier.UAV.pResource = m_GBufferA.m_resource.Get();
 		commandList->ResourceBarrier(1, &barrier);
-	}
+    }
+    // todo: combine with former barrier
+    {
+        // D3D12_RESOURCE_UAV_BARRIER 
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = m_GBufferB.m_resource.Get();
+        commandList->ResourceBarrier(1, &barrier);
+    }
 
     D3D12_RESOURCE_BARRIER preCopyBarriers[2];
     preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(renderTarget.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -886,7 +903,10 @@ void App3::CreateRaytracingOutputResource()
     m_raytracingFeedback.CreateUAV(renderer, uavDesc);
 
     uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;    // todo: optimize
-	m_GBufferA.CreateUAV(renderer, uavDesc);
+    m_GBufferA.CreateUAV(renderer, uavDesc);
+
+    uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;   // float4(albedo,0)
+    m_GBufferB.CreateUAV(renderer, uavDesc);
 
     uavDesc.Width *= 2; // 8 floats per pixel
     uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;

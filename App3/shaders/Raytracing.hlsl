@@ -64,10 +64,12 @@ RWTexture2D<float4> g_Feedback : register(u1);
 RWTexture2D<float4> g_Reservoirs : register(u2);
 // [xy]=float4(normal,depth) frame buffer sized
 RWTexture2D<float4> g_GBufferA : register(u3);
+// [xy]=float4(albedo, 0) frame buffer sized
+RWTexture2D<float4> g_GBufferB : register(u4);
 // [emissiveTriangleId] = EmissiveAreaValue
-RWBuffer<float> g_EmissiveSATValue : register(u4);
+RWBuffer<float> g_EmissiveSATValue : register(u5);
 // [emissiveTriangleId] = EmissiveAreaIndex uint4(sceneObjectId, meshInstanceId, triangleId,0) in this instance
-RWBuffer<uint4> g_EmissiveSATIndex : register(u5);
+RWBuffer<uint4> g_EmissiveSATIndex : register(u6);
 
 //
 ConstantBuffer<SceneConstantBuffer> g_sceneCB : register(b0);
@@ -549,17 +551,17 @@ void MyRaygenShader()
             ui.printHex(reservoir.rndState);
             ui.printLF();
 
-//            ui.printTxt('w', ':');
-//            ui.printFloat(reservoir.W);
-//            ui.printLF();
+            ui.printTxt('p', 'd', 'f', ':');
+            ui.printFloat(reservoir.targetPdf);
+            ui.printLF();
 
             ui.printTxt('w', 'S', 'u', 'm', ':');
             ui.printFloat(reservoir.weightSum);
             ui.printLF();
 
-//            ui.printTxt('a', 'g', 'e', ':');
-//            ui.printFloat(reservoir.age);
-//            ui.printLF();
+            ui.printTxt('a', 'g', 'e', ':');
+            ui.printFloat(reservoir.age);
+            ui.printLF();
 
             ui.printTxt('m', ':');
             ui.printInt((int)reservoir.M);
@@ -603,6 +605,7 @@ void MyRaygenShader()
     flags = RAY_FLAG_NONE;
     
     g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
+    g_GBufferB[DispatchRaysIndex().xy] = float4(payload.materialColor, 0);
 
     bool highlightPixel = false;
 

@@ -82,6 +82,8 @@ private:
 	DataBlock m_reservoirs;
 	// frame buffer sized
 	DataBlock m_GBufferA;
+    // frame buffer sized
+    DataBlock m_GBufferB;
 
     // Summed Area Table to find points on emissive surfaces, normalized so last value is 1.0f, same size as m_emissiveSATIndexData
 	std::vector<float> m_emissiveSATValueData;

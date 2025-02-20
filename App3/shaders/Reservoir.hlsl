@@ -64,7 +64,7 @@ struct Reservoir
 		visibility = 0;
 	}
 
-	// aka RTXDI_StreamSample
+	// aka RTXDI_StreamSample()
 	// Adds a new, non-reservoir light sample into the reservoir
 	// Algorithm (3) from the ReSTIR paper, Streaming RIS using weighted reservoir sampling.
 	// @param inRndState randomInit(randomSeed.x, randomSeed.y) with some frame contribution
@@ -93,7 +93,7 @@ struct Reservoir
 		return selectSample;
 	}
 
-	// aka RTXDI_InternalSimpleResample
+	// aka RTXDI_InternalSimpleResample()
 	// @param random 0..1
 	bool simple(Reservoir other, float random, float inTargetPdf, float sampleNormalization, float inM)
 	{
@@ -115,13 +115,14 @@ struct Reservoir
 		return selectSample;
 	}
 
-	// aka RTXDI_CombineDIReservoirs
+	// aka RTXDI_CombineDIReservoirs()
 	// @param random 0..1
 	bool combine(Reservoir other, float random, float inTargetPdf)
 	{
 		return simple(other, random, inTargetPdf, other.weightSum * other.M, other.M);
 	}
 
+	// aka RTXDI_FinalizeResampling()
 	//  Equation (6) from the ReSTIR paper.
 	void finalize()
 	{
