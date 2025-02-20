@@ -218,7 +218,6 @@ float3 getSkyColor(float3 worldRayDirection)
 
     return skyColor;
 }
-/*
 
 // https://en.wikipedia.org/wiki/Binary_search
 // find first occurrence of searchKey in buffer
@@ -230,7 +229,7 @@ uint binary_search_findIndex(float searchValue, uint elementCount, RWBuffer<floa
 	while (l < r)
 	{
 		uint m = (l + r) / 2;
-		uint valueHere = buffer[m];
+		float valueHere = buffer[m];
 
 		if (valueHere < searchValue)
 			l = m + 1;
@@ -240,29 +239,6 @@ uint binary_search_findIndex(float searchValue, uint elementCount, RWBuffer<floa
 
 	return l;
 }
-*/
-
-
-// https://en.wikipedia.org/wiki/Binary_search
-uint binary_search_findIndex(float searchValue, uint elementCount, RWBuffer<float> buffer)
-{
-	uint l = 0;
-	uint r = elementCount;
-
-	while (l < r)
-	{
-		uint m = (l + r) / 2;
-		uint valueHere = buffer[m];
-
-		if (valueHere > searchValue)
-			r = m;
-		else
-			l = m + 1;
-	}
-
-	return r - 1;
-}
-
 
 
 // @param meshInstanceId e.g. 0:meshA, 1:meshB
@@ -400,7 +376,7 @@ float computeLightPdf(Reservoir res, float3 surfacePos, float3 surfaceNormal)
     float3 lightPos = getEmissiveQuadSample(surfacePos, res.rndState, lightNormal, emissiveColor);
     float weight = computeWeight(lightPos - surfacePos, surfaceNormal, lightNormal);
 
-    return weight ;
+    return weight;
 }
 
 // aka RTXDI_DISpatioTemporalResampling
@@ -546,6 +522,18 @@ void BasePass()
 [shader("raygeneration")]
 void ShadingPass()
 {
+/*    // test
+    {
+        float2 p = DispatchRaysIndex().xy / (float2)DispatchRaysDimensions().xy;
+        uint emissiveTriangleId = binary_search_findIndex(p.x, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
+
+        float value = emissiveTriangleId / (float)(g_sceneCB.emissiveSATSize - 1);
+        float g = value > (1.0f - p.y);
+
+        RenderTarget[DispatchRaysIndex().xy] = float4(g,g,g,1);
+        return;
+    }
+*/
     // uncomment to visualize base pass GBuffer data
 //    RenderTarget[DispatchRaysIndex().xy] = float4(normalize(g_GBufferA[DispatchRaysIndex().xy].xyz)*0.5f+0.5f,1);   return;
 //    RenderTarget[DispatchRaysIndex().xy] = float4(g_GBufferB[DispatchRaysIndex().xy].xyz,1);   return;
