@@ -9,13 +9,13 @@
 // 0/1 animate TemporalAA jitter and noise seed
 #define ANIMATE_OVER_TIME 0
 // 0:reference path tracing, 1:area light sample, 2:reservoir
-#define LEFT_METHOD 1
+#define LEFT_METHOD 2
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
 // 1:very low, 8:low, 64:good, 256:very good
-#define LEFT_SAMPLE_COUNT 10
+#define LEFT_SAMPLE_COUNT 1
 // 1:very low, 8:low, 64:good, 256:very good
-#define RIGHT_SAMPLE_COUNT 1
+#define RIGHT_SAMPLE_COUNT 100
 // 0:off, 1:on (slow compile and shader but useful for debugging)
 #define GFX_FOR_ALL 1
 
@@ -397,6 +397,8 @@ Reservoir sampleLightsForReservoir(uint reservoirSampleCount, uint rndState, flo
         ret.stream(rndStateBefore, randomNext(rndState), weight, 1.0f);
     }
 
+    ret.finalize(1.0f, reservoirSampleCount);
+
     return ret;
 }
 
@@ -538,14 +540,21 @@ void MyRaygenShader()
         float3 emissiveColor;
         float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal, emissiveColor);
 
-        float2 pxSample = PxFromWS(samplePos);
-        ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
-//        ui.drawLine(pxSample, currentXY + 0.5f, float4(0.5f, 0.5f, 0.5f, 1), 2);
-//        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
-        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(emissiveColor, 1), 2);
+        if(reservoir.isValid())
+        {
+            float2 pxSample = PxFromWS(samplePos);
+
+            ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
+    //        ui.drawLine(pxSample, currentXY + 0.5f, float4(0.5f, 0.5f, 0.5f, 1), 2);
+    //        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
+            ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(emissiveColor, 1), 2);
+        }
 
         if(!showNormal && !showDepth && !showEmissive && !showAlbedo)
         {
+            if(!reservoir.isValid())
+                ui.textColor.rgb = float3(1,0,0);
+
             ui.pxLeftTop = ui.pxCursor = currentXY + int2(20, -50);
             ui.printTxt('r', 'n', 'd', ':');
             ui.printHex(reservoir.rndState);
@@ -630,7 +639,7 @@ void MyRaygenShader()
         uint rndState = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
 //        uint rnd = initRand(dot(DispatchRaysIndex(), uint3(1, 1, 1)), 0x12345678);  // cool hatching FX
 
-        uint sampleCountAO = right ? RIGHT_SAMPLE_COUNT : LEFT_SAMPLE_COUNT;
+        uint sampleCount = right ? RIGHT_SAMPLE_COUNT : LEFT_SAMPLE_COUNT;
 
 //        AO = 1;
 
@@ -641,7 +650,7 @@ void MyRaygenShader()
 
         float3 incomingLight = 0;
 
-        incomingLight = payload.emissiveColor * sampleCountAO;
+        incomingLight = payload.emissiveColor * sampleCount;
 
         Reservoir dstReservoir;
         if(localMethod == 2)
@@ -661,12 +670,12 @@ void MyRaygenShader()
             }
         }
 
-        for(int i = 0; i < sampleCountAO; ++i)
+        [loop] for(int i = 0; i < sampleCount; ++i)
         {
             RayPayload payload2 = (RayPayload)0;
             payload2.primitiveIndex = -1;
             payload2.instanceIndex = -1;
-            payload2.materialColor = float3(0.2f, 0.2f, 0.2f);        // ???? what is this ?
+//            payload2.materialColor = float3(0.2f, 0.2f, 0.2f);        // ???? what is this ?
             payload2.minT = payload2.minTfront = rayDesc.TMax;
 
             float weight = 1.0f;
@@ -679,27 +688,30 @@ void MyRaygenShader()
                 rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, emissiveColor) - rayDesc.Origin;
                 weight = computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
 
-                uint rndStateCopy = dstReservoir.rndState;
+//                uint rndStateCopy = dstReservoir.rndState;
 
                 // normalized
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
             }
             else if(localMethod == 2)
             {
-                Reservoir oldReservoir = dstReservoir;
-
                 if(g_sceneCB.updateReservoir == 1)
                 {
-                    if(randomNext(rndState2) < 0.025f)
-                    {
-                        dstReservoir.init();
-                    }
+//                    if(randomNext(rndState2) < 0.025f)
+//                    {
+//                        dstReservoir.init();
+//                    }
 
+                    ++dstReservoir.age;
+
+                    if(dstReservoir.age > 30)
+                        dstReservoir.init();
+
+                    // aka RTXDI_SampleLocalLights(), todo: look deeper
                     Reservoir localReservoir = sampleLightsForReservoir(1, rndState, rayDesc.Origin, payload.interpolatedNormal);
                     dstReservoir.combine(localReservoir, 0.5f, localReservoir.targetPdf);
+                    dstReservoir.finalize(1.0f, 1.0f);
                 }
-
-                dstReservoir.finalize();
 
                 weight = dstReservoir.weightSum;
 
@@ -711,26 +723,27 @@ void MyRaygenShader()
                 // todo: rayDesc.Direction should be normalized?
                 rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, emissiveColor) - rayDesc.Origin;
 
+                // needed to test if in shadow and to get payload2.emissiveColor
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
 //                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
-                if(!all(payload2.emissiveColor == emissiveColor))
+                if(g_sceneCB.updateReservoir == 1)
                 {
-                    if(localMethod == 2)
-                        dstReservoir = oldReservoir;
+                    if(!all(payload2.emissiveColor == emissiveColor))
+                    {
+                        highlightPixel = true;
+                    }
+                    else
+                    {
+                        weight = 0;
+//test                        dstReservoir.init();
+                    }
+                }
 
-//                    ++dstReservoir.age;
-                    // reset
-//                    dstReservoir.init();
-                    highlightPixel = true;
- //                   dstReservoir.rndState = rndState2;
-                }
-                else
-                {
-//                    dstReservoir.stream(rez.rndState, rez.W);
-                }
+                if(!dstReservoir.isValid())
+                    payload2.emissiveColor = 0;
             }
-            else
+            else // localMethod == 0
             {
                 // reference 
                 rayDesc.Direction = getCosHemisphereSample(rndState, payload.interpolatedNormal);
@@ -769,7 +782,7 @@ void MyRaygenShader()
 
 //            if(dstReservoir.age > 0)
 //                addLight *= weight / (dstReservoir.age+1);
-            addLight *= weight;
+//            addLight *= weight;
             incomingLight += addLight;
         }
 
@@ -784,7 +797,7 @@ void MyRaygenShader()
         // just in case
 //        AO = saturate(AO);
 
-        incomingLight /= sampleCountAO;
+        incomingLight /= sampleCount;
 
 //        hdr = materialColor * (incomingLight + AO * skyColor);
         hdr = materialColor * incomingLight;

@@ -48,20 +48,24 @@ struct Reservoir
 	float M;	// Algorithm 3
 	//todo: 3 bits might be enough, todo: could be replaced by stochastic exponential
 	float age;
-
     // Visibility information stored in the reservoir for reuse 0..1
     float visibility;
 
+	// aka RTXDI_EmptyDIReservoir
 	void init()
 	{
-		// >0 to avoid div by 0, needed?
-//		weightSum = 0.00001f;
+		rndState = 0;
 		weightSum = 0;
 		targetPdf = 0;
 		M = 0;
-		rndState = 0;
 		age = 0;
 		visibility = 0;
+	}
+
+	// aka RTXDI_IsValidDIReservoir()
+	bool isValid()
+	{
+		return rndState != 0;	// todo: improve
 	}
 
 	// aka RTXDI_StreamSample()
@@ -77,7 +81,7 @@ struct Reservoir
 		M += 1;
 		
 		// Update the weight sum
-		weightSum += risWeight;
+		weightSum += risWeight; 
 
 		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
@@ -124,10 +128,10 @@ struct Reservoir
 
 	// aka RTXDI_FinalizeResampling()
 	//  Equation (6) from the ReSTIR paper.
-	void finalize()
+	void finalize(float normalizationNumerator, float normalizationDenominator)
 	{
-//		float denominator = reservoir.targetPdf * normalizationDenominator;
-		float denominator = M;
+//		float denominator = targetPdf;
+		float denominator = targetPdf * normalizationDenominator;
 
 		weightSum = (denominator == 0.0f) ? 0.0f : weightSum / denominator;
 		M = 1;
