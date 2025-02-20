@@ -7,17 +7,17 @@
 // To tweak TemporalAA >0, .. 1.0f:no temporalFeedback, 0.5f is ok
 #define FEEDBACK_FRACTION  1.0f
 // 0/1 animate TemporalAA jitter and noise seed
-#define ANIMATE_OVER_TIME 0
+#define ANIMATE_OVER_TIME 1
 // 0:reference path tracing, 1:area light sample, 2:reservoir
-#define LEFT_METHOD 2
+#define LEFT_METHOD 1
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
 // 1:very low, 8:low, 64:good, 256:very good
-#define LEFT_SAMPLE_COUNT 1
+#define LEFT_SAMPLE_COUNT 10
 // 1:very low, 8:low, 64:good, 256:very good
-#define RIGHT_SAMPLE_COUNT 100
+#define RIGHT_SAMPLE_COUNT 1
 // 0:off, 1:on (slow compile and shader but useful for debugging)
-#define GFX_FOR_ALL 1
+#define GFX_FOR_ALL 0
 
 
 
@@ -377,6 +377,7 @@ Reservoir sampleLightsForReservoir(uint reservoirSampleCount, uint rndState, flo
         ret.stream(rndStateBefore, randomNext(rndState), weight, 1.0f);
     }
 
+    // todo: investigate
     ret.finalize(1.0f, reservoirSampleCount);
 
     return ret;
@@ -637,6 +638,7 @@ void MyRaygenShader()
         {
             dstReservoir.init();
 
+/*
             if(localMethod == 2)
             {
                 // todo: spatial reuse
@@ -648,6 +650,7 @@ void MyRaygenShader()
                 packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
                 dstReservoir.loadFromRaw(packed);
             }
+*/
         }
 
         [loop] for(int i = 0; i < sampleCount; ++i)
@@ -691,6 +694,20 @@ void MyRaygenShader()
                     Reservoir localReservoir = sampleLightsForReservoir(1, rndState, rayDesc.Origin, payload.interpolatedNormal);
                     dstReservoir.combine(localReservoir, 0.5f, localReservoir.targetPdf);
                     dstReservoir.finalize(1.0f, 1.0f);
+
+                    bool resampling = true;
+                    if(resampling)
+                    {
+                        ReservoirPacked packed;
+                        packed.raw[0] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(0, 0)];
+                        packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
+                        Reservoir loaded;
+                        loaded.loadFromRaw(packed);
+
+                       float neighborWeight = 0.0f;
+                       dstReservoir.combine(loaded, 0.5f, neighborWeight);
+
+                    }
                 }
 
                 weight = dstReservoir.weightSum;
@@ -711,14 +728,18 @@ void MyRaygenShader()
 //                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
                 if(g_sceneCB.updateReservoir == 1)
                 {
-                    if(!all(payload2.emissiveColor == emissiveColor))
+//                    if(!all(payload2.emissiveColor == emissiveColor))
+                    if(payload2.emissiveColor.r > 0)    // is emissive
                     {
                         highlightPixel = true;
                     }
                     else
                     {
+                        // in shadow
                         weight = 0;
-//test                        dstReservoir.init();
+//                        dstReservoir.age = 0;
+//                        dstReservoir.weightSum = 0;
+//                        dstReservoir.init();
                     }
                 }
 
@@ -751,19 +772,11 @@ void MyRaygenShader()
 //            if(payload2.instanceIndex == -1)
                 addLight = payload2.emissiveColor;
 
-//            if(all(payload2.interpolatedNormal != float3(0, 0, 0)))
-//            {
-//                AO -= 1.0f / sampleCountAO;
-//                unoccludedAreaDirection += rayDesc.Direction;
-//            }
-
-//            if(dstReservoir.M)
-//                addLight *= dstReservoir.wSum / dstReservoir.M;
-//                addLight *= dstReservoir.wSum / dstReservoir.M;
-//            addLight *= dstReservoir.wSum / dstReservoir.M;
+//              addLight /= dstReservoir.weightSum;
 
 //            if(dstReservoir.age > 0)
 //                addLight *= weight / (dstReservoir.age+1);
+
             addLight *= weight;
             incomingLight += addLight;
         } // for(int i = 0; i < sampleCount; ++i)

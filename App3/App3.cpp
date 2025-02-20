@@ -223,7 +223,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
 	m_sceneCB->updateReservoir = updateReservoir;
     m_sceneCB->emissiveSATSize = (uint32)m_emissiveSATValueData.size();
     m_sceneCB->emissiveSumArea = m_emissiveSumArea;
-    updateReservoir = false;
+//    updateReservoir = false;
 
     static uint32 FrameIndex = 0; ++FrameIndex;
     m_sceneCB->FrameIndex = FrameIndex;

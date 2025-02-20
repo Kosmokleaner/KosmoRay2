@@ -137,6 +137,7 @@ struct Reservoir
 		M = 1;
 	}
 
+	// aka RTXDI_LoadDIReservoir()
 	void loadFromRaw(ReservoirPacked rawData)
 	{
 		rndState = asuint(rawData.raw[0].x);
@@ -147,6 +148,7 @@ struct Reservoir
 		visibility = rawData.raw[1].y;
 	}
 
+	// aka RTXDI_StoreDIReservoir()
 	ReservoirPacked storeToRaw()
 	{
 		ReservoirPacked ret;
