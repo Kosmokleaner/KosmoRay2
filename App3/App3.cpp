@@ -220,10 +220,9 @@ void App3::OnUpdate(UpdateEventArgs& e)
     m_sceneCB->sceneParam0.x = frac(m_sceneCB->sceneParam0.x + (float)e.ElapsedTime);
     m_sceneCB->sceneParam0.y = frac(m_sceneCB->sceneParam0.y + (float)e.ElapsedTime * 0.1f);
     m_sceneCB->raytraceFlags = raytraceFlags;
-	m_sceneCB->updateReservoir = updateReservoir;
+	m_sceneCB->resampling = resampling;
     m_sceneCB->emissiveSATSize = (uint32)m_emissiveSATValueData.size();
     m_sceneCB->emissiveSumArea = m_emissiveSumArea;
-//    updateReservoir = false;
 
     static uint32 FrameIndex = 0; ++FrameIndex;
     m_sceneCB->FrameIndex = FrameIndex;
@@ -392,17 +391,18 @@ void App3::OnKeyPressed(KeyEventArgs& e)
         case KeyCode::PageDown:
             ++raytraceFlags;
             log = true;
-			break;
+            break;
 
-		case KeyCode::Space:
-            updateReservoir = true;
-			break;
+        case KeyCode::Space:
+            resampling = !resampling;
+            log = true;
+            break;
     }
 
     if(log)
     {
         char buffer[512];
-        sprintf_s(buffer, "raytraceFlags: 0x%x\n", raytraceFlags);
+        sprintf_s(buffer, "raytraceFlags: 0x%x resampling:%d\n", raytraceFlags, (int)resampling);
         OutputDebugStringA(buffer);
     }
 }

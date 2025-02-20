@@ -392,6 +392,68 @@ float2 PxFromWS(float3 wsPos)
     return pxPos;
 }
 
+// aka RTXDI_DISpatioTemporalResampling
+Reservoir TemporalResampling(uint2 pixelPosition, inout uint rndState, Reservoir curSample)
+{
+    Reservoir state;
+    state.init();
+
+    state.combine(curSample, 0.5f, curSample.targetPdf);
+
+    bool foundNeighbor = false;
+    float radius = 4; // nvidia magic
+    int2 foundPos = 0;
+
+//    uint numSamples = 8;
+
+    for (int i = 0; i < 9 && !foundNeighbor; i++)
+    {
+        int2 offset = 0;
+        if (i > 0)
+        {
+            offset.x = int((randomNext(rndState) - 0.5) * radius);
+            offset.y = int((randomNext(rndState) - 0.5) * radius);
+        }
+        // limit search to the current page
+        int2 idx = clamp(pixelPosition + offset, 0, 15);
+
+//        float3 localN = loadFromGroupShared_Normal(idx);
+//        bool validNeighbor = saturate(dot(localN, N)) > 0.5;
+//        if (!validNeighbor) continue;
+
+        foundPos = idx;
+        foundNeighbor = true;
+    }
+
+	if (foundNeighbor)
+    {
+        ReservoirPacked packed;
+        packed.raw[0] = g_Reservoirs[foundPos * uint2(2, 1) + uint2(0, 0)];
+        packed.raw[1] = g_Reservoirs[foundPos * uint2(2, 1) + uint2(1, 0)];
+        Reservoir prevSample;
+        prevSample.loadFromRaw(packed);
+
+        if(prevSample.isValid())
+        {
+            // todo
+        }
+
+        uint historyLimit = 100; // todo
+
+        prevSample.M = min(prevSample.M, historyLimit);
+    //                        prevSample.spatialDistance += spatialOffset;
+        prevSample.age += 1;
+
+        float neighborWeight = 0.01f;
+        state.combine(prevSample, 0.5f, neighborWeight);
+    }
+
+    if(state.isValid())
+        state.finalize(1.0f, state.M);
+
+    return state;
+}
+
 
 [shader("raygeneration")]
 void MyRaygenShader()
@@ -678,7 +740,7 @@ void MyRaygenShader()
             }
             else if(localMethod == 2)
             {
-                if(g_sceneCB.updateReservoir == 1)
+//                if(g_sceneCB.updateReservoir == 1)
                 {
 //                    if(randomNext(rndState2) < 0.025f)
 //                    {
@@ -695,18 +757,11 @@ void MyRaygenShader()
                     dstReservoir.combine(localReservoir, 0.5f, localReservoir.targetPdf);
                     dstReservoir.finalize(1.0f, 1.0f);
 
-                    bool resampling = true;
+                    bool resampling = g_sceneCB.resampling;
                     if(resampling)
                     {
-                        ReservoirPacked packed;
-                        packed.raw[0] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(0, 0)];
-                        packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
-                        Reservoir loaded;
-                        loaded.loadFromRaw(packed);
-
-                       float neighborWeight = 0.0f;
-                       dstReservoir.combine(loaded, 0.5f, neighborWeight);
-
+                        // see RTXDI_DISpatioTemporalResampling()
+                        dstReservoir = TemporalResampling(DispatchRaysIndex().xy, rndState, dstReservoir);
                     }
                 }
 
@@ -726,7 +781,7 @@ void MyRaygenShader()
                 weight *= computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
 
 //                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
-                if(g_sceneCB.updateReservoir == 1)
+//                if(g_sceneCB.updateReservoir == 1)
                 {
 //                    if(!all(payload2.emissiveColor == emissiveColor))
                     if(payload2.emissiveColor.r > 0)    // is emissive
