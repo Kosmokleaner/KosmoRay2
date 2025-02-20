@@ -13,7 +13,7 @@
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
 // 1:very low, 8:low, 64:good, 256:very good
-#define LEFT_SAMPLE_COUNT 10
+#define LEFT_SAMPLE_COUNT 1
 // 1:very low, 8:low, 64:good, 256:very good
 #define RIGHT_SAMPLE_COUNT 1
 // 0:off, 1:on (slow compile and shader but useful for debugging)
@@ -104,7 +104,7 @@ struct RayPayload
     float3 materialColor;
     //
     float3 emissiveColor;
-    // in world space, normalized, (0,0,0) means emissive
+    // in world space, normalized
     float3 interpolatedNormal;
     // -1 if not set
     int primitiveIndex;
@@ -392,34 +392,54 @@ float2 PxFromWS(float3 wsPos)
     return pxPos;
 }
 
+// @param n normalized normal 
+float computeLightPdf(Reservoir res, float3 surfacePos, float3 surfaceNormal)
+{
+    float3 lightNormal;
+    float3 emissiveColor;
+    float3 lightPos = getEmissiveQuadSample(surfacePos, res.rndState, lightNormal, emissiveColor);
+    float weight = computeWeight(lightPos - surfacePos, surfaceNormal, lightNormal);
+
+    return weight ;
+}
+
 // aka RTXDI_DISpatioTemporalResampling
-Reservoir TemporalResampling(uint2 pixelPosition, inout uint rndState, Reservoir curSample)
+// @param surfaceNormal normalized
+Reservoir TemporalResampling(uint2 pixelPosition, inout uint rndState, float3 surfacePos, float3 surfaceNormal, Reservoir curSample)
 {
     Reservoir state;
     state.init();
 
     state.combine(curSample, 0.5f, curSample.targetPdf);
 
+//    if(state.isValid())
+//        state.finalize(1.0f, state.M);
+//    return state;
+
+        // investigate, all code here has no effect, why?
+
+
+
     bool foundNeighbor = false;
     float radius = 4; // nvidia magic
     int2 foundPos = 0;
 
-//    uint numSamples = 8;
-
-    for (int i = 0; i < 9 && !foundNeighbor; i++)
+    [loop] for (int i = 0; i < 9 && !foundNeighbor; i++)
     {
         int2 offset = 0;
         if (i > 0)
         {
-            offset.x = int((randomNext(rndState) - 0.5) * radius);
-            offset.y = int((randomNext(rndState) - 0.5) * radius);
+            offset.x = int((randomNext(rndState) - 0.5f) * radius);
+            offset.y = int((randomNext(rndState) - 0.5f) * radius);
         }
-        // limit search to the current page
-        int2 idx = clamp(pixelPosition + offset, 0, 15);
+        int2 idx = pixelPosition + offset;
 
-//        float3 localN = loadFromGroupShared_Normal(idx);
-//        bool validNeighbor = saturate(dot(localN, N)) > 0.5;
-//        if (!validNeighbor) continue;
+        idx = clamp(idx, int2(0, 0), int2(g_sceneCB.frameBufferSize.xy) - 1);
+
+        float3 localN = g_GBufferA[idx].xyz;    // already normalized
+        bool validNeighbor = saturate(dot(localN, surfaceNormal)) > 0.5f;
+        if (!validNeighbor)
+            continue;
 
         foundPos = idx;
         foundNeighbor = true;
@@ -433,19 +453,29 @@ Reservoir TemporalResampling(uint2 pixelPosition, inout uint rndState, Reservoir
         Reservoir prevSample;
         prevSample.loadFromRaw(packed);
 
+        // RayMachine is using 32
+        uint historyLimit = 32;
+
+    //                        prevSample.spatialDistance += spatialOffset;
+        prevSample.age += 1;    // RayMachine does not have this
+
+        float neighborWeight = 0.0f;
         if(prevSample.isValid())
         {
-            // todo
+            prevSample.M = min(prevSample.M, historyLimit);
+
+//            Reservoir localReservoir = sampleLightsForReservoir(1, rndState, rayDesc.Origin, payload.interpolatedNormal);
+
+            // Computes the weight of the given light samples when the given surface is
+            // shaded using that light sample. Exact or approximate BRDF evaluation can be
+            // used to compute the weight. ReSTIR will converge to a correct lighting result
+            // even if all samples have a fixed weight of 1.0, but that will be very noisy.
+            // Scaling of the weights can be arbitrary, as long as it's consistent
+            // between all lights and surfaces.
+//            neighborWeight = 1.0;   // todo
+            neighborWeight = computeLightPdf(prevSample, surfacePos, surfaceNormal);
         }
-
-        uint historyLimit = 100; // todo
-
-        prevSample.M = min(prevSample.M, historyLimit);
-    //                        prevSample.spatialDistance += spatialOffset;
-        prevSample.age += 1;
-
-        float neighborWeight = 0.01f;
-        state.combine(prevSample, 0.5f, neighborWeight);
+        state.combine(prevSample, randomNext(rndState), neighborWeight);
     }
 
     if(state.isValid())
@@ -516,9 +546,9 @@ void BasePass()
 [shader("raygeneration")]
 void ShadingPass()
 {
-//    RenderTarget[DispatchRaysIndex().xy] = float4(normalize(g_GBufferA[DispatchRaysIndex().xy].xyz)*0.5f+0.5f,1);
-//    RenderTarget[DispatchRaysIndex().xy] = float4(g_GBufferB[DispatchRaysIndex().xy].xyz,1);
-//    return;
+    // uncomment to visualize base pass GBuffer data
+//    RenderTarget[DispatchRaysIndex().xy] = float4(normalize(g_GBufferA[DispatchRaysIndex().xy].xyz)*0.5f+0.5f,1);   return;
+//    RenderTarget[DispatchRaysIndex().xy] = float4(g_GBufferB[DispatchRaysIndex().xy].xyz,1);   return;
 
 #if GFX_FOR_ALL == 1
     struct ContextGather ui;			// pixel shader or compute shader looping through all pixels
@@ -823,7 +853,7 @@ void ShadingPass()
                     if(resampling)
                     {
                         // see RTXDI_DISpatioTemporalResampling()
-                        dstReservoir = TemporalResampling(DispatchRaysIndex().xy, rndState, dstReservoir);
+                        dstReservoir = TemporalResampling(DispatchRaysIndex().xy, rndState, rayDesc.Origin, payload.interpolatedNormal, dstReservoir);
                     }
                 }
 
