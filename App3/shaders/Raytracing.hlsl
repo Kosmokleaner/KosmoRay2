@@ -266,8 +266,7 @@ uint binary_search_findIndex(float searchValue, uint elementCount, RWBuffer<floa
 
 
 // @param meshInstanceId e.g. 0:meshA, 1:meshB
-// @param outNormal normalized
-void getGlobalTriangle(uint meshInstanceId, uint meshTriangleId, out float3 wsPosCorners[3], out uint materialId, out float3 outNormal)
+void getGlobalTriangle(uint meshInstanceId, uint meshTriangleId, out float3 wsPosCorners[3], out uint materialId)
 {
     uint3 vertexIndices = LoadIndexBuffer(meshInstanceId, meshTriangleId);
     for(int i = 0; i < 3; ++i)
@@ -282,9 +281,6 @@ void getGlobalTriangle(uint meshInstanceId, uint meshTriangleId, out float3 wsPo
         //  materialid is per triangle but stored per vertex
         materialId = g_vertices[meshInstanceId][vertexIndex].materialId;
     }
-    float3 u = wsPosCorners[1] - wsPosCorners[0];
-    float3 v = wsPosCorners[2] - wsPosCorners[0];
-    outNormal = normalize(cross(u,v));
 }
 
 float3 getRandomPointInTriangle(inout uint rndState, float3 pos[3])
@@ -314,8 +310,7 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float
 	float rnd = nextRand(rndState);
 
     // 0..g_sceneCB.emissiveSATSize-1
-//todo    uint emissiveTriangleId = binary_search_findIndex(rnd, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
-    uint emissiveTriangleId = uint(rnd * 48);
+    uint emissiveTriangleId = binary_search_findIndex(rnd, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
 
     uint4 packedIndex = g_EmissiveSATIndex[emissiveTriangleId];
     uint meshInstanceId = packedIndex.y;
@@ -324,30 +319,15 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float
     float3 wsPosCorners[3];
 
     uint materialId;
-    getGlobalTriangle(meshInstanceId, meshTriangleId, wsPosCorners, materialId, outNormal);
+    getGlobalTriangle(meshInstanceId, meshTriangleId, wsPosCorners, materialId);
 
+    float3 u = wsPosCorners[1] - wsPosCorners[0];
+    float3 v = wsPosCorners[2] - wsPosCorners[0];
+    outNormal = normalize(cross(u,v));
 
     emissiveColor = g_materials[meshInstanceId][materialId].emissiveColor;
 
     return getRandomPointInTriangle(rndState, wsPosCorners);
-
-//    g_EmissiveSAT[];
-/*
-
-
-    float yPos = 2.95f; // pretty close to the area light in the original Cornell box
-
-	// 0..1
-	float2 uv = nextRand2(rndState);
-
-    // todo: flip if needed
-    if(rayDirection.y > yPos)
-        outNormal = float3(0, 1, 0);
-    else
-        outNormal = float3(0, -1, 0);
-
-    return float3(uv.x * 2 - 1, 0, uv.y * 2 - 1) * 11.1f * 4 *  0.08f + float3(0, yPos, 0);*/
-
 }
 
 // @param n0 normalized normal at 0, as surface
@@ -726,6 +706,8 @@ void MyRaygenShader()
                 // needed to test if in shadow and to get payload2.emissiveColor
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
 
+                weight *= computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
+
 //                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
                 if(g_sceneCB.updateReservoir == 1)
                 {
@@ -782,9 +764,9 @@ void MyRaygenShader()
 
 //            if(dstReservoir.age > 0)
 //                addLight *= weight / (dstReservoir.age+1);
-//            addLight *= weight;
+            addLight *= weight;
             incomingLight += addLight;
-        }
+        } // for(int i = 0; i < sampleCount; ++i)
 
         if(localMethod == 2)
         {
@@ -804,8 +786,8 @@ void MyRaygenShader()
     }
     else hdr = payload.materialColor;   // sky
 
-    hdr *= 4.0f;    // brighter
-//    hdr *= 0.25f;    // darker
+//    hdr *= 4.0f;    // brighter
+    hdr *= 0.25f;    // darker
 
     // feedback is in linear space
     g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], float4(hdr, 0), FEEDBACK_FRACTION);
