@@ -86,10 +86,12 @@ private:
     DataBlock m_GBufferB;
 
     // Summed Area Table to find points on emissive surfaces, normalized so last value is 1.0f, same size as m_emissiveSATIndexData
+    // m_emissiveSATValueData[m_emissiveSATValueData.size()-1] = 1.0f by construction
 	std::vector<float> m_emissiveSATValueData;
 	// GPU buffer for m_emissiveSATValueData
 	D3DBuffer m_EmissiveSATValue;
     float m_emissiveSumArea = {};
+    float m_emissiveSum = {};
 
     // (sceneObjectId, meshInstanceid, triangleId, 0) in this instance, same size as m_emissiveSATValueData
 	std::vector<glm::uvec4> m_emissiveSATIndexData;

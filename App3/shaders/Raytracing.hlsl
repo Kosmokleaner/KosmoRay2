@@ -13,11 +13,13 @@
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
 // 1:very low, 8:low, 64:good, 256:very good
-#define LEFT_SAMPLE_COUNT 1
+#define LEFT_SAMPLE_COUNT 10
 // 1:very low, 8:low, 64:good, 256:very good
-#define RIGHT_SAMPLE_COUNT 1
-// 0:off, 1:on (slow compile and shader but useful for debugging)
+#define RIGHT_SAMPLE_COUNT 10
+// 0:off, 1:on (slow shader compile and shader runtime but useful for debugging)
 #define GFX_FOR_ALL 0
+// todo to make method 1 and method 2 the right brightness 
+#define BRIGHTNESS_HACK 0.03f
 
 
 
@@ -522,7 +524,8 @@ void BasePass()
 [shader("raygeneration")]
 void ShadingPass()
 {
-/*    // test
+/*
+    // visualize summed area table
     {
         float2 p = DispatchRaysIndex().xy / (float2)DispatchRaysDimensions().xy;
         uint emissiveTriangleId = binary_search_findIndex(p.x, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
@@ -776,27 +779,29 @@ void ShadingPass()
         incomingLight = payload.emissiveColor * sampleCount;
 
         Reservoir dstReservoir;
-        if(localMethod == 2)
-        {
-            dstReservoir.init();
-
-/*
-            if(localMethod == 2)
-            {
-                // todo: spatial reuse
-                //
-                //
-
-                ReservoirPacked packed;
-                packed.raw[0] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(0, 0)];
-                packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
-                dstReservoir.loadFromRaw(packed);
-            }
-*/
-        }
+      
 
         [loop] for(int i = 0; i < sampleCount; ++i)
         {
+            if(localMethod == 2)
+            {
+                dstReservoir.init();
+
+    /*
+                if(localMethod == 2)
+                {
+                    // todo: spatial reuse
+                    //
+                    //
+
+                    ReservoirPacked packed;
+                    packed.raw[0] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(0, 0)];
+                    packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
+                    dstReservoir.loadFromRaw(packed);
+                }
+    */
+            }
+
             RayPayload payload2 = (RayPayload)0;
             payload2.primitiveIndex = -1;
             payload2.instanceIndex = -1;
@@ -817,6 +822,8 @@ void ShadingPass()
 
                 // normalized
                 TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+
+                payload2.emissiveColor *= BRIGHTNESS_HACK;
             }
             else if(localMethod == 2)
             {
@@ -864,7 +871,7 @@ void ShadingPass()
 //                if(g_sceneCB.updateReservoir == 1)
                 {
 //                    if(!all(payload2.emissiveColor == emissiveColor))
-                    if(payload2.emissiveColor.r > 0)    // is emissive
+                    if(payload2.emissiveColor.r > 0)    // is emissive, todo: maybe not the right emissive
                     {
                         highlightPixel = true;
                     }
@@ -880,6 +887,8 @@ void ShadingPass()
 
                 if(!dstReservoir.isValid())
                     payload2.emissiveColor = 0;
+
+                payload2.emissiveColor *= BRIGHTNESS_HACK;
             }
             else // localMethod == 0
             {
@@ -934,8 +943,8 @@ void ShadingPass()
     }
     else hdr = payload.materialColor;   // sky
 
-//    hdr *= 4.0f;    // brighter
-    hdr *= 0.25f;    // darker
+//    hdr *= 22.0f;    // brighter
+//    hdr *= 0.25f;    // darker
 
     // feedback is in linear space
     g_Feedback[DispatchRaysIndex().xy] = lerp(g_Feedback[DispatchRaysIndex().xy], float4(hdr, 0), FEEDBACK_FRACTION);

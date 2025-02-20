@@ -26,7 +26,7 @@ STRUCT_BEGIN(SceneConstantBuffer)
 	STRUCT_ENTRY(uint, resampling)
 	STRUCT_ENTRY(uint, emissiveSATSize)
     STRUCT_ENTRY(float, emissiveSumArea)
-    STRUCT_ENTRY(float, dummyA)
+    STRUCT_ENTRY(float, emissiveSum)
     STRUCT_ENTRY(float, dummyB)
     STRUCT_ENTRY(float, dummyC)
 

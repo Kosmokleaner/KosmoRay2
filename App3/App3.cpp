@@ -224,6 +224,7 @@ void App3::OnUpdate(UpdateEventArgs& e)
 	m_sceneCB->resampling = resampling;
     m_sceneCB->emissiveSATSize = (uint32)m_emissiveSATValueData.size();
     m_sceneCB->emissiveSumArea = m_emissiveSumArea;
+    m_sceneCB->emissiveSum = m_emissiveSum;
 
     static uint32 FrameIndex = 0; ++FrameIndex;
     m_sceneCB->FrameIndex = FrameIndex;
@@ -683,6 +684,7 @@ void App3::BuildAccelerationStructures()
 	ComPtr<ID3D12Resource> instanceDescs;
 
     float sumArea = 0.0f;
+    float sum = 0.0f;
     m_emissiveSATValueData.clear();
 	m_emissiveSATIndexData.clear();
 
@@ -808,33 +810,40 @@ void App3::BuildAccelerationStructures()
                     }
 
                     glm::vec3 u = p[2] - p[0];
-					glm::vec3 v = p[1] - p[0];
+                    glm::vec3 v = p[1] - p[0];
 
                     float triArea = length(cross(u, v)) / 2.0f;
 
-//                    sumArea += emissiveAmount * triArea;
-                    sumArea += triArea;                     // keep it simple
+                    sumArea += triArea;
+                    sum += emissiveAmount * triArea;
 
-					m_emissiveSATValueData.push_back(sumArea);
+                    m_emissiveSATValueData.push_back(sum);
                     m_emissiveSATIndexData.push_back(glm::uvec4(sceneObjectId, dst->InstanceID, triangleId, 0));
                 }
-			}
+            }
 
             ++dst;
         }
 
         AllocateUploadBuffer(device.Get(), instanceDesc, sizeof(instanceDesc), &instanceDescs, L"InstanceDescs");
-	}
+    }
 
     m_emissiveSumArea = sumArea;
 
     // normalize emissiveSAT
+    if(sum)
     {
-        float inv = 1.0f / sumArea;
+        float inv = 1.0f / sum;
 
         for (auto& el : m_emissiveSATValueData)
             el *= inv;
     }
+    else
+    {
+        // no emissive triangles
+        m_emissiveSATValueData.push_back(0.0f);
+    }
+
 	AllocateUploadBuffer(device.Get(), m_emissiveSATValueData.data(), m_emissiveSATValueData.size() * sizeof(m_emissiveSATValueData[0]), &m_EmissiveSATValue.resource, L"EmissiveSATValue");
     renderer.CreateBufferSRV(&m_EmissiveSATValue, (uint32)m_emissiveSATValueData.size(), sizeof(m_emissiveSATValueData[0]));
 
