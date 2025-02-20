@@ -454,10 +454,72 @@ Reservoir TemporalResampling(uint2 pixelPosition, inout uint rndState, Reservoir
     return state;
 }
 
+[shader("raygeneration")]
+void BasePass()
+{
+//    RenderTarget[DispatchRaysIndex().xy] = float4(1,1,1, 1);
+
+    bool perFrameNoise = ANIMATE_OVER_TIME == 1;
+
+    // animate jitter offset over time for TemporalAA and GI
+    int2 move = 0;
+
+    if(perFrameNoise)
+    {
+        move = g_sceneCB.FrameIndex * int2(13, 7);
+    }
+
+    // float2(0..1, 0..1) Blue Noise
+    float2 jitterXY = g_Texture.Load(int3((DispatchRaysIndex().xy + move) % 256, 0)).rg;
+
+// IntelArc artifact with g_Texture.Load()
+//    uint startTime = NvGetSpecial(NV_SPECIALOP_GLOBAL_TIMER_LO);
+
+    float2 lerpValues = (float2)DispatchRaysIndex() / (float2)DispatchRaysDimensions();
+
+    uint section = DispatchRaysIndex().x / 8;
+
+    Ray ray = GenerateCameraRay(DispatchRaysIndex().xy, g_sceneCB.cameraPosition.xyz, g_sceneCB.worldFromClip, jitterXY);
+    float3 origin = ray.origin;
+    float3 rayDir = ray.direction;
+
+    // Trace the ray.
+    // Set the ray's extents.
+    RayDesc rayDesc;
+    rayDesc.Origin = origin;
+    rayDesc.Direction = rayDir;
+    // Set TMin to a non-zero small value to avoid aliasing issues due to floating - point errors.
+    // TMin should be kept small to prevent missing geometry at close contact areas.
+    rayDesc.TMin = 0.001f;
+    rayDesc.TMax = 10000.0f;
+
+    RayPayload payload = (RayPayload)0;
+    payload.primitiveIndex = -1;
+    payload.instanceIndex = -1;
+    payload.minT = payload.minTfront = rayDesc.TMax;
+
+    RAY_FLAG flags = RAY_FLAG_CULL_BACK_FACING_TRIANGLES;
+    //RAY_FLAG flags = RAY_FLAG_NONE;
+    uint instanceMask = ~0;
+
+    uint RayContributionToHitGroupIndex = 0;
+    uint MultiplierForGeometryContributionToHitGroupIndex = 1;
+    uint MissShaderIndex = 0;
+
+    TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
+
+    g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
+    g_GBufferB[DispatchRaysIndex().xy] = float4(payload.materialColor, 0);
+
+}
 
 [shader("raygeneration")]
-void MyRaygenShader()
+void ShadingPass()
 {
+//    RenderTarget[DispatchRaysIndex().xy] = float4(normalize(g_GBufferA[DispatchRaysIndex().xy].xyz)*0.5f+0.5f,1);
+//    RenderTarget[DispatchRaysIndex().xy] = float4(g_GBufferB[DispatchRaysIndex().xy].xyz,1);
+//    return;
+
 #if GFX_FOR_ALL == 1
     struct ContextGather ui;			// pixel shader or compute shader looping through all pixels
     ui.init(DispatchRaysIndex().xy, int2(10, 10));
@@ -641,7 +703,7 @@ void MyRaygenShader()
 #if RAY_TRACING_EXPERIMENT == 0
     // closesthit
     TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
-    RenderTarget[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal * 0.5f + 0.5f, 1.0f); // face normal
+//    RenderTarget[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal * 0.5f + 0.5f, 1.0f); // face normal
 //    RenderTarget[DispatchRaysIndex().xy] = float4(payload.materialColor, 1.0f); // color e.g. barycentrics
 //    RenderTarget[DispatchRaysIndex().xy] = float4(IndexToColor(payload.primitiveIndex), 1); // unique color for each triangle
 
@@ -656,8 +718,8 @@ void MyRaygenShader()
     TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload);
     flags = RAY_FLAG_NONE;
     
-    g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
-    g_GBufferB[DispatchRaysIndex().xy] = float4(payload.materialColor, 0);
+//    g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
+//    g_GBufferB[DispatchRaysIndex().xy] = float4(payload.materialColor, 0);
 
     bool highlightPixel = false;
 

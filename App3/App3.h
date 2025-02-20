@@ -99,7 +99,8 @@ private:
     // Shader tables
     ComPtr<ID3D12Resource> missShaderTable;
     ComPtr<ID3D12Resource> hitGroupShaderTable;
-    ComPtr<ID3D12Resource> rayGenShaderTable;
+    ComPtr<ID3D12Resource> rayGenShaderTable1;
+    ComPtr<ID3D12Resource> rayGenShaderTable2;
 
     UINT m_missShaderTableStrideInBytes = UINT_MAX;
     UINT m_hitGroupShaderTableStrideInBytes = UINT_MAX;

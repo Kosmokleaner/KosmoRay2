@@ -17,7 +17,8 @@ bool g_NVAPI_enabled = false;
 const wchar_t* c_hitGroupName1 = L"MyHitGroupTri";
 const wchar_t* c_hitGroupName2 = L"MyHitGroupAABB";
 
-const wchar_t* c_raygenShaderName = L"MyRaygenShader";
+const wchar_t* c_raygenShaderName1 = L"BasePass";
+const wchar_t* c_raygenShaderName2 = L"ShadingPass";
 const wchar_t* c_closestHitShaderName = L"MyClosestHitShader";
 const wchar_t* c_anyHitShaderName = L"MyAnyHitShader";
 const wchar_t* c_missShaderName = L"MyMissShader";
@@ -183,7 +184,7 @@ bool App3::LoadContent()
 
     // Create the descriptor heap for the depth-stencil view.
     depthStencilDescriptorHeap.CreateDescriptorHeap(Application::Get().renderer, 1, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+    auto fenceValue = commandQueue->ExecuteCommandList(commandList);
     commandQueue->WaitForFenceValue(fenceValue);
 
     m_ContentLoaded = true;
@@ -278,7 +279,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
     ComPtr<ID3D12GraphicsCommandList4> m_dxrCommandList;
     ThrowIfFailed(commandList->QueryInterface(IID_PPV_ARGS(&m_dxrCommandList)), L"Couldn't get DirectX Raytracing interface for the command list.\n");
 
-    // DispatchRays
+    // DispatchRays1
     {
         auto* commandList = m_dxrCommandList.Get();
         auto* stateObject = dxrStateObject.Get();
@@ -290,8 +291,54 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
         dispatchDesc.MissShaderTable.StartAddress = missShaderTable->GetGPUVirtualAddress();
         dispatchDesc.MissShaderTable.SizeInBytes = missShaderTable->GetDesc().Width;
         dispatchDesc.MissShaderTable.StrideInBytes = m_missShaderTableStrideInBytes;
-        dispatchDesc.RayGenerationShaderRecord.StartAddress = rayGenShaderTable->GetGPUVirtualAddress();
-        dispatchDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderTable->GetDesc().Width;
+        dispatchDesc.RayGenerationShaderRecord.StartAddress = rayGenShaderTable1->GetGPUVirtualAddress();
+        dispatchDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderTable1->GetDesc().Width;
+        dispatchDesc.Width = GetClientWidth();
+        dispatchDesc.Height = GetClientHeight();
+        dispatchDesc.Depth = 1;
+        commandList->SetPipelineState1(stateObject);
+        commandList->DispatchRays(&dispatchDesc);
+    }
+
+    {
+        // D3D12_RESOURCE_UAV_BARRIER 
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = m_raytracingOutput.m_resource.Get();
+        commandList->ResourceBarrier(1, &barrier);
+    }
+    {
+        // D3D12_RESOURCE_UAV_BARRIER 
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = m_GBufferA.m_resource.Get();
+        commandList->ResourceBarrier(1, &barrier);
+    }
+    {
+        // D3D12_RESOURCE_UAV_BARRIER 
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        barrier.UAV.pResource = m_GBufferB.m_resource.Get();
+        commandList->ResourceBarrier(1, &barrier);
+    }
+
+    // DispatchRays2
+    {
+        auto* commandList = m_dxrCommandList.Get();
+        auto* stateObject = dxrStateObject.Get();
+
+        // Since each shader table has only one shader record, the stride is same as the size.
+        dispatchDesc.HitGroupTable.StartAddress = hitGroupShaderTable->GetGPUVirtualAddress();
+        dispatchDesc.HitGroupTable.SizeInBytes = hitGroupShaderTable->GetDesc().Width;
+        dispatchDesc.HitGroupTable.StrideInBytes = m_hitGroupShaderTableStrideInBytes;
+        dispatchDesc.MissShaderTable.StartAddress = missShaderTable->GetGPUVirtualAddress();
+        dispatchDesc.MissShaderTable.SizeInBytes = missShaderTable->GetDesc().Width;
+        dispatchDesc.MissShaderTable.StrideInBytes = m_missShaderTableStrideInBytes;
+        dispatchDesc.RayGenerationShaderRecord.StartAddress = rayGenShaderTable2->GetGPUVirtualAddress();
+        dispatchDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderTable2->GetDesc().Width;
         dispatchDesc.Width = GetClientWidth();
         dispatchDesc.Height = GetClientHeight();
         dispatchDesc.Depth = 1;
@@ -371,6 +418,7 @@ void App3::OnRender(RenderEventArgs& e)
 
         fenceValues[currentBackBufferIndex] = commandQueue->ExecuteCommandList(commandList);
         currentBackBufferIndex = m_pWindow->Present();
+        // block the CPU thread until the specified fence value has been reached
         commandQueue->WaitForFenceValue(fenceValues[currentBackBufferIndex]);
     }
 }
@@ -458,7 +506,8 @@ void App3::CreateLocalRootSignatureSubobjects(CD3DX12_STATE_OBJECT_DESC* raytrac
         // Shader association
         auto rootSignatureAssociation = raytracingPipeline->CreateSubobject<CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT>();
         rootSignatureAssociation->SetSubobjectToAssociate(*localRootSignature);
-        rootSignatureAssociation->AddExport(c_raygenShaderName);
+        rootSignatureAssociation->AddExport(c_raygenShaderName1);
+        rootSignatureAssociation->AddExport(c_raygenShaderName2);
     }
 }
 
@@ -498,7 +547,8 @@ void App3::CreateRaytracingPipelineStateObject()
     // If no shader exports are defined for a DXIL library subobject, all shaders will be surfaced.
     // In this sample, this could be omitted for convenience since the sample uses all shaders in the library. 
     {
-        lib->DefineExport(c_raygenShaderName);
+        lib->DefineExport(c_raygenShaderName1);
+        lib->DefineExport(c_raygenShaderName2);
         lib->DefineExport(c_closestHitShaderName);
         lib->DefineExport(c_anyHitShaderName);
         lib->DefineExport(c_missShaderName);
@@ -829,7 +879,8 @@ void App3::BuildShaderTables()
     // Get shader identifiers.    
     ComPtr<ID3D12StateObjectProperties> stateObjectProperties;
     ThrowIfFailed(dxrStateObject.As(&stateObjectProperties));
-    void* rayGenShaderIdentifier = stateObjectProperties.Get()->GetShaderIdentifier(c_raygenShaderName);
+    void* rayGenShaderIdentifier1 = stateObjectProperties.Get()->GetShaderIdentifier(c_raygenShaderName1);
+    void* rayGenShaderIdentifier2 = stateObjectProperties.Get()->GetShaderIdentifier(c_raygenShaderName2);
     void* missShaderIdentifier = stateObjectProperties.Get()->GetShaderIdentifier(c_missShaderName);
     void* hitGroupShaderIdentifier1 = stateObjectProperties.Get()->GetShaderIdentifier(c_hitGroupName1);
 	void* hitGroupShaderIdentifier2 = stateObjectProperties.Get()->GetShaderIdentifier(c_hitGroupName2);
@@ -839,12 +890,13 @@ void App3::BuildShaderTables()
 	std::unordered_map<void*, std::wstring> shaderIdToStringMap;
 
     // todo: GetShaderIdentifier and this can be single line saving multiple lines of code
-	shaderIdToStringMap[rayGenShaderIdentifier] = c_raygenShaderName;
+	shaderIdToStringMap[rayGenShaderIdentifier1] = c_raygenShaderName1;
+    shaderIdToStringMap[rayGenShaderIdentifier2] = c_raygenShaderName2;
     shaderIdToStringMap[missShaderIdentifier] = c_missShaderName;
 	shaderIdToStringMap[hitGroupShaderIdentifier1] = c_hitGroupName1;
 	shaderIdToStringMap[hitGroupShaderIdentifier2] = c_hitGroupName2;
 
-    // Ray gen shader table
+    // Ray gen shader table1
     {
         struct RootArguments {
             RayGenConstantBuffer cb;
@@ -853,10 +905,24 @@ void App3::BuildShaderTables()
 
         UINT numShaderRecords = 1;
         UINT shaderRecordSize = shaderIdentifierSize + sizeof(rootArguments);
-        ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"RayGenShaderTable");
-		table.push_back(ShaderRecord(rayGenShaderIdentifier, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
-		table.DebugPrint(shaderIdToStringMap);
-        rayGenShaderTable = table.GetResource();
+        ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"RayGenShaderTable1");
+        table.push_back(ShaderRecord(rayGenShaderIdentifier1, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
+        table.DebugPrint(shaderIdToStringMap);
+        rayGenShaderTable1 = table.GetResource();
+    }
+    // Ray gen shader table2
+    {
+        struct RootArguments {
+            RayGenConstantBuffer cb;
+        } rootArguments;
+        rootArguments.cb = rayGenCB;
+
+        UINT numShaderRecords = 1;
+        UINT shaderRecordSize = shaderIdentifierSize + sizeof(rootArguments);
+        ShaderTable table(device.Get(), numShaderRecords, shaderRecordSize, L"RayGenShaderTable2");
+        table.push_back(ShaderRecord(rayGenShaderIdentifier2, shaderIdentifierSize, &rootArguments, sizeof(rootArguments)));
+        table.DebugPrint(shaderIdToStringMap);
+        rayGenShaderTable2 = table.GetResource();
     }
 
     // Miss shader table
