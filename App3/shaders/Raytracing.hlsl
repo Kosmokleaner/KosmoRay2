@@ -518,7 +518,129 @@ void BasePass()
 
     g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
     g_GBufferB[DispatchRaysIndex().xy] = float4(payload.materialColor, 0);
+}
 
+// @return light to accumulate
+float3 perSample(inout Reservoir dstReservoir, float3 surfacePos, float3 surfaceNormal, uint localMethod, inout uint rndState)
+{
+    if(localMethod == 2)
+        dstReservoir.init();
+
+    RayDesc rayDesc;
+    rayDesc.Origin = surfacePos;
+    // Set TMin to a non-zero small value to avoid aliasing issues due to floating - point errors.
+    // TMin should be kept small to prevent missing geometry at close contact areas.
+    rayDesc.TMin = 0.001f;
+    rayDesc.TMax = 10000.0f;
+
+    RayPayload payload2 = (RayPayload)0;
+    payload2.primitiveIndex = -1;
+    payload2.instanceIndex = -1;
+    payload2.minT = payload2.minTfront = 1000.0f;
+
+    RAY_FLAG flags = RAY_FLAG_NONE;
+    uint instanceMask = ~0;
+    uint RayContributionToHitGroupIndex = 0;
+    uint MultiplierForGeometryContributionToHitGroupIndex = 1;
+    uint MissShaderIndex = 0;
+
+    float weight = 1.0f;
+    if(localMethod == 1)
+    {
+        // normalized
+        float3 lightNormal;
+        float3 emissiveColor;
+        
+        // todo: rayDesc.Direction should be normalized?
+
+        rayDesc.Direction = getEmissiveQuadSample(surfacePos, rndState, lightNormal, emissiveColor) - surfacePos;
+        weight = computeWeight(rayDesc.Direction, surfaceNormal, lightNormal);
+
+        // normalized
+        TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+
+        payload2.emissiveColor *= BRIGHTNESS_HACK;
+    }
+    else if(localMethod == 2)
+    {
+        {
+            ++dstReservoir.age;
+
+            if(dstReservoir.age > 30)
+                dstReservoir.init();
+
+            // aka RTXDI_SampleLocalLights(), todo: look deeper
+            Reservoir localReservoir = sampleLightsForReservoir(1, rndState, surfacePos, surfaceNormal);
+            dstReservoir.combine(localReservoir, 0.5f, localReservoir.targetPdf);
+            dstReservoir.finalize(1.0f, 1.0f);
+
+            bool resampling = g_sceneCB.resampling;
+            if(resampling)
+            {
+                // see RTXDI_DISpatioTemporalResampling()
+                dstReservoir = TemporalResampling(DispatchRaysIndex().xy, rndState, surfacePos, surfaceNormal, dstReservoir);
+            }
+        }
+
+        weight = dstReservoir.weightSum;
+
+        uint rndStateCopy = dstReservoir.rndState;
+
+        // normalized
+        float3 lightNormal;
+        float3 emissiveColor;
+        // todo: rayDesc.Direction should be normalized?
+        rayDesc.Direction = getEmissiveQuadSample(surfacePos, rndStateCopy, lightNormal, emissiveColor) - surfacePos;
+
+        // needed to test if in shadow and to get payload2.emissiveColor
+        TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+
+        weight *= computeWeight(rayDesc.Direction, surfaceNormal, lightNormal);
+
+        {
+//                    if(!all(payload2.emissiveColor == emissiveColor))
+            if(payload2.emissiveColor.r > 0)    // is emissive, todo: maybe not the right emissive
+            {
+            }
+            else
+            {
+                // in shadow
+                weight = 0;
+//                        dstReservoir.age = 0;
+//                        dstReservoir.weightSum = 0;
+//                        dstReservoir.init();
+            }
+        }
+
+        if(!dstReservoir.isValid())
+            payload2.emissiveColor = 0;
+
+        payload2.emissiveColor *= BRIGHTNESS_HACK;
+    }
+    else // localMethod == 0
+    {
+        // reference 
+        rayDesc.Direction = getCosHemisphereSample(rndState, surfaceNormal);
+
+        TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
+    }
+
+    float3 addLight = 0;
+
+//            incomingLight = addLight;
+
+    // effect of sky onto others objects
+//            if(payload2.instanceIndex == -1)
+        addLight = payload2.emissiveColor;
+
+//              addLight /= dstReservoir.weightSum;
+
+//            if(dstReservoir.age > 0)
+//                addLight *= weight / (dstReservoir.age+1);
+
+    addLight *= weight;
+
+    return addLight;
 }
 
 [shader("raygeneration")]
@@ -620,31 +742,6 @@ void ShadingPass()
     rayDesc.TMin = 0.001f;
     rayDesc.TMax = 10000.0f;
 
-/*
-    // ugly visualize getEmissiveQuadSample
-    if(0)
-    for(int i = 0; i < 50; ++i)
-    {
-        const float sphereRadius = 0.05f;
-
-        uint rnd2 = initRand(82927 * i, 1233);
-
-        float3 normal;
-        float3 samplePos = getEmissiveQuadSample(rayDesc.Origin, rnd2, normal);
-        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos, sphereRadius).y > 0) // yellow sphere
-        {
-            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 0, 1);
-            return;
-        }
-        if(sphIntersect(rayDesc.Origin, rayDesc.Direction, samplePos + normal * sphereRadius, 0.03f).y > 0)    // with white dot to indicate normal direction
-        {
-            RenderTarget[DispatchRaysIndex().xy] = float4(1, 1, 1, 1);
-            return;
-        }
-    }
-*/
-
-
 #if GFX_FOR_ALL == 1
     // visualize getEmissiveQuadSample in reservoir under mouse cursor
     if(localMethod == 2)
@@ -742,8 +839,6 @@ void ShadingPass()
 //    g_GBufferA[DispatchRaysIndex().xy] = float4(payload.interpolatedNormal, payload.minT);
 //    g_GBufferB[DispatchRaysIndex().xy] = float4(payload.materialColor, 0);
 
-    bool highlightPixel = false;
-
     float3 hdr = 0;
 
     if (any(payload.interpolatedNormal != float3(0, 0, 0))) // if emissive?
@@ -776,154 +871,10 @@ void ShadingPass()
 
         float3 incomingLight = 0;
 
-        incomingLight = payload.emissiveColor * sampleCount;
-
         Reservoir dstReservoir;
       
-
         [loop] for(int i = 0; i < sampleCount; ++i)
-        {
-            if(localMethod == 2)
-            {
-                dstReservoir.init();
-
-    /*
-                if(localMethod == 2)
-                {
-                    // todo: spatial reuse
-                    //
-                    //
-
-                    ReservoirPacked packed;
-                    packed.raw[0] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(0, 0)];
-                    packed.raw[1] = g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + uint2(1, 0)];
-                    dstReservoir.loadFromRaw(packed);
-                }
-    */
-            }
-
-            RayPayload payload2 = (RayPayload)0;
-            payload2.primitiveIndex = -1;
-            payload2.instanceIndex = -1;
-//            payload2.materialColor = float3(0.2f, 0.2f, 0.2f);        // ???? what is this ?
-            payload2.minT = payload2.minTfront = rayDesc.TMax;
-
-            float weight = 1.0f;
-            if(localMethod == 1)
-            {
-                // normalized
-                float3 lightNormal;
-                float3 emissiveColor;
-                // todo: rayDesc.Direction should be normalized?
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndState, lightNormal, emissiveColor) - rayDesc.Origin;
-                weight = computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
-
-//                uint rndStateCopy = dstReservoir.rndState;
-
-                // normalized
-                TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
-
-                payload2.emissiveColor *= BRIGHTNESS_HACK;
-            }
-            else if(localMethod == 2)
-            {
-//                if(g_sceneCB.updateReservoir == 1)
-                {
-//                    if(randomNext(rndState2) < 0.025f)
-//                    {
-//                        dstReservoir.init();
-//                    }
-
-                    ++dstReservoir.age;
-
-                    if(dstReservoir.age > 30)
-                        dstReservoir.init();
-
-                    // aka RTXDI_SampleLocalLights(), todo: look deeper
-                    Reservoir localReservoir = sampleLightsForReservoir(1, rndState, rayDesc.Origin, payload.interpolatedNormal);
-                    dstReservoir.combine(localReservoir, 0.5f, localReservoir.targetPdf);
-                    dstReservoir.finalize(1.0f, 1.0f);
-
-                    bool resampling = g_sceneCB.resampling;
-                    if(resampling)
-                    {
-                        // see RTXDI_DISpatioTemporalResampling()
-                        dstReservoir = TemporalResampling(DispatchRaysIndex().xy, rndState, rayDesc.Origin, payload.interpolatedNormal, dstReservoir);
-                    }
-                }
-
-                weight = dstReservoir.weightSum;
-
-                uint rndStateCopy = dstReservoir.rndState;
-
-                // normalized
-                float3 lightNormal;
-                float3 emissiveColor;
-                // todo: rayDesc.Direction should be normalized?
-                rayDesc.Direction = getEmissiveQuadSample(rayDesc.Origin, rndStateCopy, lightNormal, emissiveColor) - rayDesc.Origin;
-
-                // needed to test if in shadow and to get payload2.emissiveColor
-                TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
-
-                weight *= computeWeight(rayDesc.Direction, payload.interpolatedNormal, lightNormal);
-
-//                if(payload2.instanceIndex != 0)// && randomNext(rndState2) > 0.5f)
-//                if(g_sceneCB.updateReservoir == 1)
-                {
-//                    if(!all(payload2.emissiveColor == emissiveColor))
-                    if(payload2.emissiveColor.r > 0)    // is emissive, todo: maybe not the right emissive
-                    {
-                        highlightPixel = true;
-                    }
-                    else
-                    {
-                        // in shadow
-                        weight = 0;
-//                        dstReservoir.age = 0;
-//                        dstReservoir.weightSum = 0;
-//                        dstReservoir.init();
-                    }
-                }
-
-                if(!dstReservoir.isValid())
-                    payload2.emissiveColor = 0;
-
-                payload2.emissiveColor *= BRIGHTNESS_HACK;
-            }
-            else // localMethod == 0
-            {
-                // reference 
-                rayDesc.Direction = getCosHemisphereSample(rndState, payload.interpolatedNormal);
-
-                TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
-
-//                weight = saturate(dot(normalize(rayDesc.Direction), payload.interpolatedNormal));
-//                weight *= saturate(dot(rayDesc.Direction, -payload2.interpolatedNormal));
-            }
-
-//            if(payload2.instanceIndex != 0 || g_sceneCB.wipeReservoir == 1)
-//            {
-//                dstReservoir.init();
-//            }
-//            dstReservoir.stream(rndState, weight);
-
-
-            float3 addLight = 0;
-
-//            incomingLight = addLight;
-
-            // effect of sky onto others objects
-//            if(payload2.instanceIndex == -1)
-                addLight = payload2.emissiveColor;
-
-//              addLight /= dstReservoir.weightSum;
-
-//            if(dstReservoir.age > 0)
-//                addLight *= weight / (dstReservoir.age+1);
-
-            addLight *= weight;
-            incomingLight += addLight;
-        } // for(int i = 0; i < sampleCount; ++i)
+            incomingLight += perSample(dstReservoir, rayDesc.Origin, payload.interpolatedNormal, localMethod, rndState);
 
         if(localMethod == 2)
         {
@@ -933,12 +884,9 @@ void ShadingPass()
             g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + int2(1, 0)] = packed.raw[1];
         }
 
-        // just in case
-//        AO = saturate(AO);
-
         incomingLight /= sampleCount;
+        incomingLight += payload.emissiveColor;
 
-//        hdr = materialColor * (incomingLight + AO * skyColor);
         hdr = materialColor * incomingLight;
     }
     else hdr = payload.materialColor;   // sky
@@ -952,9 +900,6 @@ void ShadingPass()
 
 //    float3 ldr = filmicToneMapping(hdr);
     float3 ldr = pow(hdr, 1/2.2f);  // no tone mapping
-
-//    if(highlightPixel)
-//        ldr = float3(1, 0, 0);
 
 #if GFX_FOR_ALL == 1
     if(showNormal)
