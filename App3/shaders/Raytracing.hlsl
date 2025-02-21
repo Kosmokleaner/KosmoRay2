@@ -51,7 +51,8 @@
 #include "cellular.hlsl"
 #include "Helper.hlsl"
 #include "Reservoir.hlsl"
-#include "GfxForAll.hlsl"
+#include "ui/ui_gather.hlsl"
+#include "ui/ui_scatter.hlsl"
 
 #define NV_SHADER_EXTN_SLOT u1
 #define NV_SHADER_EXTN_REGISTER_SPACE space1
@@ -662,38 +663,40 @@ void ShadingPass()
 //    RenderTarget[DispatchRaysIndex().xy] = float4(g_GBufferB[DispatchRaysIndex().xy].xyz,1);   return;
 
 #if GFX_FOR_ALL == 1
-    struct ContextGather ui;			// pixel shader or compute shader looping through all pixels
-    ui.init(DispatchRaysIndex().xy, int2(10, 10));
+    ContextGather ui;
+
+    init(ui, DispatchRaysIndex().xy, int2(10, 10));
+
     ui.mouseXY = g_sceneCB.mouseXY.xy;
     ui.scale = 2;
 
     // left menu bar
-    bool showNormal = ui.printDisc(float4(0.5f, 0.5f, 1.0f, 1.0f));
+    bool showNormal = printDisc(ui, float4(0.5f, 0.5f, 1.0f, 1.0f));
     if(showNormal)
     {
-        ui.printTxt(' ');
-        ui.printTxt('N', 'o', 'r', 'm', 'a', 'l');
+        printTxt(ui, ' ');
+        printTxt(ui, 'N', 'o', 'r', 'm', 'a', 'l');
     }
-    ui.printLF();
-    bool showDepth = ui.printDisc(float4(1, 0, 0, 1));
+    printLF(ui);
+    bool showDepth = printDisc(ui, float4(1, 0, 0, 1));
     if(showDepth)
     {
-        ui.printTxt(' ');
-        ui.printTxt('D', 'e', 'p', 't', 'h');
+        printTxt(ui, ' ');
+        printTxt(ui, 'D', 'e', 'p', 't', 'h');
     }
-    ui.printLF();
-    bool showEmissive = ui.printDisc(float4(1, 1, 1, 1));
+    printLF(ui);
+    bool showEmissive = printDisc(ui, float4(1, 1, 1, 1));
     if(showEmissive)
     {
-        ui.printTxt(' ');
-        ui.printTxt('E', 'm', 'i', 't');
+        printTxt(ui, ' ');
+        printTxt(ui, 'E', 'm', 'i', 't');
     }
-    ui.printLF();
-    bool showAlbedo = ui.printDisc(float4(0, 1, 0, 1));
+    printLF(ui);
+    bool showAlbedo = printDisc(ui, float4(0, 1, 0, 1));
     if(showAlbedo)
     {
-        ui.printTxt(' ');
-        ui.printTxt('A', 'l', 'b', 'e', 'd', 'o');
+        printTxt(ui, ' ');
+        printTxt(ui, 'A', 'l', 'b', 'e', 'd', 'o');
     }
 
     ui.scale = 1;
@@ -753,7 +756,7 @@ void ShadingPass()
         packed.raw[1] = g_Reservoirs[currentXY * uint2(2, 1) + uint2(1, 0)];
         reservoir.loadFromRaw(packed);
 
-        uint rnd2 = reservoir.rndState;
+        uint rnd2 = reservoir.rndSeed;
 //        uint rnd2 = initRand(currentXY.x, currentXY.y);
         const float sphereRadius = 0.05f;
 
@@ -765,10 +768,10 @@ void ShadingPass()
         {
             float2 pxSample = PxFromWS(samplePos);
 
-            ui.drawCircle(pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
+            drawCircle(ui, pxSample, 5.0f, float4(0.1f, 0.8f, 0.1f, 1), 2);
     //        ui.drawLine(pxSample, currentXY + 0.5f, float4(0.5f, 0.5f, 0.5f, 1), 2);
     //        ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(0.1f, 0.1f, 1.0f, 1), 2);
-            ui.drawLine(pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(emissiveColor, 1), 2);
+            drawLine(ui, pxSample, PxFromWS(samplePos + normal * sphereRadius * 5), float4(emissiveColor, 1), 2);
         }
 
         if(!showNormal && !showDepth && !showEmissive && !showAlbedo)
@@ -777,25 +780,25 @@ void ShadingPass()
                 ui.textColor.rgb = float3(1,0,0);
 
             ui.pxLeftTop = ui.pxCursor = currentXY + int2(20, -50);
-            ui.printTxt('r', 'n', 'd', ':');
-            ui.printHex(reservoir.rndState);
-            ui.printLF();
+            printTxt(ui, 'r', 'n', 'd', ':');
+            printHex(ui, reservoir.rndSeed);
+            printLF(ui);
 
-            ui.printTxt('p', 'd', 'f', ':');
-            ui.printFloat(reservoir.targetPdf);
-            ui.printLF();
+            printTxt(ui, 'p', 'd', 'f', ':');
+            printFloat(ui, reservoir.targetPdf);
+            printLF(ui);
 
-            ui.printTxt('w', 'S', 'u', 'm', ':');
-            ui.printFloat(reservoir.weightSum);
-            ui.printLF();
+            printTxt(ui, 'w', 'S', 'u', 'm', ':');
+            printFloat(ui, reservoir.weightSum);
+            printLF(ui);
 
-            ui.printTxt('a', 'g', 'e', ':');
-            ui.printFloat(reservoir.age);
-            ui.printLF();
+//            printTxt(ui, 'a', 'g', 'e', ':');
+//            printFloat(ui, reservoir.age);
+//            printLF(ui);
 
-            ui.printTxt('m', ':');
-            ui.printInt((int)reservoir.M);
-            ui.drawCrosshair(currentXY, 10, float4(0, 1, 0, 1));
+            printTxt(ui, 'm', ':');
+            printInt(ui, (int)reservoir.M);
+            drawCrosshair(ui, currentXY, 10, float4(0, 1, 0, 1));
         }
     }
 #endif // GFX_FOR_ALL == 1
