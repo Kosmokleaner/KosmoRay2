@@ -9,13 +9,13 @@
 // 0/1 animate TemporalAA jitter and noise seed
 #define ANIMATE_OVER_TIME 1
 // 0:reference path tracing, 1:area light sample, 2:reservoir
-#define LEFT_METHOD 1
+#define LEFT_METHOD 2
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
 // 1:very low, 8:low, 64:good, 256:very good
-#define LEFT_SAMPLE_COUNT 100
+#define LEFT_SAMPLE_COUNT 10
 // 1:very low, 8:low, 64:good, 256:very good
-#define RIGHT_SAMPLE_COUNT 100
+#define RIGHT_SAMPLE_COUNT 10
 // 0:off, 1:on (slow shader compile and shader runtime but useful for debugging)
 #define GFX_FOR_ALL 0
 // todo to make method 1 and method 2 the right brightness 
@@ -435,7 +435,7 @@ Reservoir TemporalResampling(uint2 pixelPosition, inout uint rndState, float3 su
         uint historyLimit = 32;
 
     //                        prevSample.spatialDistance += spatialOffset;
-        prevSample.age += 1;    // RayMachine does not have this
+//        prevSample.age += 1;    // RayMachine does not have this
 
         float neighborWeight = 0.0f;
         if(prevSample.isValid())
@@ -564,10 +564,10 @@ float3 perSample(inout Reservoir dstReservoir, float3 surfacePos, float3 surface
     else if(localMethod == 2)
     {
         {
-            ++dstReservoir.age;
+//            ++dstReservoir.age;
 
-            if(dstReservoir.age > 30)
-                dstReservoir.init();
+//            if(dstReservoir.age > 30)
+//                dstReservoir.init();
 
             // aka RTXDI_SampleLocalLights(), todo: look deeper
             Reservoir localReservoir = sampleLightsForReservoir(1, rndState, surfacePos, surfaceNormal);
@@ -893,7 +893,7 @@ void ShadingPass()
     }
     else hdr = payload.materialColor;   // sky
 
-//    hdr *= 22.0f;    // brighter
+    hdr *= 16.0f;    // brighter
 //    hdr *= 0.25f;    // darker
 
     // feedback is in linear space

@@ -48,9 +48,9 @@ struct Reservoir
 	// count
 	float M;	// Algorithm 3
 	//todo: 3 bits might be enough, todo: could be replaced by stochastic exponential
-	float age;
+//	float age;
     // Visibility information stored in the reservoir for reuse 0..1
-    float visibility;
+//    float visibility;
 
 	// aka RTXDI_EmptyDIReservoir
 	void init()
@@ -59,8 +59,8 @@ struct Reservoir
 		weightSum = 0;
 		targetPdf = 0;
 		M = 0;
-		age = 0;
-		visibility = 0;
+//		age = 0;
+//		visibility = 0;
 	}
 
 	// aka RTXDI_IsValidDIReservoir()
@@ -115,7 +115,7 @@ struct Reservoir
 		{
 			rndSeed = other.rndSeed;
 			targetPdf = inTargetPdf;
-			age = other.age;
+//			age = other.age;
 		}
 		return selectSample;
 	}
@@ -145,8 +145,8 @@ struct Reservoir
 		weightSum = rawData.raw[0].y;
 		targetPdf = rawData.raw[0].z;
 		M = rawData.raw[0].w;
-		age = rawData.raw[1].x;
-		visibility = rawData.raw[1].y;
+//		age = rawData.raw[1].x;
+//		visibility = rawData.raw[1].y;
 	}
 
 	// aka RTXDI_StoreDIReservoir()
@@ -158,8 +158,8 @@ struct Reservoir
 		ret.raw[0].y = weightSum;
 		ret.raw[0].z = targetPdf;
 		ret.raw[0].w = M;
-		ret.raw[1].x = age;
-		ret.raw[1].y = visibility;
+//		ret.raw[1].x = age;
+//		ret.raw[1].y = visibility;
 
 		return ret;
 	}
