@@ -36,7 +36,8 @@ struct ReservoirPacked
 struct Reservoir
 {
 	// aka lightSeed, lightData (Light index (bits 0..30) and validity bit (31))
-	uint rndState;
+	// input for getEmissiveQuadSample()
+	uint rndSeed;
 
     // Overloaded: represents RIS weight sum during streaming,
     // then reservoir weight (inverse PDF) after FinalizeResampling
@@ -54,7 +55,7 @@ struct Reservoir
 	// aka RTXDI_EmptyDIReservoir
 	void init()
 	{
-		rndState = 0;
+		rndSeed = 0;
 		weightSum = 0;
 		targetPdf = 0;
 		M = 0;
@@ -65,15 +66,15 @@ struct Reservoir
 	// aka RTXDI_IsValidDIReservoir()
 	bool isValid()
 	{
-		return rndState != 0;	// todo: improve
+		return rndSeed != 0;	// todo: improve
 	}
 
 	// aka RTXDI_StreamSample()
 	// Adds a new, non-reservoir light sample into the reservoir
 	// Algorithm (3) from the ReSTIR paper, Streaming RIS using weighted reservoir sampling.
-	// @param inRndState randomInit(randomSeed.x, randomSeed.y) with some frame contribution
+	// @param inRndSeed randomInit(randomSeed.x, randomSeed.y) with some frame contribution
 	// @param random 0..1
-	bool stream(uint inRndState, float random, float inTargetPdf, float invSourcePdf)
+	bool stream(uint inRndSeed, float random, float inTargetPdf, float invSourcePdf)
 	{
 		float risWeight = inTargetPdf * invSourcePdf;
 
@@ -86,7 +87,7 @@ struct Reservoir
 		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
 		{
-			rndState = inRndState;
+			rndSeed = inRndSeed;
 			targetPdf = inTargetPdf;
 		}
 /*
@@ -112,7 +113,7 @@ struct Reservoir
 		bool selectSample = (random * weightSum < risWeight);
 		if (selectSample)
 		{
-			rndState = other.rndState;
+			rndSeed = other.rndSeed;
 			targetPdf = inTargetPdf;
 			age = other.age;
 		}
@@ -140,7 +141,7 @@ struct Reservoir
 	// aka RTXDI_LoadDIReservoir()
 	void loadFromRaw(ReservoirPacked rawData)
 	{
-		rndState = asuint(rawData.raw[0].x);
+		rndSeed = asuint(rawData.raw[0].x);
 		weightSum = rawData.raw[0].y;
 		targetPdf = rawData.raw[0].z;
 		M = rawData.raw[0].w;
@@ -153,7 +154,7 @@ struct Reservoir
 	{
 		ReservoirPacked ret;
 
-		ret.raw[0].x = asfloat(rndState);
+		ret.raw[0].x = asfloat(rndSeed);
 		ret.raw[0].y = weightSum;
 		ret.raw[0].z = targetPdf;
 		ret.raw[0].w = M;

@@ -13,9 +13,9 @@
 // 0:reference path tracing, 1:area light sample, 2:reservoir
 #define RIGHT_METHOD 2
 // 1:very low, 8:low, 64:good, 256:very good
-#define LEFT_SAMPLE_COUNT 10
+#define LEFT_SAMPLE_COUNT 100
 // 1:very low, 8:low, 64:good, 256:very good
-#define RIGHT_SAMPLE_COUNT 10
+#define RIGHT_SAMPLE_COUNT 100
 // 0:off, 1:on (slow shader compile and shader runtime but useful for debugging)
 #define GFX_FOR_ALL 0
 // todo to make method 1 and method 2 the right brightness 
@@ -282,10 +282,10 @@ float3 getRandomPointInTriangle(inout uint rndState, float3 pos[3])
 // hard coded to work with Quad.obj
 // @param outNormal will be normalized
 // @return light sample wsPos
-float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float3 outNormal, out float3 emissiveColor)
+float3 getEmissiveQuadSample(float3 rayDirection, uint rndSeed, out float3 outNormal, out float3 emissiveColor)
 {
     // 0..1
-	float rnd = nextRand(rndState);
+	float rnd = nextRand(rndSeed);
 
     // 0..g_sceneCB.emissiveSATSize-1
     uint emissiveTriangleId = binary_search_findIndex(rnd, g_sceneCB.emissiveSATSize, g_EmissiveSATValue);
@@ -305,7 +305,7 @@ float3 getEmissiveQuadSample(float3 rayDirection, inout uint rndState, out float
 
     emissiveColor = g_materials[meshInstanceId][materialId].emissiveColor;
 
-    return getRandomPointInTriangle(rndState, wsPosCorners);
+    return getRandomPointInTriangle(rndSeed, wsPosCorners);
 }
 
 // @param n0 normalized normal at 0, as surface
@@ -375,7 +375,7 @@ float computeLightPdf(Reservoir res, float3 surfacePos, float3 surfaceNormal)
 {
     float3 lightNormal;
     float3 emissiveColor;
-    float3 lightPos = getEmissiveQuadSample(surfacePos, res.rndState, lightNormal, emissiveColor);
+    float3 lightPos = getEmissiveQuadSample(surfacePos, res.rndSeed, lightNormal, emissiveColor);
     float weight = computeWeight(lightPos - surfacePos, surfaceNormal, lightNormal);
 
     return weight;
@@ -584,13 +584,11 @@ float3 perSample(inout Reservoir dstReservoir, float3 surfacePos, float3 surface
 
         weight = dstReservoir.weightSum;
 
-        uint rndStateCopy = dstReservoir.rndState;
-
         // normalized
         float3 lightNormal;
         float3 emissiveColor;
         // todo: rayDesc.Direction should be normalized?
-        rayDesc.Direction = getEmissiveQuadSample(surfacePos, rndStateCopy, lightNormal, emissiveColor) - surfacePos;
+        rayDesc.Direction = getEmissiveQuadSample(surfacePos, dstReservoir.rndSeed, lightNormal, emissiveColor) - surfacePos;
 
         // needed to test if in shadow and to get payload2.emissiveColor
         TraceRay(Scene, flags, instanceMask, RayContributionToHitGroupIndex, MultiplierForGeometryContributionToHitGroupIndex, MissShaderIndex, rayDesc, payload2);
@@ -854,7 +852,7 @@ void ShadingPass()
             perFrameNoiseSeed = (uint)(g_sceneCB.sceneParam0.x * 12347);
 
 
-        uint rndState2 = initRand(dot(DispatchRaysIndex(), uint3(8227, 2113, 1)), 0x1245678 + perFrameNoiseSeed);
+//        uint rndState2 = initRand(dot(DispatchRaysIndex(), uint3(8227, 2113, 1)), 0x1245678 + perFrameNoiseSeed);
 
 
         uint rndState = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed);
@@ -874,7 +872,11 @@ void ShadingPass()
         Reservoir dstReservoir;
       
         [loop] for(int i = 0; i < sampleCount; ++i)
+        {
+//            rndState = initRand(dot(DispatchRaysIndex(), uint3(82927, 21313, 1)), 0x12345678 + perFrameNoiseSeed + i * 0x3313);
+
             incomingLight += perSample(dstReservoir, rayDesc.Origin, payload.interpolatedNormal, localMethod, rndState);
+        }
 
         if(localMethod == 2)
         {
