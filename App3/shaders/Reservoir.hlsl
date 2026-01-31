@@ -157,6 +157,7 @@ struct Reservoir
 		ret.raw[0].z = targetPdf;
 		ret.raw[0].w = M;
 //		ret.raw[1].y = visibility;
+		ret.raw[1] = 0;
 
 		return ret;
 	}

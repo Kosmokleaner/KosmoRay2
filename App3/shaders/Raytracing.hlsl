@@ -884,7 +884,7 @@ void ShadingPass()
         if(localMethod == 2)
         {
             ReservoirPacked packed = dstReservoir.storeToRaw();
-
+			
             g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + int2(0, 0)] = packed.raw[0];
             g_Reservoirs[DispatchRaysIndex().xy * uint2(2, 1) + int2(1, 0)] = packed.raw[1];
         }

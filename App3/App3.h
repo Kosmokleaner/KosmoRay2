@@ -5,6 +5,8 @@
 #include "../DataBlock.h"
 #include "Splats.h"
 
+#define MAX_DESC_COUNT 100
+
 class App3 : public AppBase
 {
 public:

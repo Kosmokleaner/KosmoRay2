@@ -657,7 +657,7 @@ void App3::BuildAccelerationStructures()
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS topLevelInputs = {};
     topLevelInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
     topLevelInputs.Flags = buildFlags;
-    topLevelInputs.NumDescs = 1;
+    topLevelInputs.NumDescs = MAX_DESC_COUNT;
     topLevelInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO topLevelPrebuildInfo = {};
@@ -853,6 +853,8 @@ void App3::BuildAccelerationStructures()
     // Top Level Acceleration Structure desc
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
     {
+		assert(instanceCount < MAX_DESC_COUNT);
+
         topLevelInputs.InstanceDescs = instanceDescs->GetGPUVirtualAddress();
         topLevelInputs.NumDescs = instanceCount;
         topLevelBuildDesc.Inputs = topLevelInputs;
