@@ -398,9 +398,7 @@ unsigned int CTangentSpaceCalculation<InputProxy>::CalculateTangentSpace( const 
 
 	// adjust the base vectors per vertex -------------------------------------------
 	{
-		std::vector<CBase33>::template iterator it;
-		
-		for(it=m_BaseVectors.begin();it!=m_BaseVectors.end();++it)
+		for(auto it=m_BaseVectors.begin();it!=m_BaseVectors.end();++it)
 		{
 			CBase33 &ref=(*it);
 
@@ -444,16 +442,14 @@ unsigned int CTangentSpaceCalculation<InputProxy>::AddUV2Base( std::multimap<CBa
 
 	Indx.m_dwPosNo=indwPosNo;
 	Indx.m_dwNormNo=indwNormNo;
-
-	std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder>::template iterator iFind,iFindEnd;
-		
-	iFind = inMap.lower_bound(Indx);
+	
+	auto iFind = inMap.lower_bound(Indx);
 
 	assert(iFind!=inMap.end());
 
 	CVec3 vNormal=m_BaseVectors[(*iFind).second].n;
 
-	iFindEnd = inMap.upper_bound(Indx);
+	auto iFindEnd = inMap.upper_bound(Indx);
 
 	unsigned int dwBaseUVIndex=0xffffffff;													// init with not found
 
@@ -525,7 +521,7 @@ void CTangentSpaceCalculation<InputProxy>::AddNormal2Base( std::multimap<CBaseIn
 	Indx.m_dwPosNo=indwPosNo;
 	Indx.m_dwNormNo=indwNormNo;
 
-	std::multimap<CBaseIndex,unsigned int,CBaseIndexOrder>::template iterator iFind = inMap.find(Indx);
+	auto iFind = inMap.find(Indx);
 
 	unsigned int dwBaseNIndex;
 
