@@ -17,6 +17,16 @@ Game::~Game()
     assert(!m_pWindow && "Use Game::Destroy() before destruction.");
 }
 
+int Game::GetClientWidth() const
+{
+	return m_Width;
+}
+
+int Game::GetClientHeight() const
+{
+	return m_Height;
+}
+
 bool Game::Initialize()
 {
     // Check for DirectX Math library support.
