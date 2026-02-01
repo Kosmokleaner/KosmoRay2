@@ -14,8 +14,7 @@ public:
 
     AppBase(const std::wstring& name, int width, int height, bool vSync)
         : Game(name, width, height, vSync), m_ScissorRect(CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX))
-        , m_Viewport(CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)))
-        , m_ContentLoaded(false)
+	    , m_ContentLoaded(false)
     {
     }
 
@@ -59,7 +58,7 @@ protected:
     // Pipeline state object.
     ComPtr<ID3D12PipelineState> pipelineState;
 
-    D3D12_VIEWPORT m_Viewport;
+//    D3D12_VIEWPORT m_Viewport;
     D3D12_RECT m_ScissorRect;
 
     // in degree, fovAngleY for XMMatrixPerspectiveFovLH

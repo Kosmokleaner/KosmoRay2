@@ -201,9 +201,6 @@ void App3::OnResize(ResizeEventArgs& e)
     {
         super::OnResize(e);
 
-        m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
-            static_cast<float>(e.Width), static_cast<float>(e.Height));
-
         ResizeDepthBuffer(e.Width, e.Height);
         CreateWindowSizeDependentResources();
     }

@@ -144,9 +144,6 @@ void App2::OnResize(ResizeEventArgs& e)
     {
         super::OnResize(e);
 
-        m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
-            static_cast<float>(e.Width), static_cast<float>(e.Height));
-
         ResizeDepthBuffer(e.Width, e.Height);
     }
 }
@@ -187,7 +184,10 @@ void App2::OnRender(RenderEventArgs& e)
     commandList->IASetVertexBuffers(0, 1, &mesh.vertexBufferView);
     commandList->IASetIndexBuffer(&mesh.indexBufferView);
 
-    commandList->RSSetViewports(1, &m_Viewport);
+	CD3DX12_VIEWPORT viewport = CD3DX12_VIEWPORT(0.0f, 0.0f,
+		static_cast<float>(m_pWindow->GetClientWidth()), static_cast<float>(m_pWindow->GetClientHeight()));
+	
+    commandList->RSSetViewports(1, &viewport);
     commandList->RSSetScissorRects(1, &m_ScissorRect);
 
     commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
