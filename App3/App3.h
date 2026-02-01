@@ -14,7 +14,7 @@ public:
 
     App3(const std::wstring& name, int width, int height, bool vSync = false);
     ~App3();
-
+	virtual bool Initialize();
     virtual bool LoadContent() override;
     virtual void UnloadContent() override;
 

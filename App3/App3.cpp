@@ -59,14 +59,10 @@ namespace LocalRootSignatureParams {
 App3::App3(const std::wstring& name, int width, int height, bool vSync)
     : super(name, width, height, vSync)
 {
+	auto device = Application::Get().renderer.device;
+	m_sceneCB.Create(device.Get(), Window::BufferCount, L"Scene Constant Buffer");
+
     rayGenCB.csViewport = { -1.0f, -1.0f, 1.0f, 1.0f };
-    UpdateForSizeChange(width, height);
-
-    CreateDeviceDependentResources();
-    CreateWindowSizeDependentResources();
-
-    auto device = Application::Get().renderer.device;
-    m_sceneCB.Create(device.Get(), Window::BufferCount, L"Scene Constant Buffer");
 }
 
 App3::~App3()
@@ -74,7 +70,18 @@ App3::~App3()
     ReleaseDeviceDependentResources();
 }
 
+bool App3::Initialize()
+{
+	if(!super::Initialize())
+		return false;
 
+	// after Game::Initialize()
+	UpdateForSizeChange(GetClientWidth(), GetClientHeight());
+    CreateDeviceDependentResources();
+    CreateWindowSizeDependentResources();
+
+	return true;
+}
 
 void App3::CreateRootSignatures()
 {
@@ -469,9 +476,9 @@ void App3::UpdateForSizeChange(UINT width, UINT height)
 //    DXSample::UpdateForSizeChange(width, height);
     float border = 0.1f;
 
-    float aspectRatio = GetClientWidth() / static_cast<float>(GetClientHeight());
+    float aspectRatio = width  / (float)height;
 
-    if (GetClientWidth() <= GetClientHeight())
+    if (width <= height)
     {
         rayGenCB.stencil =
         {
@@ -963,6 +970,8 @@ void App3::BuildShaderTables()
 
 void App3::CreateRaytracingOutputResource()
 {
+	assert(m_pWindow);
+
     auto& renderer = Application::Get().renderer;
     auto device = renderer.device;
     auto backbufferFormat = m_pWindow->GetBackBufferFormat();

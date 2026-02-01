@@ -19,12 +19,16 @@ Game::~Game()
 
 int Game::GetClientWidth() const
 {
-	return m_Width;
+	assert(m_pWindow);
+//	assert(m_Width == (*m_pWindow).GetClientWidth());
+	return std::max(1, m_Width);
 }
 
 int Game::GetClientHeight() const
 {
-	return m_Height;
+	assert(m_pWindow);
+//	assert(m_Height == (*m_pWindow).GetClientHeight());
+	return std::max(1, m_Height);
 }
 
 bool Game::Initialize()
