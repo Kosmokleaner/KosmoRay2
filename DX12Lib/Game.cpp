@@ -7,7 +7,7 @@
 
 WindowPersist g_windowPersist;
 
-Game::Game( const std::wstring& name, int width, int height, bool vSync )
+Game::Game( const std::wstring& name)
     : m_Name( name )
 {
 }
