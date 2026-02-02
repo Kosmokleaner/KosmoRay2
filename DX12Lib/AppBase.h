@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "DescriptorHeap.h"
+#include "DataBlock.h"
 
 
 class AppBase : public Game
@@ -48,7 +49,8 @@ protected:
     uint64_t fenceValues[Window::BufferCount] = {};
 
     // Depth buffer
-    ComPtr<ID3D12Resource> depthBuffer;
+//    ComPtr<ID3D12Resource> depthBuffer;
+	DataBlock depthBuffer;
     // Descriptor heap for depth buffer
     DescriptorHeap depthStencilDescriptorHeap;
 

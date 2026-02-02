@@ -25,16 +25,16 @@ void AppBase::ResizeDepthBuffer(int width, int height)
         optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
         CD3DX12_HEAP_PROPERTIES a(D3D12_HEAP_TYPE_DEFAULT);
-        CD3DX12_RESOURCE_DESC b = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
+		depthBuffer.m_desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
             1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
         ThrowIfFailed(device->CreateCommittedResource(
             &a,
             D3D12_HEAP_FLAG_NONE,
-            &b,
+            &depthBuffer.m_desc,
             D3D12_RESOURCE_STATE_DEPTH_WRITE,
             &optimizedClearValue,
-            IID_PPV_ARGS(&depthBuffer)
+            IID_PPV_ARGS(&depthBuffer.m_resource)
         ));
 
         // Update the depth-stencil view.
@@ -44,7 +44,7 @@ void AppBase::ResizeDepthBuffer(int width, int height)
         dsv.Texture2D.MipSlice = 0;
         dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-        device->CreateDepthStencilView(depthBuffer.Get(), &dsv,
+        device->CreateDepthStencilView(depthBuffer.m_resource.Get(), &dsv,
             depthStencilDescriptorHeap.descriptorHeap->GetCPUDescriptorHandleForHeapStart());
     }
 }
