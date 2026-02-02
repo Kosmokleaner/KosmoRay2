@@ -6,9 +6,6 @@
 
 Game::Game( const std::wstring& name, int width, int height, bool vSync )
     : m_Name( name )
-    , m_Width( width )
-    , m_Height( height )
-    , m_vSync( vSync )
 {
 }
 
@@ -20,15 +17,17 @@ Game::~Game()
 int Game::GetClientWidth() const
 {
 	assert(m_pWindow);
-	assert(m_Width == (*m_pWindow).GetClientWidth());
-	return std::max(1, m_Width);
+	return std::max(1, (*m_pWindow).GetClientWidth());
+//	assert(m_Width == (*m_pWindow).GetClientWidth());
+//	return std::max(1, m_Width);
 }
 
 int Game::GetClientHeight() const
 {
 	assert(m_pWindow);
-	assert(m_Height == (*m_pWindow).GetClientHeight());
-	return std::max(1, m_Height);
+	return std::max(1, (*m_pWindow).GetClientHeight());
+//	assert(m_Height == (*m_pWindow).GetClientHeight());
+//	return std::max(1, m_Height);
 }
 
 bool Game::Initialize()
@@ -40,7 +39,7 @@ bool Game::Initialize()
 //        return false;
 //    }
 
-    m_pWindow = Application::Get().CreateRenderWindow(m_Name, m_Width, m_Height, m_vSync);
+    m_pWindow = Application::Get().CreateRenderWindow(m_Name, 1024, 768, false);
     m_pWindow->RegisterCallbacks(shared_from_this());
     m_pWindow->Show();
 
@@ -95,8 +94,6 @@ void Game::OnMouseWheel(MouseWheelEventArgs& e)
 
 void Game::OnResize(ResizeEventArgs& e)
 {
-    m_Width = e.Width;
-    m_Height = e.Height;
 }
 
 void Game::OnWindowDestroy()

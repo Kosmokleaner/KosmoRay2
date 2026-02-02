@@ -127,6 +127,9 @@
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Splats.cpp" />
+    <ClCompile Include="DX12Lib\IniArchive.cpp" />
+    <ClCompile Include="DX12Lib\WindowPersist.cpp" />
+    <ClCompile Include="DX12Lib\ASCIIFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DX12Lib\HighResolutionClock.h">
@@ -303,6 +306,9 @@
     <ClInclude Include="ReflectionHelper.h" />
     <ClInclude Include="DataDefinitions.h" />
     <ClInclude Include="VertexDefinitions.h" />
+    <ClInclude Include="DX12Lib\WindowPersist.h" />
+    <ClInclude Include="DX12Lib\IniArchive.h" />
+    <ClInclude Include="DX12Lib\ASCIIFile.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

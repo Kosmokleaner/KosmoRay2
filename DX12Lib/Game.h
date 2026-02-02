@@ -88,7 +88,4 @@ protected:
 
 private:
     std::wstring m_Name;
-    int m_Width = 0;
-    int m_Height = 0;
-    bool m_vSync = false;
 };

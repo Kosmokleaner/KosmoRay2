@@ -69,7 +69,10 @@
     <ClCompile Include="App3\App3.cpp" />
     <ClCompile Include="DataBlock.cpp" />
     <ClCompile Include="DX12Lib\AppBase.cpp" />
+    <ClCompile Include="DX12Lib\ASCIIFile.cpp" />
     <ClCompile Include="DX12Lib\DescriptorHeap.cpp" />
+    <ClCompile Include="DX12Lib\IniArchive.cpp" />
+    <ClCompile Include="DX12Lib\WindowPersist.cpp" />
     <ClCompile Include="external\DearGPU\CommonFileSystem.cpp" />
     <ClCompile Include="external\DearGPU\FBVHTree.cpp" />
     <ClCompile Include="external\DearGPU\forsyth.cpp" />
@@ -99,7 +102,10 @@
     <ClInclude Include="DataBlock.h" />
     <ClInclude Include="DataDefinitions.h" />
     <ClInclude Include="DX12Lib\AppBase.h" />
+    <ClInclude Include="DX12Lib\ASCIIFile.h" />
     <ClInclude Include="DX12Lib\DescriptorHeap.h" />
+    <ClInclude Include="DX12Lib\IniArchive.h" />
+    <ClInclude Include="DX12Lib\WindowPersist.h" />
     <ClInclude Include="external\DearGPU\BBox3F.h" />
     <ClInclude Include="external\DearGPU\CommonFileSystem.h" />
     <ClInclude Include="external\DearGPU\deargpu.h" />
