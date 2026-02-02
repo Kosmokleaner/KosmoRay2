@@ -3,6 +3,9 @@
 #include "Application.h"
 #include "DX12Lib/Game.h"
 #include "DX12Lib/Window.h"
+#include "WindowPersist.h"
+
+WindowPersist g_windowPersist;
 
 Game::Game( const std::wstring& name, int width, int height, bool vSync )
     : m_Name( name )
@@ -39,7 +42,18 @@ bool Game::Initialize()
 //        return false;
 //    }
 
-    m_pWindow = Application::Get().CreateRenderWindow(m_Name, 1024, 768, false);
+	if (!g_windowPersist.IsValid())
+	{
+		g_windowPersist = {};
+		g_windowPersist.data[0] = g_windowPersist.data[1] = 100;
+		g_windowPersist.data[2] = 1280;
+		g_windowPersist.data[3] = 768;
+	}
+	
+	m_pWindow = Application::Get().CreateRenderWindow(m_Name, 1024, 768, false);
+
+	g_windowPersist.ApplyState(m_pWindow->GetWindowHandle());
+
     m_pWindow->RegisterCallbacks(shared_from_this());
     m_pWindow->Show();
 

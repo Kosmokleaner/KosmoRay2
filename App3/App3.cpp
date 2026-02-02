@@ -7,9 +7,13 @@
 #include "CompiledShaders\Raytracing.hlsl.h" // g_pRaytracing
 #include "RelativeMouseInput.h"
 #include "external/nv-api/nvapi.h"
+#include "WindowPersist.h"
+#include "IniArchive.h"
 
 #include "Mathlib.h"
 #include <Mock12.h>
+
+extern WindowPersist g_windowPersist;
 
 // only on NVidia
 bool g_NVAPI_enabled = false;
@@ -54,11 +58,26 @@ namespace LocalRootSignatureParams {
     };
 }
 
+void Reflection(CIniArchive& archive, WindowPersist& ref)
+{
+	Reflection(archive, "Window_fullScreen", ref.fullscreen);
+	Reflection(archive, "Window_maximized", ref.maximized);
 
+	for (int i = 0; i < 4; ++i)
+	{
+		char str[256];
+		sprintf_s(str, sizeof(str), "Window_rect%d", i);
+		Reflection(archive, str, ref.data[i]);
+	}
+}
 
 App3::App3(const std::wstring& name, int width, int height, bool vSync)
     : super(name, width, height, vSync)
 {
+	CIniArchive iniArchive;
+	iniArchive.Load("Settings.ini");
+	Reflection(iniArchive, g_windowPersist);
+
 	auto device = Application::Get().renderer.device;
 	m_sceneCB.Create(device.Get(), Window::BufferCount, L"Scene Constant Buffer");
 
@@ -67,6 +86,12 @@ App3::App3(const std::wstring& name, int width, int height, bool vSync)
 
 App3::~App3()
 {
+	{
+		CIniArchive iniArchive;
+		Reflection(iniArchive, g_windowPersist);
+		iniArchive.Save("Settings.ini");
+	}
+
     ReleaseDeviceDependentResources();
 }
 

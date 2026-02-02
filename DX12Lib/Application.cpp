@@ -6,8 +6,11 @@
 #include "DX12Lib/CommandQueue.h"
 #include "DX12Lib/Window.h"
 #include "Mock12.h"
+#include "WindowPersist.h"
 
 #include "../RelativeMouseInput.h"
+
+extern WindowPersist g_windowPersist;
 
 CRelativeMouseInput g_MouseInput;
 
@@ -403,6 +406,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
             // If a window is being destroyed, remove it from the 
             // window maps.
             RemoveWindow(hwnd);
+
+			// doing it later will not work, after this message the hwnd is invalid
+			g_windowPersist.SaveState(hwnd);
 
             if (gs_Windows.empty())
             {
