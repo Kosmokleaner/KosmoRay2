@@ -140,7 +140,7 @@ bool App2::LoadContent()
 
 void App2::OnResize(ResizeEventArgs& e)
 {
-    if (e.Width != GetClientWidth() || e.Height != GetClientHeight())
+	if (e.Width != depthBuffer.m_desc.Width || e.Height != depthBuffer.m_desc.Height)
     {
         super::OnResize(e);
 
