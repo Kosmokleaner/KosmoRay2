@@ -71,8 +71,7 @@ void Reflection(CIniArchive& archive, WindowPersist& ref)
 	}
 }
 
-App3::App3(const std::wstring& name, int width, int height, bool vSync)
-    : super(name, width, height, vSync)
+App3::App3()
 {
 	CIniArchive iniArchive;
 	iniArchive.Load("Settings.ini");

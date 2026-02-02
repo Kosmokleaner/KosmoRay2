@@ -9,7 +9,7 @@ class App2 : public AppBase
 public:
     using super = AppBase;
 
-    App2(const std::wstring& name, int width, int height, bool vSync = false);
+    App2();
 
     virtual bool LoadContent() override;
     virtual void UnloadContent() override;

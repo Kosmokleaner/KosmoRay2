@@ -12,7 +12,7 @@ class App3 : public AppBase
 public:
     using super = AppBase;
 
-    App3(const std::wstring& name, int width, int height, bool vSync = false);
+    App3();
     ~App3();
 	virtual bool Initialize();
     virtual bool LoadContent() override;

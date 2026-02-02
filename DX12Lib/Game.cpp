@@ -7,8 +7,7 @@
 
 WindowPersist g_windowPersist;
 
-Game::Game( const std::wstring& name)
-    : m_Name( name )
+Game::Game()
 {
 }
 
@@ -50,7 +49,7 @@ bool Game::Initialize()
 		g_windowPersist.data[3] = 768;
 	}
 	
-	m_pWindow = Application::Get().CreateRenderWindow(m_Name, 1024, 768, false);
+	m_pWindow = Application::Get().CreateRenderWindow(L"KosmoRay2", 1024, 768, false);
 
 	g_windowPersist.ApplyState(m_pWindow->GetWindowHandle());
 

@@ -37,8 +37,7 @@ static Mesh::IndexType g_Indicies[36] =
     4, 0, 3, 4, 3, 7
 };
 
-App2::App2(const std::wstring& name, int width, int height, bool vSync)
-    : super(name, width, height, vSync)
+App2::App2()
 {
 }
 

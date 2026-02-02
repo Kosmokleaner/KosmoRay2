@@ -13,7 +13,7 @@ class Window;
 class Game : public std::enable_shared_from_this<Game>
 {
 public:
-    Game(const std::wstring& name);
+    Game();
     virtual ~Game();
 
     int GetClientWidth() const;
@@ -85,7 +85,4 @@ protected:
     virtual void OnWindowDestroy();
 
     std::shared_ptr<Window> m_pWindow;
-
-private:
-    std::wstring m_Name;
 };

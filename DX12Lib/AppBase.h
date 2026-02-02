@@ -13,8 +13,8 @@ class AppBase : public Game
 public:
     using super = Game;
 
-    AppBase(const std::wstring& name, int width, int height, bool vSync)
-        : Game(name), m_ScissorRect(CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX))
+    AppBase()
+        : m_ScissorRect(CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX))
 	    , m_ContentLoaded(false)
     {
     }
