@@ -20,14 +20,14 @@ Game::~Game()
 int Game::GetClientWidth() const
 {
 	assert(m_pWindow);
-//	assert(m_Width == (*m_pWindow).GetClientWidth());
+	assert(m_Width == (*m_pWindow).GetClientWidth());
 	return std::max(1, m_Width);
 }
 
 int Game::GetClientHeight() const
 {
 	assert(m_pWindow);
-//	assert(m_Height == (*m_pWindow).GetClientHeight());
+	assert(m_Height == (*m_pWindow).GetClientHeight());
 	return std::max(1, m_Height);
 }
 
