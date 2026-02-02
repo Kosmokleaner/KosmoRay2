@@ -14,10 +14,12 @@ public:
 
     void Load(Renderer& renderer, const char* fileName);
 
-    void CreateUAV(Renderer& renderer, const D3D12_RESOURCE_DESC& uavDesc);
+	// set m_desc before
+    void CreateUAV(Renderer& renderer);
+
+	D3D12_RESOURCE_DESC m_desc = {};
 
 private:
-
     UINT m_UAVDescriptorHeapIndex = UINT_MAX;
 };
 

@@ -31,15 +31,15 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
     auto commandQueue = renderer.directCommandQueue;
     ID3D12GraphicsCommandList2* commandList = commandQueue->GetCommandList().Get();
 
-    D3D12_RESOURCE_DESC desc = {};
-    desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    desc.MipLevels = 1;
-    desc.Width = width;
-    desc.Height = height;
-    desc.DepthOrArraySize = 1;
-    desc.SampleDesc.Count = 1;
-    desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	m_desc = {};
+    m_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    m_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    m_desc.MipLevels = 1;
+    m_desc.Width = width;
+    m_desc.Height = height;
+    m_desc.DepthOrArraySize = 1;
+    m_desc.SampleDesc.Count = 1;
+    m_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     
     // https://www.braynzarsoft.net/viewtutorial/q16390-directx-12-textures-from-file
 
@@ -48,7 +48,7 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
     // each row must be 256 byte aligned except for the last row, which can just be the size in bytes of the row
     // eg. textureUploadBufferSize = ((((width * numBytesPerPixel) + 255) & ~255) * (height - 1)) + (width * numBytesPerPixel);
     //textureUploadBufferSize = (((imageBytesPerRow + 255) & ~255) * (textureDesc.Height - 1)) + imageBytesPerRow;
-    renderer.device->GetCopyableFootprints(&desc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
+    renderer.device->GetCopyableFootprints(&m_desc, 0, 1, 0, nullptr, nullptr, nullptr, &textureUploadBufferSize);
 
     ComPtr<ID3D12Resource> textureBufferUploadHeap;
 
@@ -56,7 +56,7 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
 
     auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     ThrowIfFailed(renderer.device->CreateCommittedResource(
-        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_resource)));
+        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &m_desc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_resource)));
     NAME_D3D12_OBJECT(m_resource);
 
     
@@ -67,8 +67,8 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
     // store vertex buffer in upload heap
     D3D12_SUBRESOURCE_DATA textureData = {};
     textureData.pData = mem;
-    textureData.RowPitch = (Renderer::GetFormatBitsPerPixel(desc.Format) * desc.Width) / 8;
-    textureData.SlicePitch = textureData.RowPitch * desc.Height;
+    textureData.RowPitch = (Renderer::GetFormatBitsPerPixel(m_desc.Format) * m_desc.Width) / 8;
+    textureData.SlicePitch = textureData.RowPitch * m_desc.Height;
 
     resourceUpload.Upload(m_resource.Get(), 0, &textureData, 1);
 
@@ -108,13 +108,12 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
 }
 
 
-void DataBlock::CreateUAV(Renderer& renderer, const D3D12_RESOURCE_DESC& uavDesc)
+void DataBlock::CreateUAV(Renderer& renderer)
 {
     auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     ThrowIfFailed(renderer.device->CreateCommittedResource(
-        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_resource)));
+        &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &m_desc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_resource)));
     NAME_D3D12_OBJECT(m_resource);
-
 
     D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
 

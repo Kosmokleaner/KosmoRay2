@@ -977,23 +977,26 @@ void App3::CreateRaytracingOutputResource()
     auto backbufferFormat = m_pWindow->GetBackBufferFormat();
 
     // Create the output resource. The dimensions and format should match the swap-chain.
-    auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(backbufferFormat, GetClientWidth(), GetClientHeight(), 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-
-    m_raytracingOutput.CreateUAV(renderer, uavDesc);
+	m_raytracingOutput.m_desc = CD3DX12_RESOURCE_DESC::Tex2D(backbufferFormat, GetClientWidth(), GetClientHeight(), 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+    m_raytracingOutput.CreateUAV(renderer);
     
     // higher quality feedback
-    uavDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-    m_raytracingFeedback.CreateUAV(renderer, uavDesc);
+	m_raytracingFeedback.m_desc = m_raytracingOutput.m_desc;
+	m_raytracingFeedback.m_desc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	m_raytracingFeedback.CreateUAV(renderer);
 
-    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;    // todo: optimize
-    m_GBufferA.CreateUAV(renderer, uavDesc);
+	m_GBufferA.m_desc = m_raytracingFeedback.m_desc;
+	m_GBufferA.m_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;    // todo: optimize
+    m_GBufferA.CreateUAV(renderer);
 
-    uavDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;   // float4(albedo,0)
-    m_GBufferB.CreateUAV(renderer, uavDesc);
+	m_GBufferB.m_desc = m_GBufferA.m_desc;
+	m_GBufferB.m_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;   // float4(albedo,0)
+    m_GBufferB.CreateUAV(renderer);
 
-    uavDesc.Width *= 2; // 8 floats per pixel
-    uavDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    m_reservoirs.CreateUAV(renderer, uavDesc);
+	m_reservoirs.m_desc = m_GBufferB.m_desc;
+	m_reservoirs.m_desc.Width *= 2; // 8 floats per pixel
+	m_reservoirs.m_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    m_reservoirs.CreateUAV(renderer);
 }
 
 void App3::ReleaseDeviceDependentResources()
