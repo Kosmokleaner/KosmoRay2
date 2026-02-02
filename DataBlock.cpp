@@ -90,7 +90,7 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
 
     D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
 
-    m_UAVDescriptorHeapIndex = renderer.descriptorHeap.AllocateDescriptor(&uavDescriptorHandle, m_UAVDescriptorHeapIndex);
+    m_UAVDescriptorHeapIndex = renderer.descriptorHeapR.AllocateDescriptor(&uavDescriptorHandle, m_UAVDescriptorHeapIndex);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
 
@@ -98,9 +98,9 @@ void DataBlock::Load(Renderer& renderer, const char* fileName)
     renderer.device->CreateUnorderedAccessView(m_resource.Get(), nullptr, &UAVDesc, uavDescriptorHandle);
 
     m_UAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-        renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+        renderer.descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
         m_UAVDescriptorHeapIndex,
-        renderer.descriptorHeap.maxSize);
+        renderer.descriptorHeapR.maxSize);
 
 
 
@@ -117,7 +117,7 @@ void DataBlock::CreateUAV(Renderer& renderer)
 
     D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
 
-    m_UAVDescriptorHeapIndex = renderer.descriptorHeap.AllocateDescriptor(&uavDescriptorHandle, m_UAVDescriptorHeapIndex);
+    m_UAVDescriptorHeapIndex = renderer.descriptorHeapR.AllocateDescriptor(&uavDescriptorHandle, m_UAVDescriptorHeapIndex);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
 
@@ -125,7 +125,7 @@ void DataBlock::CreateUAV(Renderer& renderer)
     renderer.device->CreateUnorderedAccessView(m_resource.Get(), nullptr, &UAVDesc, uavDescriptorHandle);
 
     m_UAVGpuDescriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-        renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+        renderer.descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
         m_UAVDescriptorHeapIndex,
-        renderer.descriptorHeap.maxSize);
+        renderer.descriptorHeapR.maxSize);
 }

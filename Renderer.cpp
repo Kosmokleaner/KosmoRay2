@@ -32,6 +32,10 @@ void Renderer::init()
 
     // ray tracing
     ThrowIfFailed(device->QueryInterface(IID_PPV_ARGS(&dxrDevice)), L"Couldn't get DirectX Raytracing interface for the device.\n");
+
+	// Allocate a heap for a large number of descriptors
+	descriptorHeapR.CreateDescriptorHeap(*this, 1024 * 8, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+	descriptorHeapR.maxSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void Renderer::UpdateBufferResource(
@@ -282,9 +286,9 @@ UINT Renderer::CreateBufferSRV(D3DBuffer* buffer, UINT numElements, UINT element
         srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
         srvDesc.Buffer.StructureByteStride = elementSize;
     }
-    UINT descriptorIndex = descriptorHeap.AllocateDescriptor(&buffer->cpuDescriptorHandle);
+    UINT descriptorIndex = descriptorHeapR.AllocateDescriptor(&buffer->cpuDescriptorHandle);
     device->CreateShaderResourceView(buffer->resource.Get(), &srvDesc, buffer->cpuDescriptorHandle);
-    buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, descriptorHeap.maxSize);
+    buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorIndex, descriptorHeapR.maxSize);
     return descriptorIndex;
 }
 

@@ -260,7 +260,7 @@ void App3::DoRaytracing(ComPtr<ID3D12GraphicsCommandList2> commandList, UINT cur
 
     // Bind the heaps, acceleration structure and dispatch rays
     D3D12_DISPATCH_RAYS_DESC dispatchDesc = {};
-    commandList->SetDescriptorHeaps(1, renderer.descriptorHeap.descriptorHeap.GetAddressOf());
+    commandList->SetDescriptorHeaps(1, renderer.descriptorHeapR.descriptorHeap.GetAddressOf());
     commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::OutputViewSlot, m_raytracingOutput.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::FeedbackSlot, m_raytracingFeedback.m_UAVGpuDescriptor);
 	commandList->SetComputeRootDescriptorTable(GlobalRootSignatureParams::ReservoirsSlot, m_reservoirs.m_UAVGpuDescriptor);
@@ -1040,10 +1040,6 @@ void App3::CreateDeviceDependentResources()
     // Create a raytracing pipeline state object which defines the binding of shaders, state and resources to be used during raytracing.
     CreateRaytracingPipelineStateObject();
 
-    // Allocate a heap for a large number of descriptors
-    renderer.descriptorHeap.CreateDescriptorHeap(renderer, 1024 * 8, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    renderer.descriptorHeap.maxSize = renderer.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
     bool ok;
 
     //meshA.load(renderer, "../../data/monkey.obj");
@@ -1083,32 +1079,32 @@ void App3::CreateDeviceDependentResources()
             meshA.CreateSRVs(renderer, 0);
         meshB.CreateSRVs(renderer, 0);
 		m_allIB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			renderer.descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorIndexIB,
-			renderer.descriptorHeap.maxSize);
+			renderer.descriptorHeapR.maxSize);
 
         UINT baseDescriptorIndexVB =
             meshA.CreateSRVs(renderer, 1);
         meshB.CreateSRVs(renderer, 1);
 		m_allVB = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			renderer.descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorIndexVB,
-			renderer.descriptorHeap.maxSize);
+			renderer.descriptorHeapR.maxSize);
 
 	    UINT baseDescriptorMaterials =
 			meshA.CreateSRVs(renderer, 2);
 		meshB.CreateSRVs(renderer, 2);
 		m_allMaterials = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			renderer.descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorMaterials,
-			renderer.descriptorHeap.maxSize);
+			renderer.descriptorHeapR.maxSize);
 
         UINT baseDescriptorIndexSplat =
             splatA.CreateSRVs(renderer);
 		m_allSplats = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-			renderer.descriptorHeap.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			renderer.descriptorHeapR.descriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			baseDescriptorIndexSplat,
-			renderer.descriptorHeap.maxSize);
+			renderer.descriptorHeapR.maxSize);
     }
 
 

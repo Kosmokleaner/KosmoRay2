@@ -64,7 +64,7 @@ public:
     // copyCommandQueue->GetCommandList()
     ID3D12GraphicsCommandList2* copyCommandList = {};
     // used by CreateBufferSRV() and CreateRaytracingOutputResource()
-    DescriptorHeap descriptorHeap;
+    DescriptorHeap descriptorHeapR;
 
     // get the number of bits per pixel for a dxgi format
     // @param 0 if not known
